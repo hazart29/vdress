@@ -1,0 +1,42 @@
+{
+    "rules": { 
+        "baseSSRProbability": "0.006",
+        "baseSRProbability": "0.051"
+    },
+    "gacha": {
+      "SSR": [
+        {
+          "name": "Seifuku",
+          "url": "/item/seifuku-biru.png",
+          "icon": "/icon/gacha/ssr-seifuku.png",
+          "origin": "Jepang",
+          "event": true
+        },
+        {
+          "name": "Maid-medium",
+          "url": "/item/maid-medium.png",
+          "icon": "/icon/gacha/ssr-maid.png",
+          "origin": "Jepang",
+          "event": true
+        }
+      ],
+      "SR": [
+        {
+          "name": "SR",
+          "url": "/item/sr.png",
+          "icon": "/icon/gacha/sr.png",
+          "origin": "",
+          "event": false
+        }
+      ],
+      "R": [
+        {
+          "name": "R",
+          "url": "/item/r.png",
+          "icon": "/icon/gacha/r.png",
+          "origin": "",
+          "event": false
+        }
+      ]
+    }
+  }
