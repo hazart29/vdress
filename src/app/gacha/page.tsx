@@ -226,7 +226,7 @@ export default function Page() {
                 <button onClick={event => openModal(10)} type="button" className="rounded-full flex-1 h-full bg-gradient-to-br from-violet-300 via-purple-400 to-fuchsia-500 text-purple-700 hover:scale-110 transform ease-in-out focus:outline-none hover:ring hover:ring-white hover:text-white">10x</button>
 
                 <Modal isOpen={isModalOpen} onClose={closeModal}>
-                    <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 h-auto w-[140%]' autoPlay muted>
+                    <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 h-full' autoPlay muted>
                         <source src="/video/gacha.mp4" type="video/mp4" />
                     </video>
                     <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-2'></div>
