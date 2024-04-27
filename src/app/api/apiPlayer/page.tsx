@@ -1,9 +1,10 @@
 // pages/api/update.js
 import fs from 'fs';
+import { NextApiRequest } from 'next';
 import { NextResponse } from 'next/server';
 import path from 'path';
 
-export default function handler(req) {
+export default function handler(req: NextApiRequest) {
   if (req.method === 'POST') {
     const { primogems } = req.body;
 
