@@ -1,6 +1,6 @@
 import Navbar from "../component/navbar";
 
-export default function HomeLayout({
+export default function Layout({
     children,
   }: Readonly<{
     children: React.ReactNode;

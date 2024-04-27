@@ -12,6 +12,14 @@ const config: Config = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "hero-patterns": "url('/background/bubbles.svg')",
+        "room": "url('/background/bgroom.svg')",
+      },
+      screens: {
+        'tall': { 'min': '(min-height: 700px' },
+      },
+      objectPosition: {
+        'center-top': 'center top',
       },
     },
   },

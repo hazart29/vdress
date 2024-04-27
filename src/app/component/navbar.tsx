@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -24,19 +24,18 @@ export default function Navbar() {
 
 function NavigationLink({
     href, btn, router,
-  }: Readonly<{
+}: Readonly<{
     href: any;
     btn: any;
     router: any;
-  }>) {
-    const isActive = router.asPath === (href === "/home" ? "/" : href)
+}>) {
+    const isActive = usePathname()
     return (
-        <Link href={href === "/home" ? "/" : href} passHref className="flex flex-1 h-full p-1" legacyBehavior>
+        <Link href={href} passHref className="flex flex-1 h-full p-1" legacyBehavior>
             <a
-                href={href === "/home" ? "/" : href}
-                className={`relative flex-1 w-full h-full p-1 rounded-lg ${isActive && "hover:bg-blue-300 bg-blue-400 focus:bg-blue-400"} hover:bg-blue-300 focus:bg-blue-400`}
+                className={`relative flex-1 w-full h-full p-1 rounded-lg ${isActive === href ? 'hover:bg-blue-300 bg-blue-400 focus:bg-blue-400' : ''} hover:bg-blue-300 focus:bg-blue-400`}
             >
-                <Image src={btn} alt='menu' className='flex h-12' layout="fill"/>
+                <Image src={btn} alt='menu' className='flex h-12 p-2' fill priority/>
             </a>
         </Link>
     )
@@ -49,18 +48,18 @@ const navigatiunRoute = [
         btn: "/ui/btn_home.svg"
     },
     {
-        href: "menus/Outfit",
-        asPath: "menus/Outfit",
+        href: "outfit",
+        asPath: "outfit",
         btn: "/ui/btn_outfit.svg"
     },
     {
-        href: "menus/Gacha",
-        asPath: "menus/Gacha",
+        href: "gacha",
+        asPath: "gacha",
         btn: "/ui/btn_gacha.svg"
     },
     {
-        href: "menus/Room",
-        asPath: "menus/Room",
+        href: "room",
+        asPath: "room",
         btn: "/ui/btn_room.svg"
     },
 ]
