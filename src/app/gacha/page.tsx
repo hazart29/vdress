@@ -201,11 +201,11 @@ export default function Page() {
         const divDapat: any = document.getElementById('diDapat')
         for (let i of tenpull) {
             if (i === "SSR") {
-                divDapat.innerHTML += '<img src="" class="bg-yellow-400 w-20 h-20" alt="' + i + '" />'
+                divDapat.innerHTML += '<img src="" class="bg-yellow-400 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />'
             } else if (i === "SR") {
-                divDapat.innerHTML += '<img src="" class="bg-purple-400 w-20 h-20" alt="' + i + '" />'
+                divDapat.innerHTML += '<img src="" class="bg-purple-400 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />'
             } else {
-                divDapat.innerHTML += '<img src="" class="bg-gray-300 w-20 h-20" alt="' + i + '" />'
+                divDapat.innerHTML += '<img src="" class="bg-gray-300 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />'
             }
         }
     }
