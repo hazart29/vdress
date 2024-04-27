@@ -3,7 +3,7 @@ import fs from 'fs';
 import { NextResponse } from 'next/server';
 import path from 'path';
 
-export function handler(req: Request, res: NextResponse) {
+export function POST(req: Request, res: NextResponse) {
   if (req.method === 'POST') {
     const { primogems } = req.body;
 
