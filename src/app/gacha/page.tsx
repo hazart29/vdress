@@ -29,8 +29,17 @@ export default function Page() {
     const [sumGacha, setSumGacha] = useState(0);
     const [data, setData] = useState<PlayerData | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const closeModal = () => setIsModalOpen(false);
-    const openModal = (a: number) => { 
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        //handleRefresh()
+    };
+
+    const handleRefresh = () => {
+        window.location.reload();
+      };
+
+    const openModal = (a: number) => {
         if (a === 1) {
             if (data && data?.players.primogems < 160) {
                 setIsModalOpen(false)
@@ -84,46 +93,34 @@ export default function Page() {
     let primogems: any = data?.players.primogems;
     let pityCounter: any = data?.players.pityCounter;
 
-    const decPrimo = async (e: number) => {
-        // Get data from the form.
+    async function updatePrimo(a: number) {
+        console.log(a)
         const data = {
-          first: e
+            primogems: a
         }
-    
         // Send the data to the server in JSON format.
         const JSONdata = JSON.stringify(data)
-    
         // API endpoint where we send form data.
-        const endpoint = '/api/apiPlayer'
-    
-        // Form the request for sending data to the server.
-        const options = {
-          // The method is POST because we are sending data.
-          method: 'POST',
-          // Tell the server we're sending JSON.
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // Body of the request is the JSON data we created above.
-          body: JSONdata,
+        const response = await fetch('/api/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSONdata, // Replace 1000 with the value you want to update
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
-    
-        // Send the form data to our forms API on Vercel and get a response.
-        const response = await fetch(endpoint, options)
-    
-        // Get the response data from server as JSON.
-        // If server returns the name submitted, that means the form works.
-        const result = await response.json()
-        alert(`Is this your full name: ${result.data.first}`)
-        console.log('sukses')
-      }
+
+        const responseData = await response.json();
+        console.log(responseData)
+    }
 
     class GachaSystem {
         makeWish() {
             if (data && primogems) {
-                data.players.primogems -= 160;
-                console.log(primogems);
-                decPrimo(data.players.primogems)
+                updatePrimo(160)
             } else {
                 return "Not enough Primogems for a wish!";
             }
@@ -214,13 +211,13 @@ export default function Page() {
     }
 
     const gacha = new GachaSystem();
-    const banner = '/banner/banner_seifuku.png'
+    const banner = '/banner/banner_seifuku.webp'
 
     return (
         <div className='flex flex-col gap-2 w-full h-full px-4'>
             <div className="flex flex-col flex-1 bg-gradient-to-br from-white to-gray-300 rounded-lg p-4">
                 <div className="relative overflow-hidden flex-1 bg-red-400 rounded-lg">
-                    <Image src={banner} className='object-center-top object-cover' alt="none" fill priority />
+                    <Image src={banner} alt="none" sizes='33vw' fill priority />
                 </div>
 
             </div>

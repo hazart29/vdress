@@ -22,6 +22,8 @@ interface PlayerData {
     players: Players;
 }
 
+export const revalidate = 1;
+
 export default function Header() {
     const [data, setData] = useState<PlayerData | null>(null);
     let primo: any;
@@ -40,9 +42,14 @@ export default function Header() {
             }
         }
         fetchData();
+
+        const intervalId = setInterval(fetchData, 500); // Polling setiap 5 ms
+
+        // Bersihkan interval saat komponen di-unmount
+        return () => clearInterval(intervalId);
     }, []);
 
-    if (data){
+    if (data) {
         primo = data.players.primogems;
     }
 
@@ -50,7 +57,7 @@ export default function Header() {
         <div className='flex gap-2 w-full h-full px-2 pt-2'>
             <div className='flex-1 rounded-full bg-white bg-opacity-50 text-center text-sm'></div>
             <div className='flex-1 rounded-full bg-white bg-opacity-50 text-center text-sm'></div>
-            <div className='flex-1 rounded-full bg-white bg-opacity-50 text-center text-xs'>{primo}</div>
+            <div className='flex flex-1 rounded-full bg-white bg-opacity-50 text-center text-xs justify-center items-center'><p>{primo}</p></div>
         </div>
     );
 };

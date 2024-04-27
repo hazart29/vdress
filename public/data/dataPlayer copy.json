@@ -1,0 +1,28 @@
+{
+  "players": {
+    "id": 1,
+    "name": "Player 1",
+    "primogems": 16000,
+    "inventory": {
+      "SSR": [
+        "Character A",
+        "Character B"
+      ],
+      "SR": [
+        "Character C",
+        "Character D"
+      ],
+      "R": [
+        "Character E",
+        "Character F"
+      ]
+    },
+    "tenpull": [
+      ""
+    ],
+    "gacha": [
+      ""
+    ],
+    "pityCounter": 1
+  }
+}

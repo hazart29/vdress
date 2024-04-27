@@ -1,5 +1,3 @@
-// components/Modal.js
-
 import React from 'react';
 
 const Modal = ({ isOpen, onClose, children }: Readonly<{

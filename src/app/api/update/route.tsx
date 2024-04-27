@@ -1,12 +1,16 @@
-// pages/api/update.js
 import fs from 'fs';
 import { NextApiRequest } from 'next';
 import { NextResponse } from 'next/server';
 import path from 'path';
 
-export default function handler(req: NextApiRequest) {
+export function GET(request: Request) {
+  return new Response(`Hello from Hazart`);
+}
+
+export async function POST(req: Request) {
+  'use server'
   if (req.method === 'POST') {
-    const { primogems } = req.body;
+    const reqData = await req.json();
 
     // Define the path to the JSON file
     const filePath = path.resolve('./public/data/', 'dataPlayer.json');
@@ -18,13 +22,12 @@ export default function handler(req: NextApiRequest) {
     const data = JSON.parse(fileData);
 
     // Update the data
-    data.primogems = primogems;
-
+    data.players.primogems -= reqData.primogems;
     // Write the updated data back to the file
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(filePath, JSON.stringify(data));
 
-    NextResponse.json({ message: 'Data updated successfully' }, {status: 200});
+    return NextResponse.json({ message: 'Data updated successfully' }, {status: 200});
   } else {
-    NextResponse.json({ message: 'Method not allowed' }, {status: 405});
+    return NextResponse.json({ message: 'Method not allowed' }, {status: 405});
   }
 }
