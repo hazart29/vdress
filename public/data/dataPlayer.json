@@ -1,1 +1,28 @@
-{"players":{"id":1,"name":"Player 1","primogems":1275200,"inventory":{"SSR":["Character A","Character B"],"SR":["Character C","Character D"],"R":["Character E","Character F"]},"tenpull":[""],"gacha":[""],"pityCounter":1}}
+{
+    "players": {
+        "id": 1,
+        "name": "Player 1",
+        "primogems": 1272000,
+        "inventory": {
+            "SSR": [
+                "Character A",
+                "Character B"
+            ],
+            "SR": [
+                "Character C",
+                "Character D"
+            ],
+            "R": [
+                "Character E",
+                "Character F"
+            ]
+        },
+        "tenpull": [
+            ""
+        ],
+        "gacha": [
+            ""
+        ],
+        "pityCounter": 1
+    }
+}
