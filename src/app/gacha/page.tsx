@@ -94,7 +94,6 @@ export default function Page() {
     let pityCounter: any = data?.players.pityCounter;
 
     async function updatePrimo(a: number) {
-        console.log(a)
         const data = {
             primogems: a
         }
