@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Your Virtual Dressing Girl",
   icons: [
     {
-      icon: "/favicon.ico",
+      url: "/favicon.ico",
       sizes: "32x32",
       type: "image/png",
     },
