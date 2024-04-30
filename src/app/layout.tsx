@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,13 +25,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className='flex h-screen w-screen select-none absolute'>
-          <div className='flex-1 w-1/3 hidden lg:flex'></div>
-          <div id="mainlayout" className='flex-none w-full sm:flex lg:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
-            {children}
+        <Analytics/>
+          <div className='flex h-screen w-screen select-none absolute'>
+            <div className='flex-1 w-1/3 hidden lg:flex'></div>
+            <div id="mainlayout" className='flex-none w-full sm:flex lg:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
+              {children}
+            </div>
+            <div className='flex-1 w-1/3 hidden lg:flex'></div>
           </div>
-          <div className='flex-1 w-1/3 hidden lg:flex'></div>
-        </div>
       </body>
     </html>
   );
