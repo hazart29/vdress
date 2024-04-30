@@ -29,6 +29,8 @@ export default function Page() {
     const [sumGacha, setSumGacha] = useState(0);
     const [data, setData] = useState<PlayerData | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const banner = '/banner/banner_seifuku.webp';
+    const loading = '/ui/iconVD.svg';
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -88,7 +90,7 @@ export default function Page() {
     };
 
     if (!data || !data.players) {
-        return <div className='absolute flex w-full h-full z-[999] top-0 left-0 text-center items-center'><div className='flex-1 animate-ping'>Loading...</div></div>;
+        return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={loading} alt="none" width={40} height={40} className='animate-ping'/></div>;
     }
     let primogems: any = data?.players.primogems;
     let pityCounter: any = data?.players.pityCounter;
@@ -96,9 +98,9 @@ export default function Page() {
     async function updatePrimo(a: number) {
         const data = {
             primogems: a
-        }
+        };
         // Send the data to the server in JSON format.
-        const JSONdata = JSON.stringify(data)
+        const JSONdata = JSON.stringify(data);
         // API endpoint where we send form data.
         const response = await fetch('/api/update', {
             method: 'POST',
@@ -113,7 +115,7 @@ export default function Page() {
         }
 
         const responseData = await response.json();
-        console.log(responseData)
+        console.log(responseData);
     }
 
     class GachaSystem {
@@ -160,7 +162,6 @@ export default function Page() {
             } else {
                 return "R";
             }
-
         }
 
         pullCharacterOrItem(rarity: string) {
@@ -210,7 +211,6 @@ export default function Page() {
     }
 
     const gacha = new GachaSystem();
-    const banner = '/banner/banner_seifuku.webp'
 
     return (
         <div className='flex flex-col gap-2 w-full h-full px-4'>
@@ -218,7 +218,6 @@ export default function Page() {
                 <div className="relative overflow-hidden flex-1 bg-red-400 rounded-lg">
                     <Image src={banner} alt="none" sizes='33vw' fill priority />
                 </div>
-
             </div>
             <div className="flex flex-none w-full bottom-0 gap-4 p-2 font-bold h-[13%] justify-center items-center">
                 <button onClick={event => openModal(1)} type="button" className="rounded-full flex-1 h-full bg-gradient-to-br from-green-300 via-teal-400 to-emerald-500 text-green-700 hover:scale-110 transform ease-in-out focus:outline-none hover:ring hover:ring-white hover:text-white">1x</button>

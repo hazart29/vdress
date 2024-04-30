@@ -7,6 +7,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "V-DRESS",
   description: "Your Virtual Dressing Girl",
+  icons: [
+    {
+      icon: "/favicon.ico",
+      sizes: "32x32",
+      type: "image/png",
+    },
+  ],
 };
 
 export default function RootLayout({
