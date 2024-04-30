@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   console.log(reqData);
 
   // Define the path to the JSON file
-  const filePath = path.join(process.cwd(), '/public/data/dataPlayer.json');
+  const filePath = path.join('/tmp', 'dataPlayer.json');
   console.log(filePath);
 
   // Read the file
