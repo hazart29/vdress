@@ -9,25 +9,24 @@ export function GET(request: Request) {
 
 export async function POST(req: Request) {
   'use server'
-  if (req.method === 'POST') {
-    const reqData = await req.json();
+  const reqData = await req.json();
 
-    // Define the path to the JSON file
-    const filePath = path.join(process.cwd(), '/public/data/dataPlayer.json');
+  // Define the path to the JSON file
+  const filePath = path.join(process.cwd(), '/public/data/dataPlayer.json');
 
-    // Read the file
-    const fileData = fs.readFileSync(filePath, 'utf8');
+  // Read the file
+  const fileData = fs.readFileSync(filePath, 'utf8');
 
-    // Parse the JSON data
-    const data = JSON.parse(fileData);
+  // Parse the JSON data
+  const data = JSON.parse(fileData);
 
-    // Update the data
-    data.players.primogems -= reqData.primogems;
-    // Write the updated data back to the file
-    fs.writeFileSync(filePath, JSON.stringify(data));
-
-    return NextResponse.json({ message: 'Data updated successfully' }, {status: 200});
+  // Update the data
+  const writeDT = data.players.primogems -= reqData.primogems;
+  // Write the updated data back to the file
+  fs.writeFileSync(filePath, JSON.stringify(data));
+  if (writeDT) {
+    return NextResponse.json({ message: 'Data updated successfully' }, { status: 200 });
   } else {
-    return NextResponse.json({ message: 'Method not allowed' }, {status: 405});
+    return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
   }
 }
