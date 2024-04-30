@@ -7,10 +7,9 @@ export function GET(request: Request) {
   return new Response(`Hello from Hazart`);
 }
 
-export async function POST(req: NextApiRequest) {
+export async function POST(req: Request) {
   'use server'
-  const reqData =  await new Response(req.body).json()
-  console.log(reqData);
+  const reqData = await req.json();
 
   // Define the path to the JSON file
   const filePath = path.join(process.cwd(), '/public/data/dataPlayer.json');
