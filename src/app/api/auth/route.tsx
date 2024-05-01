@@ -2,12 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import pool from '../../db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import { sql } from '@vercel/postgres';
 
-export async function GET(request: Request) {
-  await pool.connect();
-  const result = await pool.query('SELECT * FROM users WHERE email = email1@email.com');
-  console.log(result)
-  return new Response(`Hello from Hazart`, {status:200});
+export async function GET(request: Request, res: NextApiResponse) {
+  const data = await sql `SELECT * FROM players`
+  console.log(data)
+  return res.status(200).json(data);
 }
 
 export async function POST(req: Request, res: NextApiResponse) {
