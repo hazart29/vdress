@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   console.log(reqData);
 
   // Define the path to the JSON file
-  const filePath = path.join('/tmp', 'dataPlayer.json');
+  const filePath = path.join('https://rtxmhcsjby185buf.public.blob.vercel-storage.com/data/', 'dataPlayer-Mh9FTRqw3S3tfX3UXwvkz5DK0KkQQY.json');
   console.log(filePath);
 
   // Read the file
