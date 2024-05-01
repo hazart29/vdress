@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import pool from '../../db';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken'
 
 export async function GET(request: Request) {
   await pool.connect();
