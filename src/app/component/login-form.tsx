@@ -34,7 +34,7 @@ const Login: React.FC = () => {
         <input
           type="email"
           placeholder="Email"
-          className='flex rounded-md p-2'
+          className='flex rounded-md p-2 text-black'
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -42,7 +42,7 @@ const Login: React.FC = () => {
         <input
           type="password"
           placeholder="Password"
-          className='flex rounded-md p-2'
+          className='flex rounded-md p-2 text-black'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
