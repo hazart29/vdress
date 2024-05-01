@@ -3,30 +3,25 @@ import pool from '../../db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { sql } from '@vercel/postgres';
+import { NextResponse } from 'next/server';
 
 export async function GET(request: Request, res: NextApiResponse) {
-  const data = await sql `SELECT * FROM players`
-  console.log(data)
-  return res.status(200).json(data);
+  const { rows } = await sql`SELECT * FROM players where email = 'email1@email.com'`;
+  return NextResponse.json(rows, { status: 200 });
 }
-
+//
 export async function POST(req: Request, res: NextApiResponse) {
-    const { email, password } =  await new Response(req.body).json()
+  const { email, password } = await new Response(req.body).json();
+  const { rows } = await sql`SELECT * FROM players where email = ${email}`;
+  const user = rows;
+  const isMatch = await bcrypt.compare(password, user[0].password);
 
-    try {
-      const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-      if (result.rows.length === 0) {
-        return new Response('Invalid email or password', {status:401});
-      }
-      const user = result.rows[0];
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return new Response('Invalid email or password', {status:401});
-      }
-      const token = jwt.sign({ userId: user.id }, 'your_secret_key');
-      res.status(200).json({ token });
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
+  if (rows.length === 0) {
+    return NextResponse.json({ message: 'User not found' }, { status: 404 });
+  } else if (!isMatch) {
+    return NextResponse.json({ message: 'Password not match'}, { status: 401 });
+  } else {
+    const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    return NextResponse.json({ token, user: user[0] }, { status: 200 });
+  }
 }
