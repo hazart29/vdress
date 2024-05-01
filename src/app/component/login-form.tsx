@@ -1,10 +1,48 @@
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { useEffect, useState } from 'react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = () => {
+      // Get the session token from local storage
+      const token = localStorage.getItem('sessionToken');
+
+      if (!token) {
+        router.push('/'); // Redirect to '/' page if no token found
+      } else {
+        try {
+          const currentDate = new Date();
+          // Decode the JWT token
+          const decodedToken = jwtDecode(token);
+          // Check if the token is expired
+          if (decodedToken.exp) {
+            const isTokenExpired = decodedToken.exp * 1000 < currentDate.getTime();
+            if (isTokenExpired) {
+              // Clear expired token from local storage
+              localStorage.removeItem('sessionToken');
+              router.push('/'); // Redirect to '/' page if token is expired
+            } else {
+              router.push('/main'); // Redirect to '/main' page if token is valid
+            }
+          }
+        } catch (error) {
+          // Handle any errors (e.g., invalid token format)
+          console.error('Error decoding token:', error);
+          // Clear invalid token from local storage
+          localStorage.removeItem('sessionToken');
+          router.push('/'); // Redirect to '/' page
+        }
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +59,7 @@ const Login: React.FC = () => {
       }
       const data = await response.json();
       localStorage.setItem('token', data.token);
+      localStorage.setItem('sessionToken', data.token);
       router.push('/main');
       // Redirect or perform any other action after successful login
     } catch (error) {
