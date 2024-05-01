@@ -21,7 +21,8 @@ export async function POST(req: Request, res: NextApiResponse) {
   } else if (!isMatch) {
     return NextResponse.json({ message: 'Password not match'}, { status: 401 });
   } else {
+    const isAuth = true
     const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    return NextResponse.json({ token, user: user[0] }, { status: 200 });
+    return NextResponse.json({ token, user: user[0], isAuth }, { status: 200 });
   }
 }
