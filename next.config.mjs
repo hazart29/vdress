@@ -19,8 +19,12 @@ export default withPWAInit({
     cacheOnFrontEndNav: true,
     aggressiveFrontEndNavCaching: true,
     reloadOnOnline: true,
+    cacheStartUrl: true,
     swcMinify: true,
     dest: "public",
+    register: true,
+    scope: "/app",
+    sw: "sw.js",
     fallbacks: {
       //image: "/static/images/fallback.png",
       document: "/offline", // if you want to fallback to a custom page rather than /_offline
