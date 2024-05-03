@@ -64,6 +64,25 @@ if (workbox) {
     }
   );
 
+  // Tambahkan fetch untuk endpoint tertentu
+  self.addEventListener('fetch', (event) => {
+    // Pastikan permintaan hanya untuk endpoint tertentu yang ingin Anda tangani
+    if (event.request.url.includes('/api/data')) {
+      event.respondWith(
+        // Lakukan fetch ke endpoint
+        fetch(event.request)
+          .then((response) => {
+            // Jika respons berhasil, kembalikan respons tersebut
+            return response;
+          })
+          .catch((error) => {
+            // Jika terjadi kesalahan, kembalikan pesan error
+            return new Response('Error fetching data', { status: 500 });
+          })
+      );
+    }
+  });
+
   // Activate the service worker immediately after installation
   self.addEventListener('install', (event) => {
     self.skipWaiting();
