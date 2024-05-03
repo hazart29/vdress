@@ -1,101 +1,93 @@
-// Import Workbox library
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.4/workbox-sw.js');
+/**
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-// Check if Workbox was loaded successfully
-if (workbox) {
-  console.log('Workbox loaded successfully');
+// If the loader is already loaded, just stop.
+if (!self.define) {
+  let registry = {};
 
-  // Precache assets for the /app route
-  workbox.precaching.precacheAndRoute([
-    // Precache the HTML page for the /app route
-    //{ url: '/', revision: null }, // Add the revision hash if you want to cache-bust
+  // Used for `eval` and `importScripts` where we can't get script URL by other means.
+  // In both cases, it's safe to use a global var because those functions are synchronous.
+  let nextDefineUri;
 
-    // Precache other assets (e.g., JavaScript, CSS, images) used in the /app route
-    // For example:
-    { url: '/offline', revision: null },
-    { url: '/main', revision: null },
-    // Add other assets here
-  ]);
-
-  // Define a route for the offline page
-  // (assuming you have an offline page stored at /offline)
-  workbox.routing.registerRoute(
-    // Match all navigation requests
-    ({ event }) => event.request.mode === 'navigate',
-    // Handler function
-    async ({ event }) => {
-      try {
-        // Fetch the offline page
-        const offlineResponse = await caches.match('/offline');
-        if (offlineResponse) {
-          // If offline page found in cache, return it
-          return offlineResponse;
-        } else {
-          // If offline page not found in cache, return a generic offline message
-          return new Response('You are offline. Please check your internet connection.');
+  const singleRequire = (uri, parentUri) => {
+    uri = new URL(uri + ".js", parentUri).href;
+    return registry[uri] || (
+      
+        new Promise(resolve => {
+          if ("document" in self) {
+            const script = document.createElement("script");
+            script.src = uri;
+            script.onload = resolve;
+            document.head.appendChild(script);
+          } else {
+            nextDefineUri = uri;
+            importScripts(uri);
+            resolve();
+          }
+        })
+      
+      .then(() => {
+        let promise = registry[uri];
+        if (!promise) {
+          throw new Error(`Module ${uri} didn’t register its module`);
         }
-      } catch (error) {
-        // Return a generic offline message in case of errors
-        return new Response('You are offline. Please check your internet connection.');
-      }
+        return promise;
+      })
+    );
+  };
+
+  self.define = (depsNames, factory) => {
+    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
+    if (registry[uri]) {
+      // Module is already loading or loaded.
+      return;
     }
-  );
-
-  // Tambahkan penanganan khusus untuk permintaan manifest.json
-  workbox.routing.registerRoute(
-    // Memastikan hanya permintaan ke manifest.json yang ditangani
-    ({ request }) => request.destination === 'manifest',
-    // Handler function
-    async ({ event }) => {
-      try {
-        // Fetch the manifest.json file
-        const manifestResponse = await fetch('/manifest.json');
-        if (manifestResponse.ok) {
-          // Jika manifest.json ditemukan, kembalikan responsnya
-          return manifestResponse;
-        } else {
-          // Jika manifest.json tidak ditemukan, kembalikan pesan error
-          return new Response('Manifest not found', { status: 404 });
-        }
-      } catch (error) {
-        // Jika terjadi kesalahan saat mengambil manifest.json, kembalikan pesan error
-        return new Response('Error fetching manifest', { status: 500 });
-      }
-    }
-  );
-
-  // Tambahkan fetch untuk endpoint tertentu
-  self.addEventListener('fetch', (event) => {
-    // Pastikan permintaan hanya untuk endpoint tertentu yang ingin Anda tangani
-    if (event.request.url.includes('/api/data')) {
-      event.respondWith(
-        // Lakukan fetch ke endpoint
-        fetch(event.request)
-          .then((response) => {
-            // Jika respons berhasil, kembalikan respons tersebut
-            return response;
-          })
-          .catch((error) => {
-            // Jika terjadi kesalahan, kembalikan pesan error
-            return new Response('Error fetching data', { status: 500 });
-          })
-      );
-    }
-  });
-
-  // Activate the service worker immediately after installation
-  self.addEventListener('install', (event) => {
-    self.skipWaiting();
-  });
-
-  self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
-  });
-
-  // Handle other requests with a network-first strategy
-  workbox.routing.setDefaultHandler(new workbox.strategies.NetworkFirst());
-
-  // Add your existing Workbox routing and caching logic here
-} else {
-  console.log('Workbox failed to load');
+    let exports = {};
+    const require = depUri => singleRequire(depUri, uri);
+    const specialDeps = {
+      module: { uri },
+      exports,
+      require
+    };
+    registry[uri] = Promise.all(depsNames.map(
+      depName => specialDeps[depName] || require(depName)
+    )).then(deps => {
+      factory(...deps);
+      return exports;
+    });
+  };
 }
+define(['./workbox-631a4576'], (function (workbox) { 'use strict';
+
+  importScripts();
+  self.skipWaiting();
+  workbox.clientsClaim();
+  workbox.registerRoute("/", new workbox.NetworkFirst({
+    "cacheName": "start-url",
+    plugins: [{
+      cacheWillUpdate: async ({
+        response: e
+      }) => e && "opaqueredirect" === e.type ? new Response(e.body, {
+        status: 200,
+        statusText: "OK",
+        headers: e.headers
+      }) : e
+    }]
+  }), 'GET');
+  workbox.registerRoute(/.*/i, new workbox.NetworkOnly({
+    "cacheName": "dev",
+    plugins: []
+  }), 'GET');
+
+}));
+//# sourceMappingURL=sw.js.map

@@ -25,28 +25,28 @@ interface PlayerData {
 }
 
 function Home() {
-  const icon = '/ui/iconVD.svg';
-  const [isloading, setLoading] = useState(true)
+  // const icon = '/ui/iconVD.svg';
+  // const [isloading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', {
-          scope: '.'
-      }).then(function (registration) {
-          // Registration was successful
-          console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
-          setLoading(false)
-      }, function (err) {
-          // registration failed :(
-          console.log('Laravel PWA: ServiceWorker registration failed: ', err);
-      });
-  }
-  }, []);
+  // useEffect(() => {
+  //   if ('serviceWorker' in navigator) {
+  //     navigator.serviceWorker.register('/sw.js', {
+  //         scope: '.'
+  //     }).then(function (registration) {
+  //         // Registration was successful
+  //         console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
+  //         setLoading(false)
+  //     }, function (err) {
+  //         // registration failed :(
+  //         console.log('Laravel PWA: ServiceWorker registration failed: ', err);
+  //     });
+  // }
+  // }, []);
 
 
-  if (isloading) {
-    return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={icon} alt="none" width={40} height={40} className='animate-ping' /></div>;
-  }
+  // if (isloading) {
+  //   return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={icon} alt="none" width={40} height={40} className='animate-ping' /></div>;
+  // }
 
   return (
     <div className='flex flex-1 flex-col items-center justify-start h-full'>
