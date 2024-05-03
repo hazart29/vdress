@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 
-export async function GET(res: NextApiResponse) {
+export async function GET(req: Request) {
     const { rows } = await sql`SELECT * FROM players`;
     return NextResponse.json(rows, {status: 200});
 }
