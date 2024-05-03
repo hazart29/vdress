@@ -4,6 +4,8 @@ import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import LoginForm from './component/login-form';
+import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 
 interface Inventory {
   SSR: string[];
@@ -27,20 +29,23 @@ interface PlayerData {
 function Home() {
   const icon = '/ui/iconVD.svg';
   const [isloading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', {
-          scope: '.'
+        scope: '.'
       }).then(function (registration) {
-          // Registration was successful
-          console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
-          setLoading(false)
+        // Registration was successful
+        console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
+        setLoading(false)
       }, function (err) {
-          // registration failed :(
-          console.log('Laravel PWA: ServiceWorker registration failed: ', err);
+        // registration failed :(
+        console.log('Laravel PWA: ServiceWorker registration failed: ', err);
       });
-  }
+    }
+
+    
   }, []);
 
 

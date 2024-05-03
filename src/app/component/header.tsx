@@ -2,55 +2,42 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 
-interface Inventory {
-    SSR: string[];
-    SR: string[];
-    R: string[];
-}
-
-interface Players {
-    id: number;
-    name: string;
-    primogems: number;
-    inventory: Inventory;
-    gacha: string[];
-    pityCounter: number;
-    tenpull: string[];
-}
-
-interface PlayerData {
-    players: Players;
-}
-
 export const revalidate = 1;
 
 export default function Header() {
-    const [data, setData] = useState<PlayerData | null>(null);
     let primo: any;
+    const [data,setData] = useState(null);
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await fetch('/data/dataPlayer.json');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                const jsonData: PlayerData = await response.json();
-                setData(jsonData);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
+        async function getData() {
+            const user = localStorage.getItem('user');
+    
+            // Kirim permintaan ke endpoint API di Next.js dengan menggunakan fetch atau library HTTP client lainnya
+            const response = await fetch('/api/db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Login failed');
+              }
+              const reqData = await response.json();
+              setData(reqData[0].primogems)
         }
-        fetchData();
+    
+        getData();
 
-        const intervalId = setInterval(fetchData, 500); // Polling setiap 5 ms
+        const intervalId = setInterval(getData, 5000); // Polling setiap
 
         // Bersihkan interval saat komponen di-unmount
         return () => clearInterval(intervalId);
     }, []);
 
     if (data) {
-        primo = data.players.primogems;
+       primo = data
     }
 
     return (

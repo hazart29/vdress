@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     const checkAuth = () => {
       // Get the session token from local storage
-      const token = localStorage.getItem('sessionToken');
+      const token = sessionStorage.getItem('sessionToken');
 
       if (!token) {
         router.push('/'); // Redirect to '/' page if no token found
@@ -58,8 +58,8 @@ const Login: React.FC = () => {
         throw new Error('Login failed');
       }
       const data = await response.json();
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('sessionToken', data.token);
+      sessionStorage.setItem('sessionToken', data.token);
+      localStorage.setItem('user', data.user.username);
       router.push('/main');
       // Redirect or perform any other action after successful login
     } catch (error) {

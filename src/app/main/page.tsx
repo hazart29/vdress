@@ -6,7 +6,7 @@ export default function Home() {
     const router = useRouter();
     const handleLogout = () => {
         // Clear session token from localStorage
-        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('sessionToken');
 
         // Redirect to login page
         router.push('/');

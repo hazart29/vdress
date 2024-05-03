@@ -36,7 +36,7 @@ self.addEventListener('fetch', (event) => {
           return caches.match(OFFLINE_URL);
         })
     );
-  } else {
+  } else if (event.request.method !== 'POST') { // Melewati permintaan POST
     event.respondWith(
       caches.match(event.request)
         .then((response) => {

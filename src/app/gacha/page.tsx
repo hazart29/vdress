@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '../component/modal';
 import Image from 'next/image';
+import Header from '@/app/component/header'
 
 interface Inventory {
     SSR: string[];
@@ -10,7 +11,7 @@ interface Inventory {
     R: string[];
 }
 
-interface Players {
+interface PlayerData {
     id: number;
     name: string;
     primogems: number;
@@ -18,10 +19,6 @@ interface Players {
     gacha: string[];
     pityCounter: number;
     tenpull: string[];
-}
-
-interface PlayerData {
-    players: Players;
 }
 
 export default function Page() {
@@ -32,53 +29,33 @@ export default function Page() {
     const banner = '/banner/banner_seifuku.webp';
     const loading = '/ui/iconVD.svg';
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-        //handleRefresh()
-    };
-
-    const handleRefresh = () => {
-        window.location.reload();
-      };
-
-    const openModal = (a: number) => {
-        if (a === 1) {
-            if (data && data?.players.primogems < 160) {
-                setIsModalOpen(false)
-                alert('not enough primo')
-            } else {
-                setIsModalOpen(true)
-                setSumGacha(a)
-            }
-        } else {
-            if (data && data?.players.primogems < 1600) {
-                setIsModalOpen(false)
-                alert('not enough primo')
-            } else {
-                setIsModalOpen(true)
-                setSumGacha(a)
-            }
-        }
-    };
 
     let baseSSRProbability: any = 0.006;
     let baseSRProbability: any = 0.051;
-    let incSSRProbability: any, incSRProbability: any, tenPity: any;
+    let incSSRProbability: any, incSRProbability: any, tenPity: any, primogems: any, pityCounter: any, v_gacha: string[];
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await fetch('/data/dataPlayer.json');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                const jsonData: PlayerData = await response.json();
-                setData(jsonData);
-            } catch (error) {
-                console.error('Error fetching data:', error);
+
+        async function getData() {
+            const user = localStorage.getItem('user');
+
+            // Kirim permintaan ke endpoint API di Next.js dengan menggunakan fetch atau library HTTP client lainnya
+            const response = await fetch('/api/db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user }),
+            });
+
+            if (!response.ok) {
+                throw new Error('data failed');
             }
+            const reqData = await response.json();
+            setData(reqData)
         }
-        fetchData();
+
+        getData();
     }, []);
 
     const handleVideoEnd = () => {
@@ -89,25 +66,48 @@ export default function Page() {
         }
     };
 
-    if (!data || !data.players) {
-        return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={loading} alt="none" width={40} height={40} className='animate-ping'/></div>;
+    if (!data) {
+        return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={loading} alt="none" width={40} height={40} className='animate-ping' /></div>;
     }
-    let primogems: any = data?.players.primogems;
-    let pityCounter: any = data?.players.pityCounter;
 
-    async function updatePrimo(a: number) {
-        const data = {
-            primogems: a
-        };
-        // Send the data to the server in JSON format.
-        const JSONdata = JSON.stringify(data);
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const openModal = (a: number) => {
+        if (a === 1) {
+            if (data && data.primogems < 160) {
+                setIsModalOpen(false)
+                alert('not enough primo')
+            } else {
+                setIsModalOpen(true)
+                setSumGacha(a)
+            }
+        } else {
+            if (data && data.primogems < 1600) {
+                setIsModalOpen(false)
+                alert('not enough primo')
+            } else {
+                setIsModalOpen(true)
+                setSumGacha(a)
+            }
+        }
+    };
+
+    async function updatePrimo(a: any) {
+        const user = localStorage.getItem('user');
         // API endpoint where we send form data.
-        const response = await fetch('/api/update', {
+        const data = {
+            user: user, // Pastikan user sudah didefinisikan di mana pun Anda menggunakan fungsi ini
+            primogems: a // Gunakan nilai primogems yang diterima sebagai argumen
+        };
+    
+        const response = await fetch('/api/gacha', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSONdata, // Replace 1000 with the value you want to update
+            body: JSON.stringify(data), // Replace 1000 with the value you want to update
         });
 
         if (!response.ok) {
@@ -120,35 +120,35 @@ export default function Page() {
 
     class GachaSystem {
         makeWish() {
-            if (data && primogems) {
-                updatePrimo(160)
+            if (Array.isArray(data) && data[0].primogems) {
+                updatePrimo(160);
             } else {
                 return "Not enough Primogems for a wish!";
             }
 
             // Determine rarity based on pity counter and base probabilities
-            let rarity: keyof Inventory = this.calculateRarity();
+            //let rarity: keyof Inventory = this.calculateRarity();
 
             // Simulate pulling character/item of determined rarity
-            let pulledCharacterOrItem: any = this.pullCharacterOrItem(rarity);
+            //let pulledCharacterOrItem: any = this.pullCharacterOrItem(rarity);
 
-            if (pulledCharacterOrItem) {
-                // Add character/item to inventory
-                data.players.inventory[rarity].push(pulledCharacterOrItem);
+            // if (pulledCharacterOrItem) {
+            //     // Add character/item to inventory
+            //     data.players.inventory[rarity].push(pulledCharacterOrItem);
 
-                // Add character/item to tenpull
-                data.players.tenpull.push(pulledCharacterOrItem);
-            }
+            //     // Add character/item to tenpull
+            //     data.players.tenpull.push(pulledCharacterOrItem);
+            // }
 
-            // Reset pity counter if SSR is obtained
-            if (rarity === "SSR") {
-                pityCounter = 0;
-            } else {
-                // Increase pity counter
-                pityCounter += 1;
-            }
+            // // Reset pity counter if SSR is obtained
+            // if (rarity === "SSR") {
+            //     pityCounter = 0;
+            // } else {
+            //     // Increase pity counter
+            //     pityCounter += 1;
+            // }
 
-            return pulledCharacterOrItem;
+            // return pulledCharacterOrItem;
         }
 
         calculateRarity() {

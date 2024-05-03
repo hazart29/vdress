@@ -20,7 +20,7 @@ export default function Layout({
     useEffect(() => {
         const checkAuth = () => {
             // Get the session token from local storage
-            const token = localStorage.getItem('sessionToken');
+            const token = sessionStorage.getItem('sessionToken');
 
             if (!token) {
                 router.push('/'); // Redirect to '/' page if no token found
