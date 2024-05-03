@@ -8,7 +8,7 @@ if (workbox) {
   // Precache assets for the /app route
   workbox.precaching.precacheAndRoute([
     // Precache the HTML page for the /app route
-    { url: '/', revision: null }, // Add the revision hash if you want to cache-bust
+    //{ url: '/', revision: null }, // Add the revision hash if you want to cache-bust
 
     // Precache other assets (e.g., JavaScript, CSS, images) used in the /app route
     // For example:
