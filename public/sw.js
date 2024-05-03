@@ -41,6 +41,29 @@ if (workbox) {
     }
   );
 
+  // Tambahkan penanganan khusus untuk permintaan manifest.json
+  workbox.routing.registerRoute(
+    // Memastikan hanya permintaan ke manifest.json yang ditangani
+    ({ request }) => request.destination === 'manifest',
+    // Handler function
+    async ({ event }) => {
+      try {
+        // Fetch the manifest.json file
+        const manifestResponse = await fetch('/manifest.json');
+        if (manifestResponse.ok) {
+          // Jika manifest.json ditemukan, kembalikan responsnya
+          return manifestResponse;
+        } else {
+          // Jika manifest.json tidak ditemukan, kembalikan pesan error
+          return new Response('Manifest not found', { status: 404 });
+        }
+      } catch (error) {
+        // Jika terjadi kesalahan saat mengambil manifest.json, kembalikan pesan error
+        return new Response('Error fetching manifest', { status: 500 });
+      }
+    }
+  );
+
   // Activate the service worker immediately after installation
   self.addEventListener('install', (event) => {
     self.skipWaiting();
