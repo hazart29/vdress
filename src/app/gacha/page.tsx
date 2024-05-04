@@ -32,7 +32,7 @@ export default function Page() {
 
     let baseSSRProbability: any = 0.006;
     let baseSRProbability: any = 0.051;
-    let incSSRProbability: any, incSRProbability: any, tenPity: any, primogems: any, pityCounter: any, v_gacha: string[];
+    let incSSRProbability: any, incSRProbability: any, tenPity: any, primogems: any, pity: any, v_gacha: string[];
 
     useEffect(() => {
 
@@ -94,14 +94,15 @@ export default function Page() {
         }
     };
 
-    async function updatePrimo(a: any) {
+    async function fetchApiGacha(typeFetch: string, dataFetch: any) {
         const user = localStorage.getItem('user');
         // API endpoint where we send form data.
         const data = {
             user: user, // Pastikan user sudah didefinisikan di mana pun Anda menggunakan fungsi ini
-            primogems: a // Gunakan nilai primogems yang diterima sebagai argumen
+            typeFetch: typeFetch,
+            dataFetch: dataFetch,
         };
-    
+
         const response = await fetch('/api/gacha', {
             method: 'POST',
             headers: {
@@ -120,42 +121,40 @@ export default function Page() {
 
     class GachaSystem {
         makeWish() {
-            if (Array.isArray(data) && data[0].primogems) {
-                updatePrimo(160);
-            } else {
-                return "Not enough Primogems for a wish!";
-            }
+
+            const dataFetch = { primogems: 160 }
+            fetchApiGacha('updatePrimo', dataFetch);
 
             // Determine rarity based on pity counter and base probabilities
-            //let rarity: keyof Inventory = this.calculateRarity();
+            let rarity: keyof Inventory = this.calculateRarity();
 
             // Simulate pulling character/item of determined rarity
-            //let pulledCharacterOrItem: any = this.pullCharacterOrItem(rarity);
+            let pulledCharacterOrItem: any = this.pullCharacterOrItem(rarity);
 
-            // if (pulledCharacterOrItem) {
-            //     // Add character/item to inventory
-            //     data.players.inventory[rarity].push(pulledCharacterOrItem);
-
-            //     // Add character/item to tenpull
-            //     data.players.tenpull.push(pulledCharacterOrItem);
-            // }
+            if (pulledCharacterOrItem) {
+                // Add character/item to inventory
+                const dataFetch = { rarity: rarity, item: pulledCharacterOrItem };
+                fetchApiGacha('upInven', dataFetch);
+            }
 
             // // Reset pity counter if SSR is obtained
-            // if (rarity === "SSR") {
-            //     pityCounter = 0;
-            // } else {
-            //     // Increase pity counter
-            //     pityCounter += 1;
-            // }
+            if (rarity === "SSR") {
+                const dataFetch = { pityCounter: 0 };
+                fetchApiGacha('resetPity', dataFetch);
+            } else {
+                // Increase pity counter
+                const dataFetch = { incPity: 1 };
+                fetchApiGacha('incPity', dataFetch);
+            }
 
-            // return pulledCharacterOrItem;
+            return pulledCharacterOrItem;
         }
 
         calculateRarity() {
 
             // Determine rarity based on base probabilities and pity counter
             let rand = Math.random();
-            if (rand < incSSRProbability || pityCounter === 90) {
+            if (rand < incSSRProbability || Array.isArray(data) && data[0].pityCounter === 90) {
                 return "SSR";
             } else if (rand < incSRProbability || tenPity % 10 === 0) {
                 return "SR";
@@ -194,6 +193,7 @@ export default function Page() {
             tenpull[i] = result
             console.log(`Wish ${i + 1}:`, result);
         }
+
         listGacha(tenpull)
     }
 

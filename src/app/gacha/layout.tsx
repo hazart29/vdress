@@ -1,20 +1,70 @@
+'use client'
 import Navbar from "../component/navbar";
 import Header from "../component/header";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { jwtDecode } from "jwt-decode";
 
 export default function Layout({
     children,
-  }: Readonly<{
+}: Readonly<{
     children: React.ReactNode;
-  }>) {
-    return (
-        <div className='relative flex flex-col w-full h-full select-none bg-hero-patterns'>
-            <div className='h-[7%] w-full felx-none items-end p-2'><Header/></div>
-            <div className='overflow-hidden flex flex-shrink flex-col h-full w-full flex-none text-white p-4 md:py-6'>
-                <div className='flex-1'>
-                    {children}
-                </div>  
+}>) {
+    const router = useRouter();
+    const [loading, isloading] = useState(true);
+    const icon = '/ui/iconVD.svg';
+
+    useEffect(() => {
+        const checkAuth = () => {
+            // Get the session token from local storage
+            const token = sessionStorage.getItem('sessionToken');
+
+            if (!token) {
+                router.push('/'); // Redirect to '/' page if no token found
+            } else {
+                try {
+                    const currentDate = new Date();
+                    // Decode the JWT token
+                    const decodedToken = jwtDecode(token);
+                    // Check if the token is expired
+                    if (decodedToken.exp) {
+                        const isTokenExpired = decodedToken.exp * 1000 < currentDate.getTime();
+                        if (isTokenExpired) {
+                            // Clear expired token from local storage
+                            localStorage.removeItem('sessionToken');
+                            router.push('/'); // Redirect to '/' page if token is expired
+                        } else {
+                            router.push('/gacha'); // Redirect to '/main' page if token is valid
+                            isloading(false);
+                        }
+                    }
+                } catch (error) {
+                    // Handle any errors (e.g., invalid token format)
+                    console.error('Error decoding token:', error);
+                    // Clear invalid token from local storage
+                    localStorage.removeItem('sessionToken');
+                    router.push('/'); // Redirect to '/' page
+                }
+            }
+        };
+
+        checkAuth();
+    }, [router, isloading]);
+
+    if (loading) {
+        return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={icon} alt="none" width={40} height={40} className='animate-ping' /></div>;
+    } else {
+        return (
+            <div className='relative flex flex-col w-full h-full select-none bg-hero-patterns'>
+                <div className='h-[7%] w-full felx-none items-end p-2'><Header /></div>
+                <div className='overflow-hidden flex flex-shrink flex-col h-full w-full flex-none text-white p-4 md:py-6'>
+                    <div className='flex-1'>
+                        {children}
+                    </div>
+                </div>
+                <div className='h-[13%] w-full felx-none items-end bg-white rounded-t-lg'><Navbar /></div>
             </div>
-            <div className='h-[13%] w-full felx-none items-end bg-white rounded-t-lg'><Navbar /></div>
-        </div>
-    )
+        )
+    }
 }
