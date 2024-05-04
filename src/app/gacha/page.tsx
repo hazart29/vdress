@@ -76,7 +76,7 @@ export default function Page() {
 
     const openModal = (a: number) => {
         if (a === 1) {
-            if (data && data.primogems < 160) {
+            if (Array.isArray(data) && data[0].primogems < 160) {
                 setIsModalOpen(false)
                 alert('not enough primo')
             } else {
@@ -84,7 +84,7 @@ export default function Page() {
                 setSumGacha(a)
             }
         } else {
-            if (data && data.primogems < 1600) {
+            if (Array.isArray(data) && data[0].primogems < 1600) {
                 setIsModalOpen(false)
                 alert('not enough primo')
             } else {
