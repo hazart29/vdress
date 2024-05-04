@@ -23,12 +23,18 @@ const urlsToCache = [
 ];
 
 // Install service worker
+// Install service worker
 self.addEventListener('install', (event) => {
   console.log('Service worker installed');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Cache opened');
-      return cache.addAll(urlsToCache);
+    // Tambahkan delay dengan setTimeout
+    new Promise((resolve) => {
+      setTimeout(() => {
+        caches.open(CACHE_NAME).then((cache) => {
+          console.log('Cache opened');
+          resolve(cache.addAll(urlsToCache));
+        });
+      }, 5000); // Delay 5 detik
     })
     .then(() => self.skipWaiting())
   );
@@ -78,30 +84,3 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
-
-// Fetch event
-// self.addEventListener('fetch', (event) => {
-//   console.log('Fetch event fired:', event.request.url);
-  
-//   // Check if the request method is POST
-//   if (event.request.method === 'POST') {
-//     console.log('POST request, bypassing cache');
-//     return fetch(event.request); // Bypass cache and directly fetch from the network
-//   }
-
-//   event.respondWith(
-//     caches.match(event.request).then((response) => {
-//       // If request is found in cache, return cached response
-//       if (response) {
-//         console.log('Cache hit:', event.request.url);
-//         return response;
-//       }
-//       // If request is not found in cache, fetch from network
-//       console.log('Cache miss. Fetching from network:', event.request.url);
-//       return fetch(event.request);
-//     }).catch(() => {
-//       // If fetch fails, return the offline page
-//       return caches.match('/offline');
-//     })
-//   );
-// });
