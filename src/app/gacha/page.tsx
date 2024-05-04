@@ -122,9 +122,6 @@ export default function Page() {
     class GachaSystem {
         makeWish() {
 
-            const dataFetch = { primogems: 160 }
-            fetchApiGacha('updatePrimo', dataFetch);
-
             // Determine rarity based on pity counter and base probabilities
             let rarity: keyof Inventory = this.calculateRarity();
 
@@ -193,7 +190,9 @@ export default function Page() {
             tenpull[i] = result
             console.log(`Wish ${i + 1}:`, result);
         }
-
+        const primo = (a*160);
+        const dataFetch = { primogems: primo };
+        fetchApiGacha('updatePrimo', dataFetch);
         listGacha(tenpull)
     }
 
