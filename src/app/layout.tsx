@@ -3,8 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import Backsound from "./component/backsound";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -77,6 +76,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Analytics />
         <SpeedInsights />
+        <Backsound />
         <div className='flex h-screen w-screen select-none absolute '>
           <div className='flex-1 w-1/3 hidden lg:flex'></div>
           <div id="mainlayout" className='flex-none w-full sm:flex lg:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
