@@ -30,14 +30,14 @@ const CanvasComponent: React.FC = () => {
     const clothingImage = new Image();
     clothingImage.onload = () => {
       // Menggambar pakaian di atas model
-      const sizeImg = 87;
-      ctx.drawImage(clothingImage, ((ctx.canvas.width-sizeImg)/2), 80, sizeImg, sizeImg);
+      const sizeImg = 870;
+      ctx.drawImage(clothingImage, ((ctx.canvas.width-sizeImg)/2), 800, sizeImg, sizeImg);
     };
     // Ganti 'path/to/clothing.png' dengan path gambar pakaian Anda
     clothingImage.src = '/baju/maid-atas.svg';
   };
 
-  return <canvas ref={canvasRef} width={143} height={450} />;
+  return <canvas ref={canvasRef} style={{width: '143px', height: '450px'}} width={1430} height={4500} />;
 };
 
 export default CanvasComponent;
