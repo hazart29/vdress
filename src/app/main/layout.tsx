@@ -63,7 +63,7 @@ export default function Layout({
         <div className='relative flex flex-col w-full h-full select-none bg-hero-patterns'>
             <div className='h-[7%] w-full felx-none items-end p-2'><Header /></div>
             <div id='mainlayout' className='relative overflow-hidden flex flex-shrink flex-col h-full w-full flex-none text-white p-4 md:py-6'>
-                <div className='flex-1'>
+                <div className='flex flex-1'>
                     {children}
                 </div>
             </div>

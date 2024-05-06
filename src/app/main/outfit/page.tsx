@@ -1,7 +1,13 @@
-function Outfit() {
-    return (
-        <div className="flex flex-1">hello this is outfit</div>
-    )
-}
+// pages/index.tsx
+import React from 'react';
+import GameCanvas from '@/app/component/game-canvas';
 
-export default Outfit;
+const IndexPage: React.FC = () => {
+  return (
+    <div className='flex flex-1'>
+      <GameCanvas />
+    </div>
+  );
+};
+
+export default IndexPage;
