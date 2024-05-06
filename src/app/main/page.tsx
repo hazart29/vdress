@@ -12,7 +12,7 @@ export default function Home() {
         router.push('/');
     }
     return (
-        <div className='flex flex-1 flex-col h-full gap-4 justify-between items-center'>
+        <div className='flex flex-1 flex-col h-full gap-4 justify-between items-center p-4'>
             <div className='relative flex-none h-[30%] w-full justify-center items-start'>
                 <Image src="/ui/logo.svg" alt="logo" priority fill />
             </div>

@@ -4,31 +4,18 @@ const CACHE_NAME = 'VD-Cache';
 const urlsToCache = [
   '/',
   '/offline',
-  // '/main',
-  // '/manifest.json',
-  // '/ui/btn_gacha.svg',
-  // '/ui/btn_home.svg',
-  // '/ui/btn_outfit.svg',
-  // '/ui/iconVD.svg',
-  // '/ui/btn_room.svg',
-  // '/ui/logo.svg',
-  // '/ui/logoVD.svg',
-  // '/video/gacha.mp4',
-  // '/banner/banner_seifuku.webp',
-  // '/background/bgroom.svg',
-  // '/background/bubbles.svg',
-  // '/next.svg',
-  // '/vercel.svg',
-  // Tambahkan rute lain yang ingin Anda precache di sini
+  // Tambahkan URL lain yang ingin Anda precache di sini
 ];
 
-// Install service worker
+// Tentukan apakah aplikasi berada dalam mode pengembangan atau produksi
+const isDevelopment = true; // Ganti dengan logika sesuai dengan kebutuhan Anda
+
 // Install service worker
 self.addEventListener('install', (event) => {
   console.log('Service worker installed');
   event.waitUntil(
-    // Tambahkan delay dengan setTimeout
     new Promise((resolve) => {
+      // Tambahkan delay dengan setTimeout
       setTimeout(() => {
         caches.open(CACHE_NAME).then((cache) => {
           console.log('Cache opened');
@@ -40,7 +27,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate service worker
+// Aktivasi service worker
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
@@ -54,9 +41,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-
+// Fetch event
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate' ||
+  if (isDevelopment) {
+    // Jika dalam mode pengembangan, nonaktifkan Service Worker
+    console.log('development mode sw disabled')
+    return;
+  } else if (event.request.mode === 'navigate' ||
     (event.request.method === 'GET' &&
       event.request.headers.get('accept').includes('text/html'))) {
     event.respondWith(

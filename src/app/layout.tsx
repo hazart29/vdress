@@ -84,7 +84,7 @@ export default function RootLayout({
           </div>
           <div className='flex-1 w-1/3 hidden lg:flex'></div>
         </div>
-        
+
       </body>
     </html>
   );

@@ -1,9 +1,10 @@
 'use client'
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Navbar from "../component/navbar";
 import { jwtDecode } from 'jwt-decode';
+import Header from "../component/header";
 
 export default function Layout({
     children,
@@ -13,6 +14,8 @@ export default function Layout({
     const router = useRouter();
     const [loading, isloading] = useState(true);
     const icon = '/ui/iconVD.svg';
+    const currentUrl = usePathname();
+
 
     // Check if user is authenticated
 
@@ -36,7 +39,7 @@ export default function Layout({
                             localStorage.removeItem('sessionToken');
                             router.push('/'); // Redirect to '/' page if token is expired
                         } else {
-                            router.push('/main'); // Redirect to '/main' page if token is valid
+                            router.push(currentUrl); // Redirect to '/main' page if token is valid
                             isloading(false);
                         }
                     }
@@ -58,12 +61,11 @@ export default function Layout({
 
     return (
         <div className='relative flex flex-col w-full h-full select-none bg-hero-patterns'>
-            <div className='h-[5%] w-full felx-none items-end p-4'></div>
+            <div className='h-[7%] w-full felx-none items-end p-2'><Header /></div>
             <div id='mainlayout' className='relative overflow-hidden flex flex-shrink flex-col h-full w-full flex-none text-white p-4 md:py-6'>
                 <div className='flex-1'>
                     {children}
                 </div>
-                <div className='flex-none h-[13%]'></div>
             </div>
             <div className='h-[13%] bottom-0 z-[999] w-full felx-none items-end bg-white rounded-t-lg'><Navbar /></div>
         </div>

@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function Navbar() {
     const router = useRouter()
     return (
-        <nav className="flex h-full w-full flex select-none gap-4 items-center p-2">
+        <nav className="flex h-full w-full select-none gap-4 items-center p-2">
             {navigatiunRoute.map((singleRoute) => {
                 return (
                     <NavigationLink
@@ -48,17 +48,17 @@ const navigatiunRoute = [
         btn: "/ui/btn_home.svg"
     },
     {
-        href: "outfit",
-        asPath: "outfit",
+        href: "main/outfit",
+        asPath: "main/outfit",
         btn: "/ui/btn_outfit.svg"
     },
     {
-        href: "gacha",
-        asPath: "gacha",
+        href: "main/gacha",
+        asPath: "main/gacha",
         btn: "/ui/btn_gacha.svg"
     },
     {
-        href: "room",
+        href: "main/room",
         asPath: "room",
         btn: "/ui/btn_room.svg"
     },

@@ -1,7 +1,7 @@
 // pages/index.js
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
-import Modal from '../component/modal';
+import Modal from '../../component/modal';
 import Image from 'next/image';
 import Header from '@/app/component/header'
 
