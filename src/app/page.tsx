@@ -45,7 +45,7 @@ function Home() {
       });
     }
 
-    
+
   }, []);
 
 
@@ -54,13 +54,9 @@ function Home() {
   }
 
   return (
-    <div className='flex flex-1 flex-col items-center justify-start h-full'>
-      <div className='flex flex-col flex-1 py-10'>
-        <div className='flex flex-col flex-1 w-full justify-center items-center gap-8'>
-          <Image src="/ui/logo.svg" alt="logo" className='w-2/3' sizes='10vw' width={40} height={70} priority />
-          <LoginForm />
-        </div>
-      </div>
+    <div className='flex flex-col flex-1 w-full justify-center items-center gap-8'>
+      <Image src="/ui/logo.svg" alt="logo" className='pt-10' width={200} height={70} priority />
+      <LoginForm />
     </div>
   );
 }

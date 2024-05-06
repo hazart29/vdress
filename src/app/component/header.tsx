@@ -40,8 +40,8 @@ export default function Header() {
 
     return (
         <div className='flex gap-2 w-full h-full px-2 pt-2'>
-            <div className='flex-1 rounded-full bg-white bg-opacity-50 text-center text-sm'><p>{user}</p></div>
-            <div className='flex-1 rounded-full bg-white bg-opacity-50 text-center text-sm'></div>
+            <div className='flex flex-1 rounded-full bg-white bg-opacity-50 text-gray-600 text-center text-xs font-bold justify-center items-center'><p>{user}</p></div>
+            <div className='flex flex-1 rounded-full bg-white bg-opacity-50 text-gray-600 text-center text-xs font-bold justify-center items-center'></div>
             <div className='flex flex-1 rounded-full bg-white bg-opacity-50 text-gray-600 text-center text-xs font-bold justify-center items-center' onClick={getData}><p>{primo}</p></div>
         </div>
     );

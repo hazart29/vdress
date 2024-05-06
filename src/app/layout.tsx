@@ -77,12 +77,12 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <Backsound />
-        <div className='flex h-screen w-screen select-none absolute '>
-          <div className='flex-1 w-1/3 hidden lg:flex'></div>
-          <div id="mainlayout" className='flex-none w-full sm:flex lg:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
+        <div className='flex h-screen w-screen select-none absolute justify-normal md:justify-center'>
+          <div className='flex-shrink w-1/3 hidden xs:flex'></div>
+          <div id="mainlayout" className='flex-none w-full xs:flex xs:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900  justify-center items-center'>
             {children}
           </div>
-          <div className='flex-1 w-1/3 hidden lg:flex'></div>
+          <div className='flex-shrink w-1/3 hidden xs:flex'></div>
         </div>
 
       </body>

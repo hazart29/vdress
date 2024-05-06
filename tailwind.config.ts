@@ -16,7 +16,8 @@ const config: Config = {
         "room": "url('/background/bgroom.svg')",
       },
       screens: {
-        'tall': { 'min': '(min-height: 700px' },
+        'tall': { 'raw': '(min-height: 700px)' },
+        'xs': '540px',
       },
       objectPosition: {
         'center-top': 'center top',

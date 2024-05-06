@@ -68,12 +68,12 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col items-center justify-center gap-2'>
+    <div className='flex flex-col flex-1 items-center justify-center gap-2'>
       <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center gap-4'>
         <input
           type="email"
           placeholder="Email"
-          className='flex rounded-md p-2 text-black'
+          className='flex rounded-md p-2 text-black text-xs lg:text-md'
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -81,12 +81,12 @@ const Login: React.FC = () => {
         <input
           type="password"
           placeholder="Password"
-          className='flex rounded-md p-2 text-black'
+          className='flex rounded-md p-2 text-black text-xs lg:text-md'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="transform hover:scale-110 ease-in-out hover:text-orange-700 flex rounded-lg bg-gradient-to-r hover:from-orange-400 from-orange-500 hover:to-red-400 to-red-500 p-4 text-2xl text-orange-300 font-bold">Login</button>
+        <button type="submit" className="transform hover:scale-110 ease-in-out hover:text-orange-700 flex rounded-lg bg-gradient-to-r hover:from-orange-400 from-orange-500 hover:to-red-400 to-red-500 p-4 text-orange-300 font-bold text-xs :text-lg">Login</button>
       </form>
       <p className='text-xs text-white opacity-50 font-sans pt-4'>Hazart Studio @2024</p>
     </div>

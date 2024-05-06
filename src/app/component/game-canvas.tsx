@@ -37,7 +37,7 @@ const CanvasComponent: React.FC = () => {
     clothingImage.src = '/baju/maid-atas.svg';
   };
 
-  return <canvas ref={canvasRef} style={{width: '143px', height: '450px'}} width={1430} height={4500} />;
+  return <canvas ref={canvasRef} className='h-[450px] w-[140px] tall:h-full tall:w-[50%]' width={1400} height={4500} />;
 };
 
 export default CanvasComponent;
