@@ -8,7 +8,7 @@ const urlsToCache = [
 ];
 
 // Tentukan apakah aplikasi berada dalam mode pengembangan atau produksi
-const isDevelopment = true; // Ganti dengan logika sesuai dengan kebutuhan Anda
+const isDevelopment = false; // Ganti dengan logika sesuai dengan kebutuhan Anda
 
 // Install service worker
 self.addEventListener('install', (event) => {
