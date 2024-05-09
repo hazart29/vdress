@@ -15,7 +15,6 @@
     "@serwist/precaching": "^9.0.2",
     "@serwist/sw": "^9.0.2",
     "@types/jwt-decode": "^3.1.0",
-    "@types/pixi.js": "^5.0.0",
     "@vercel/analytics": "^1.2.2",
     "@vercel/blob": "^0.23.2",
     "@vercel/postgres": "^0.8.0",
@@ -24,7 +23,6 @@
     "next": "14.2.3",
     "next-auth": "^5.0.0-beta.17",
     "pg": "^8.11.5",
-    "pixi-live2d-display": "^0.4.0",
     "react": "^18",
     "react-dom": "^18",
     "zod": "^3.23.5"
