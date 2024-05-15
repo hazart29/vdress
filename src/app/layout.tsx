@@ -77,12 +77,13 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <Backsound />
-        <div className='flex h-screen w-screen select-none absolute justify-normal md:justify-center'>
-          <div className='flex-shrink w-1/3 hidden xs:flex'></div>
-          <div id="mainlayout" className='flex-none w-full xs:flex xs:w-1/4 bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900  justify-center items-center'>
+        <div className="portrait:hidden lg:hidden bg-slate-900 text-yellow-600 flex h-screen w-screen items-center justify-center"><p className="animate-pulse text-center font-sans font-bold text-lg ">please rotate your phone to potrait!</p></div>
+        <div className='relative landscape:hidden lg:landscape:flex flex h-screen w-screen select-none justify-normal md:justify-center bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
+          <div className='flex-shrink w-1/3 hidden lg:flex'></div>
+          <div id="mainlayout" className='flex flex-1 lg:flex-none lg:w-1/3 justify-center items-center'>
             {children}
           </div>
-          <div className='flex-shrink w-1/3 hidden xs:flex'></div>
+          <div className='flex-shrink w-1/3 hidden lg:flex'></div>
         </div>
 
       </body>

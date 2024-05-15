@@ -48,8 +48,8 @@ export function strtod(s: string, endPtr: string[]): number {
 
 let s_isStarted = false;
 let s_isInitialized = false;
-let s_option: Option = null;
-let s_cubismIdManager: CubismIdManager = null;
+let s_option: Option | null;
+let s_cubismIdManager: CubismIdManager | null;
 
 /**
  * Framework内で使う定数の宣言
@@ -59,7 +59,7 @@ export const Constant = Object.freeze<Record<string, number>>({
   vertexStep: 2 // メッシュ頂点のステップ値
 });
 
-export function csmDelete<T>(address: T): void {
+export function csmDelete<T>(address: T | undefined): void {
   if (!address) {
     return;
   }
@@ -81,7 +81,7 @@ export class CubismFramework {
    *
    * @return   準備処理が完了したらtrueが返ります。
    */
-  public static startUp(option: Option = null): boolean {
+  public static startUp(option: Option | null): boolean {
     if (s_isStarted) {
       CubismLogInfo('CubismFramework.startUp() is already done.');
       return s_isStarted;
@@ -89,8 +89,12 @@ export class CubismFramework {
 
     s_option = option;
 
-    if (s_option != null) {
-      Live2DCubismCore.Logging.csmSetLogFunction(s_option.logFunction);
+    if (s_option != null && s_option != undefined && s_option.logFunction != undefined) {
+      if(Logging){
+        Logging.csmSetLogFunction(s_option.logFunction);
+      } else {
+        console.error('Logging undefined')
+      }
     }
 
     s_isStarted = true;
@@ -192,7 +196,7 @@ export class CubismFramework {
 
     Value.staticReleaseNotForClientCall();
 
-    s_cubismIdManager.release();
+    s_cubismIdManager?.release();
     s_cubismIdManager = null;
 
     // レンダラの静的リソース（シェーダプログラム他）を解放する
@@ -238,7 +242,7 @@ export class CubismFramework {
    *
    * @return  現在のログ出力レベル設定の値
    */
-  public static getLoggingLevel(): LogLevel {
+  public static getLoggingLevel(): LogLevel | undefined {
     if (s_option != null) {
       return s_option.loggingLevel;
     }
@@ -249,7 +253,7 @@ export class CubismFramework {
    * IDマネージャのインスタンスを取得する
    * @return CubismManagerクラスのインスタンス
    */
-  public static getIdManager(): CubismIdManager {
+  public static getIdManager(): CubismIdManager | null {
     return s_cubismIdManager;
   }
 
@@ -257,12 +261,12 @@ export class CubismFramework {
    * 静的クラスとして使用する
    * インスタンス化させない
    */
-  private constructor() {}
+  private constructor() { }
 }
 
 export class Option {
-  logFunction: Live2DCubismCore.csmLogFunction; // ログ出力の関数オブジェクト
-  loggingLevel: LogLevel; // ログ出力レベルの設定
+  logFunction: Live2DCubismCore.csmLogFunction | undefined; // ログ出力の関数オブジェクト
+  loggingLevel: LogLevel | undefined; // ログ出力レベルの設定
 }
 
 /**
@@ -279,6 +283,7 @@ export enum LogLevel {
 
 // Namespace definition for compatibility.
 import * as $ from './live2dcubismframework';
+import Live2DCubismCore, { Logging } from '@hazart-pkg/live2d-core'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
   export const Constant = $.Constant;
