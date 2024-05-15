@@ -1,0 +1,2 @@
+DELETE FROM inventory
+UPDATE players SET pitycounter = 0 WHERE id = 1

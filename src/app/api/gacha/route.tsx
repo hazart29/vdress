@@ -22,28 +22,27 @@ export async function POST(req: Request, res: NextApiResponse) {
         // Return a response indicating success
         return NextResponse.json({ message: 'primogems updated successfully' }, { status: 200 });
     } else if (typeFetch === 'resetPity') {
+        const { rows } = await sql`SELECT * FROM players WHERE username = ${user}`;
+        if (rows.length > 0) { // Check if any rows were returned
+            await sql`UPDATE players SET pitycounter = 0 WHERE username = ${user}`;
 
-        // Calculate the new value of primo after subtracting primogems
-        const newPity = dataFetch.pityCounter;
+            // Return a response indicating success
+            return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
+        } else {
+            return NextResponse.json({ message: 'user not found' }, { status: 404 });
+        }
 
-        // Update the value of primo in the database
-        await sql`UPDATE players SET pitycounter = 0 WHERE username = ${user}`;
-
-        // Return a response indicating success
-        return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
     } else if (typeFetch === 'incPity') {
         const { rows } = await sql`SELECT pitycounter FROM players WHERE username = ${user}`;
-        if (rows) {
-            const currentPity = rows[0].pitycounter;
-
+        if (rows.length > 0) {
             // Calculate the new value of primo after subtracting primogems
-            const newPity = currentPity + dataFetch.incPity;
+            const newPity = dataFetch.incPity;
 
             // Update the value of primo in the database
             await sql`UPDATE players SET pitycounter = ${newPity} WHERE username = ${user}`;
 
             // Return a response indicating success
-            return NextResponse.json({ message: 'pity updated +1 successfully' }, { status: 200 });
+            return NextResponse.json({ message: 'pity updated successfully' }, { status: 200 });
         } else {
             return NextResponse.json({ message: 'pity not updated' }, { status: 200 });
         }
