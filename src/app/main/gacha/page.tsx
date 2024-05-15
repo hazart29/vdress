@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '../../component/modal';
 import Image from 'next/image';
-import Header from '@/app/component/header';
 
 interface InventoryItem {
     player_id: number;
@@ -32,9 +31,9 @@ interface players {
 
 export default function Page() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [sumGacha, setSumGacha] = useState(0);
     const [data, setData] = useState<players | null>(null);
-    const [dataPOST, setDataPOST] = useState<players | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const banner = '/banner/banner_seifuku.webp';
     const loading = '/ui/iconVD.svg';
@@ -134,9 +133,9 @@ export default function Page() {
         calculateRarity() {
             let rand = Math.random();
 
-            if (rand < incSSRProbability || (pity+1) >= 90) {
+            if (rand < incSSRProbability || (pity + 1) >= 90) {
                 return "SSR";
-            } else if (rand < incSRProbability || (pity+1) % 10 === 0) {
+            } else if (rand < incSRProbability || (pity + 1) % 10 === 0) {
                 return "SR";
             } else {
                 return "R";
@@ -161,6 +160,7 @@ export default function Page() {
         let tenpull = [];
         incSRProbability = baseSRProbability;
         incSSRProbability = baseSSRProbability;
+        setIsLoading(true);
 
         try {
             const dataPOST = await fetchApiGacha('getPity', null);
@@ -189,6 +189,9 @@ export default function Page() {
         } catch (error) {
             console.error('Error fetching API:', error);
         }
+
+        setIsLoading(false);
+
     }
 
     const listGacha = (tenpull: any[]) => {
@@ -222,6 +225,7 @@ export default function Page() {
                     <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
                         <source src="/video/gacha.mp4" type="video/mp4" />
                     </video>
+
                     <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-2'></div>
                 </Modal>
             </div>
