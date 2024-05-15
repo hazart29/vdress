@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import pool from '../../db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { sql } from '@vercel/postgres';
