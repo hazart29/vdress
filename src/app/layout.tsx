@@ -73,17 +73,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <link crossOrigin="use-credentials" rel="manifest" href="/manifest.json" />
-      <body className={inter.className}>
+      <body contextMenu="return false" className={inter.className}>
         <Analytics />
         <SpeedInsights />
         <Backsound />
-        <div className="portrait:hidden lg:hidden bg-slate-900 text-yellow-600 flex h-screen w-screen items-center justify-center"><p className="animate-pulse text-center font-sans font-bold text-lg ">please rotate your phone to potrait!</p></div>
-        <div className='relative landscape:hidden lg:landscape:flex flex h-screen w-screen select-none justify-normal md:justify-center bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900'>
-          <div className='flex-shrink w-1/3 hidden lg:flex'></div>
-          <div id="mainlayout" className='flex flex-1 lg:flex-none lg:w-1/3 justify-center items-center'>
+        <div className="landscape:hidden lg:hidden pointer-events-none bg-slate-900 text-yellow-600 flex h-screen w-screen items-center justify-center"><p className="animate-pulse text-center font-sans font-bold text-lg ">please rotate your phone to landscape!</p></div>
+        <div className='relative portrait:hidden select-none h-screen bg-gradient-to-br from-blue-500 to-purple-500 flex flex-1 flex-col items-center justify-center'>
+          <div className="absolute inset-0 flex items-center justify-center z-50">
             {children}
           </div>
-          <div className='flex-shrink w-1/3 hidden lg:flex'></div>
+          <div id="bg1" className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="bg-white opacity-30 rounded-full h-96 w-96"></div>
+          </div>
+          <div id="bg2" className="absolute inset-0 flex items-center justify-center z-0">
+            <div className="bg-white opacity-10 rounded-full h-[28rem] w-[28rem]"></div>
+          </div>
         </div>
 
       </body>

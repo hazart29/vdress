@@ -4,6 +4,17 @@ const CACHE_NAME = 'VD-Cache';
 const urlsToCache = [
   '/',
   '/offline',
+  '/avatar/model.svg',
+  '/ui/btn_gacha.svg',
+  '/ui/btn_home.svg',
+  '/ui/btn_outfit.svg',
+  '/ui/btn_room.svg',
+  '/ui/iconVD.svg',
+  '/ui/logo.svg',
+  '/ui/logoVD.svg',
+  '/video/gacha.mp4',
+  '/backsound/backsound.mp3',
+  '/banner/banner_seifuku.webp'
   // Tambahkan URL lain yang ingin Anda precache di sini
 ];
 

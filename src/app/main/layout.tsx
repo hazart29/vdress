@@ -2,9 +2,8 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Navbar from "../component/navbar";
 import { jwtDecode } from 'jwt-decode';
-import Header from "../component/header";
+import Header from "../component/HeaderMenu";
 
 export default function Layout({
     children,
@@ -15,7 +14,6 @@ export default function Layout({
     const [loading, isloading] = useState(true);
     const icon = '/ui/iconVD.svg';
     const currentUrl = usePathname();
-
 
     // Check if user is authenticated
 
@@ -60,14 +58,10 @@ export default function Layout({
     }
 
     return (
-        <div className='relative flex flex-col w-full h-full select-none bg-hero-patterns'>
-            <div className='h-[7%] w-full flex-none items-end p-2'><Header /></div>
-            <div id='mainlayout' className='overflow-hidden flex flex-shrink flex-col h-full w-full flex-none text-white py-2 px-6 md:py-6'>
-                <div className='flex flex-1'>
-                    {children}
-                </div>
+        <div className="overflow-hidden flex flex-1 h-screen w-full">
+            <div className='flex flex-1 text-white'>
+                {children}
             </div>
-            <div className='h-[10%] bottom-0 z-[999] w-full flex-none items-end bg-white rounded-t-lg'><Navbar /></div>
         </div>
     )
 }

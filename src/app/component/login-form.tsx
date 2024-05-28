@@ -1,11 +1,21 @@
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+interface FormData {
+  email: string;
+  password: string;
+}
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
+  const [prevFormData, setPrevFormData] = useState<FormData>({ email: '', password: '' });
   const router = useRouter();
+
+  useEffect(() => {
+    setPrevFormData(formData);
+  }, [formData]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -43,6 +53,13 @@ const Login: React.FC = () => {
     checkAuth();
   }, [router]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +69,7 @@ const Login: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(formData),
       });
       if (!response.ok) {
         throw new Error('Login failed');
@@ -64,29 +81,47 @@ const Login: React.FC = () => {
       // Redirect or perform any other action after successful login
     } catch (error) {
       console.error('Login error:', error);
+      // Reset fields to previous values on error
+      setFormData(prevFormData);
     }
   };
 
   return (
-    <div className='flex flex-col flex-1 items-center justify-center gap-2'>
+    <div className='flex flex-col items-center justify-center gap-2'>
       <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center gap-4'>
         <input
           type="email"
           placeholder="Email"
-          className='flex rounded-md p-2 text-black text-xs lg:text-md'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="email"
+          className='flex rounded-md p-2 text-black text-sm lg:text-md'
+          value={formData.email}
+          onChange={handleChange}
           required
         />
         <input
           type="password"
           placeholder="Password"
-          className='flex rounded-md p-2 text-black text-xs lg:text-md'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
+          className='flex rounded-md p-2 text-black text-sm lg:text-md'
+          value={formData.password}
+          onChange={handleChange}
           required
         />
-        <button type="submit" className="transform hover:scale-110 ease-in-out hover:text-orange-700 flex rounded-lg bg-gradient-to-r hover:from-orange-400 from-orange-500 hover:to-red-400 to-red-500 p-4 text-orange-300 font-bold text-xs :text-lg">Login</button>
+
+        <div className='flex md:flex-row flex-col gap-2 w-full justify-center items-center'>
+          <Link href="/daftar">
+            <button
+              className="flex-1 bg-transparent border-2 border-white text-white font-bold p-2 rounded-lg hover:bg-white hover:text-green-500 transition-all duration-300">
+              DAFTAR
+            </button>
+          </Link>
+          <button
+            type="submit"
+            className="flex-1 bg-transparent border-2 border-white text-white font-bold p-2 rounded-lg hover:bg-white hover:text-blue-500 transition-all duration-300">
+            MASUK
+          </button>
+        </div>
+
       </form>
       <p className='text-xs text-white opacity-50 font-sans pt-4'>Hazart Studio @2024</p>
     </div>

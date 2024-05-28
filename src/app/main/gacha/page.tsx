@@ -66,10 +66,10 @@ export default function Page() {
         getData();
     }, []);
 
-    const handleVideoEnd = () => {
+    const handleVideoEnd = async () => {
         if (videoRef.current) {
             videoRef.current.style.display = 'none';
-            pull(sumGacha);
+            await pull(sumGacha);
         }
     };
 
@@ -194,19 +194,34 @@ export default function Page() {
 
     }
 
-    const listGacha = (tenpull: any[]) => {
+    const listGacha = async (tenpull: any[]) => {
         const divDapat: any = document.getElementById('diDapat');
         divDapat.innerHTML = ''; // Clear previous results
-        for (let i of tenpull) {
-            if (i === "SSR") {
-                divDapat.innerHTML += '<img src="" class="bg-yellow-400 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />';
-            } else if (i === "SR") {
-                divDapat.innerHTML += '<img src="" class="bg-purple-400 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />';
+        for (let i = 0; i < tenpull.length; i++) {
+            const currentItem = tenpull[i];
+            let bgColorClass = '';
+            if (currentItem === "SSR") {
+                bgColorClass = 'bg-yellow-400';
+            } else if (currentItem === "SR") {
+                bgColorClass = 'bg-purple-400';
             } else {
-                divDapat.innerHTML += '<img src="" class="bg-gray-300 w-24 lg:w-20 h-24 lg:h-20" alt="' + i + '" />';
+                bgColorClass = 'bg-gray-300';
             }
+            const imgElement = document.createElement('img');
+            imgElement.src = `/items_gacha/${currentItem}.svg`; // Add your image source here
+            imgElement.className = `w-24 h-24 ${bgColorClass} opacity-0 transition-opacity duration-500`; // Add opacity transition
+            imgElement.alt = currentItem;
+            divDapat.appendChild(imgElement);
+    
+            // Triggering reflow before adding the animation class to start animation
+            void imgElement.offsetWidth;
+            imgElement.classList.add('opacity-100');
+    
+            // Render each item with a slight delay
+            await new Promise(resolve => setTimeout(resolve, 500)); // Adjust the delay time as needed
         }
     }
+    
 
     const gacha = new GachaSystem();
 
@@ -222,11 +237,10 @@ export default function Page() {
                 <button onClick={() => openModal(10)} type="button" className="rounded-full flex-1 h-full bg-gradient-to-br from-violet-300 via-purple-400 to-fuchsia-500 text-purple-700 hover:scale-110 transform ease-in-out focus:outline-none hover:ring hover:ring-white hover:text-white">10x</button>
 
                 <Modal isOpen={isModalOpen} onClose={closeModal}>
+                    <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
                     <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
                         <source src="/video/gacha.mp4" type="video/mp4" />
                     </video>
-
-                    <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-2'></div>
                 </Modal>
             </div>
         </div>
