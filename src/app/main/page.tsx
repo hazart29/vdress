@@ -12,7 +12,7 @@ export default function Home() {
 
     return (
         <div className="flex flex-1 items-center justify-center min-h-screen">
-            <div className={`relative flex items-center justify-center transition-opacity duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div className={`relative pointer-events-none select-none animate-bounce2 flex items-center justify-center transition-opacity duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                 <Image
                     src={'/ui/logo2.svg'}
                     alt="logo"

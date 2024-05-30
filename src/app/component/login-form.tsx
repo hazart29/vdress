@@ -87,8 +87,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col items-center justify-center gap-2'>
-      <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center gap-4'>
+    <div className='relative flex flex-none w-1/4 flex-col items-center justify-center gap-2'>
+      <form onSubmit={handleSubmit} className='flex flex-col flex-none items-center justify-center gap-4'>
         <input
           type="email"
           placeholder="Email"
@@ -123,7 +123,7 @@ const Login: React.FC = () => {
         </div>
 
       </form>
-      <p className='text-xs text-white opacity-50 font-sans pt-4'>Hazart Studio @2024</p>
+      <p className='text-xs text-white font-sans pt-4'>Hazart Studio @2024</p>
     </div>
   );
 };

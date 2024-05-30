@@ -13,8 +13,8 @@ export default function MenuButton() {
             router.push('/');
         } else if (menu === 'outfit') {
             router.push('/main/outfit');
-        } else if (menu === 'gacha') {
-            router.push('/main/gacha');
+        } else if (menu === 'gacha_genshin') {
+            router.push('/main/gacha/genshin');
         }
     }
 
@@ -37,7 +37,7 @@ export default function MenuButton() {
                 {/* Tombol Gacha */}
                 <button
                     type="button"
-                    onClick={() => handleMenu('gacha')}
+                    onClick={() => handleMenu('gacha_genshin')}
                     className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 ease-in-out"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">

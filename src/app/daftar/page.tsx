@@ -19,14 +19,19 @@ export default function Daftar() {
     const [formData, setFormData] = useState<FormData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isChecked, setIsChecked] = useState(false);
+
+    const onChecked = () => {
+        setIsChecked(!isChecked);
+    }
 
     const handleOpenModal = () => {
-      setIsModalOpen(true);
+        setIsModalOpen(true);
     };
-  
+
     const handleConfirmModal = () => {
-      setIsModalOpen(false);
-      router.push('/'); // Redirect to login page after successful registration
+        setIsModalOpen(false);
+        router.push('/'); // Redirect to login page after successful registration
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,13 +88,13 @@ export default function Daftar() {
 
     return (
         <>
-            <div className="flex flex-col flex-1 items-center justify-center p-4">
-                <Image src="/ui/logo2.svg" alt="logo" className='pt-10' width={200} height={70} priority />
+            <div className="flex flex-col flex-1 items-center justify-center p-4 text-sm">
+                <Image src="/ui/logo2.svg" alt="logo" className='pointer-events-none select-none' width={200} height={70} priority />
 
-                <form className="p-6 m-4 rounded-md shadow-md w-1/3" onSubmit={handleSubmit}>
+                <form className="flex flex-col flex-none w-1/4 p-6 rounded-md gap-4" onSubmit={handleSubmit}>
                     {error && <p className="text-red-500 mb-4">{error}</p>}
                     <input
-                        className="border rounded-md text-sm p-2 w-full mb-4"
+                        className="border rounded-md text-sm p-2 w-full"
                         type="text"
                         name="username"
                         placeholder="Username"
@@ -97,7 +102,7 @@ export default function Daftar() {
                         onChange={handleChange}
                     />
                     <input
-                        className="border rounded-md text-sm p-2 w-full mb-4"
+                        className="border rounded-md text-sm p-2 w-full"
                         type="password"
                         name="password"
                         placeholder="Password"
@@ -105,7 +110,7 @@ export default function Daftar() {
                         onChange={handleChange}
                     />
                     <input
-                        className="border rounded-md text-sm p-2 w-full mb-4"
+                        className="border rounded-md text-sm p-2 w-full"
                         type="email"
                         name="email"
                         placeholder="Email"
@@ -113,7 +118,7 @@ export default function Daftar() {
                         onChange={handleChange}
                     />
                     <input
-                        className="border rounded-md text-sm p-2 w-full mb-4"
+                        className="border rounded-md text-sm p-2 w-full"
                         type="text"
                         name="name"
                         placeholder="Name"
@@ -121,7 +126,7 @@ export default function Daftar() {
                         onChange={handleChange}
                     />
                     <input
-                        className="border p-2 w-full mb-4"
+                        className="border p-2 w-full"
                         type="number"
                         name="primogems"
                         placeholder="Primogems"
@@ -130,7 +135,7 @@ export default function Daftar() {
                         hidden
                     />
                     <input
-                        className="border p-2 w-full mb-4"
+                        className="border p-2 w-full"
                         type="number"
                         name="pitycounter"
                         placeholder="Pity Counter"
@@ -138,16 +143,29 @@ export default function Daftar() {
                         onChange={handleChange}
                         hidden
                     />
+                    <label className="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                            checked={isChecked}
+                            onChange={() => onChecked()}
+                        />
+                        <span className="ml-2 text-slate-700 text-xs">By pressing the check button, you are ready to register a new account</span>
+                    </label>
                     <div className="flex md:flex-row flex-col gap-4 justify-center items-center">
                         <Link href="/">
-                            <button 
-                            className="flex-1 bg-transparent border-2 border-white text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300">
+                            <button
+                                className="flex-1 bg-transparent border-2 border-white text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300">
                                 BACK
                             </button>
                         </Link>
                         <button
                             type="submit"
-                            className="flex-1 bg-transparent border-2 border-white text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all duration-300"
+                            className={`flex-1 bg-transparent border-2 font-bold py-2 px-4 rounded-lg transition-all duration-300 ${isChecked
+                                    ? 'border-white text-white hover:bg-blue-500 hover:text-white hover:border-blue-500'
+                                    : 'border-gray-400 text-gray-400 cursor-not-allowed'
+                                }`}
+                            disabled={!isChecked}
                         >
                             REGISTER
                         </button>
@@ -162,7 +180,7 @@ export default function Daftar() {
                         <p>Silahkan Melakukan Login!</p>
                     </ModalAlert>
                 </form>
-            </div>
+            </div >
         </>
     );
 }

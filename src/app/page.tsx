@@ -34,7 +34,7 @@ function Home() {
 
   return (
     <div className='flex flex-col flex-1 justify-center items-center gap-8'>
-      <Image src="/ui/logo2.svg" alt="logo" className='pt-10' width={200} height={70} priority />
+      <Image src="/ui/logo2.svg" alt="logo" className='pointer-events-none select-none' width={200} height={70} priority />
       <LoginForm />
     </div>
   );

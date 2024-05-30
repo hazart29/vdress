@@ -1,0 +1,25 @@
+@font-face {
+  font-family: 'Genshin Impact';
+  src: url('/font/zh-cn.ttf') format('truetype');
+  font-weight: normal;
+  /* Add other font file formats and font weights if available */
+}
+
+.body {
+  font-family: 'Genshin Impact', sans-serif;
+}
+
+.container {
+  /* Gaya untuk kontainer jika diperlukan */
+  font-family: 'Genshin Impact', sans-serif;
+}
+
+.heading {
+  /* Gaya untuk judul jika diperlukan */
+  font-family: 'Genshin Impact', sans-serif;
+}
+
+.paragraph {
+  /* Gaya untuk paragraf jika diperlukan */
+  font-family: 'Genshin Impact', sans-serif;
+}
