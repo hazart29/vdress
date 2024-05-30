@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ message: 'berhasil get api daftar' }, { status: 200 });
 }
 
-export async function POST(req: NextApiRequest) {
+export async function POST(req: Request) {
     const { username, password, email, name, primogems, pitycounter } = await new Response(req.body).json();
 
     try {
