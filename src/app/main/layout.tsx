@@ -57,7 +57,7 @@ export default function Layout({
     }
 
     return (
-        <div className="overflow-hidden flex flex-1 h-screen w-full">
+        <div id="s" className="overflow-hidden flex flex-1 h-screen w-full">
             <div className='flex flex-1 text-white'>
                 {children}
             </div>
