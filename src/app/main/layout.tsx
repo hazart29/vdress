@@ -3,7 +3,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { jwtDecode } from 'jwt-decode';
-import Header from "../component/HeaderMenu";
 
 export default function Layout({
     children,
