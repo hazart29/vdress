@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import LoginForm from './component/login-form';
-import { useRouter } from 'next/navigation';
+import PWAInstallPrompt from './component/PWAInstallPompt';
 
 function Home() {
   const icon = '/ui/iconVD.svg';
-  const [isloading, setLoading] = useState(true)
-  const router = useRouter()
+  const [isloading, setLoading] = useState(true);
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -24,13 +25,20 @@ function Home() {
       });
     }
 
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
 
   }, []);
-
 
   if (isloading) {
     return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><Image src={icon} alt="none" width={40} height={40} className='animate-ping' /></div>;
   }
+
+  if (!isInstalled) {
+    return <PWAInstallPrompt />;
+  }  
 
   return (
     <div className='flex flex-col flex-1 justify-center items-center gap-8'>

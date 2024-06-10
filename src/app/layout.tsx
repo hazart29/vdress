@@ -4,6 +4,8 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Backsound from "./component/backsound";
+import type { AppProps } from 'next/app';
+import PWAInstallPrompt from '@/app/component/PWAInstallPompt';
 
 const inter = Inter({ subsets: ["latin"] });
 

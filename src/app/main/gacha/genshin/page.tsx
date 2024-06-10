@@ -217,22 +217,22 @@ const GenshinWishBanner = () => {
             imgElement.className = `w-24 h-24 ${bgColorClass} opacity-0 transition-opacity duration-500`; // Add opacity transition
             imgElement.alt = currentItem;
             divDapat.appendChild(imgElement);
-    
+
             // Triggering reflow before adding the animation class to start animation
             void imgElement.offsetWidth;
             imgElement.classList.add('opacity-100');
-    
+
             // Render each item with a slight delay
             await new Promise(resolve => setTimeout(resolve, 500)); // Adjust the delay time as needed
         }
     }
-    
+
 
     const gacha = new GachaSystem();
 
 
     return (
-        <div className={`relative flex flex-1 items-center justify-center ml-24 flex-col ${style.container}`}>
+        <div className={`flex flex-1 items-center justify-center ml-24 flex-col ${style.container}`}>
             <div className='fixed inset-0 top-0 flex max-h-fit items-center ml-24 justify-between p-8'>
                 <p className='font-bold text-lg'>Genshin Wish</p>
                 <div className='flex gap-2 text-xs'>
@@ -252,14 +252,13 @@ const GenshinWishBanner = () => {
                     <button onClick={() => openModal(1)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 1x</button>
                     <button onClick={() => openModal(10)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 10x</button>
                 </div>
-                
-                <Modal isOpen={isModalOpen} onClose={closeModal}>
-                    <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
-                    <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
-                        <source src="/video/gacha.mp4" type="video/mp4" />
-                    </video>
-                </Modal>
             </div>
+            <Modal isOpen={isModalOpen} onClose={closeModal}>
+                <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
+                <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
+                    <source src="/video/gacha.mp4" type="video/mp4" />
+                </video>
+            </Modal>
         </div>
     );
 }

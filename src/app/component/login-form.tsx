@@ -110,10 +110,10 @@ const Login: React.FC = () => {
 
         <div className='flex md:flex-row flex-col gap-2 w-full justify-center items-center'>
           <Link href="/daftar">
-            <button
+            <p
               className="flex-1 bg-transparent border-2 border-white text-white font-bold p-2 rounded-lg hover:bg-white hover:text-green-500 transition-all duration-300">
               DAFTAR
-            </button>
+            </p>
           </Link>
           <button
             type="submit"
