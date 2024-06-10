@@ -5,20 +5,22 @@ interface ModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   title?: string;
+  imageSrc?: string; // Prop untuk sumber gambar
   children: React.ReactNode;
 }
 
-const ModalAlert: React.FC<ModalProps> = ({ isOpen, onConfirm, title, children }) => {
+const ModalAlert: React.FC<ModalProps> = ({ isOpen, onConfirm, title, imageSrc, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 flex items-center justify-center text-center gap-4 bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-full outline outline-4 outline-blue-500 shadow-lg w-full max-w-xs p-6 relative">
+        {imageSrc && <img src={imageSrc} className="mx-auto mb-4" alt="Error Image" />} {/* Tampilkan gambar sebelum judul jika ada */}
         {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
         <div className="mb-6">
           {children}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-center">
           <button
             onClick={onConfirm}
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-all duration-300"

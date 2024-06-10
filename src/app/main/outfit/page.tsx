@@ -1,10 +1,10 @@
 'use client'
 import React, { useRef, useEffect, useState } from 'react';
 import ModalWardrobe from '@/app/component/modal-wardrobe';
-import JSXImage from 'next/image';
-import Button from '@/app/component/Button';
 import { useRouter } from 'next/navigation';
 import OutfitComponent from '@/app/component/OutfitComponent';
+import BackButton from '@/app/component/BackButton';
+import DownloadButton from '@/app/component/DownloadButton';
 
 const CanvasComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -123,21 +123,27 @@ const CanvasComponent: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleButton = () => {
-    router.back();
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const url = canvas.toDataURL(); // Mengonversi kanvas menjadi URL data gambar
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'avatar.png'; // Nama file saat diunduh
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
     <>
       <div className={`relative flex w-screen h-screen justify-center items-center gap-10 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className='absolute top-4 left-4 z-50 max-w-fit'>
-          <button onClick={handleButton} className='bg-blue-500 text-4xl text-white font-bold border border-white hover:bg-white hover:text-blue-500 pr-4 pb-4 pl-12 pt-4 -skew-x-3 fixed -top-2 -left-5'>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-16">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-            </svg>
-          </button>
+        <div className='absolute flex flex-col gap-8 top-20 right-40 z-50 max-w-fit scale-125'>
+          <BackButton />
+          <DownloadButton onClick={handleDownload} />
         </div>
-        <canvas ref={canvasRef} className={`max-h-[450px] tall:s:max-h-[600px] talles:s:max-h-[650px] tallesmax:s:max-h-[750px] transition-transform duration-1000 transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={1400} height={4500} />
+        <canvas id='avatar' ref={canvasRef} className={`max-h-[450px] tall:s:max-h-[600px] talles:s:max-h-[650px] tallesmax:s:max-h-[750px] transition-transform duration-1000 transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={1400} height={4500} />
         <form onSubmit={fetchPOSTClothingItem} className={`flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
           <OutfitComponent loc="top" src={topImage} openModal={openModal} />
           <OutfitComponent loc="bottom" src={botImage} openModal={openModal} />

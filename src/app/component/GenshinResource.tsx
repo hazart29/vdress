@@ -1,8 +1,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import BackButton from "./BackButton";
 
 const GenshinResource = () => {
-    const router = useRouter();
     const [primo, setPrimo] = useState(null);
     const [user, setUser] = useState(null);
 
@@ -37,10 +37,6 @@ const GenshinResource = () => {
         return () => clearInterval(intervalId);
     }, []);
 
-    const handleClose = () => {
-        router.back();
-    }
-
     return (
         <>
             <span className='flex-none flex gap-2'>
@@ -59,13 +55,7 @@ const GenshinResource = () => {
                     <p className='text-slate-900'>1</p>
                 </span>
             </span>
-            <span className='rounded-full flex relative bg-gray-400 text-xs py-4 px-4 ml-6 transition-all ease-in-out duration-100 hover:scale-125'>
-                <button onClick={() => handleClose()} className='absolute inset-0 m-1 flex items-center justify-center rounded-full bg-white text-slate-900'>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </span>
+            <BackButton />
         </>
     );
 }

@@ -175,6 +175,7 @@ export default function Daftar() {
                         isOpen={isModalOpen}
                         onConfirm={handleConfirmModal}
                         title="Confirmation"
+                        imageSrc="/ui/success_img.svg"
                     >
                         <p>Sukses Mendaftar!</p>
                         <p>Silahkan Melakukan Login!</p>

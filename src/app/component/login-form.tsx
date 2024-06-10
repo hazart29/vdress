@@ -2,6 +2,7 @@ import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import ModalAlert from '@/app/component/ModalAlert';
 
 interface FormData {
   email: string;
@@ -11,6 +12,8 @@ interface FormData {
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
   const [prevFormData, setPrevFormData] = useState<FormData>({ email: '', password: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,33 +22,27 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = () => {
-      // Get the session token from local storage
       const token = sessionStorage.getItem('sessionToken');
 
       if (!token) {
-        router.push('/'); // Redirect to '/' page if no token found
+        router.push('/');
       } else {
         try {
           const currentDate = new Date();
-          // Decode the JWT token
-          const decodedToken = jwtDecode(token);
-          // Check if the token is expired
+          const decodedToken = jwtDecode<{ exp: number }>(token);
           if (decodedToken.exp) {
             const isTokenExpired = decodedToken.exp * 1000 < currentDate.getTime();
             if (isTokenExpired) {
-              // Clear expired token from local storage
-              localStorage.removeItem('sessionToken');
-              router.push('/'); // Redirect to '/' page if token is expired
+              sessionStorage.removeItem('sessionToken');
+              router.push('/');
             } else {
-              router.push('/main'); // Redirect to '/main' page if token is valid
+              router.push('/main');
             }
           }
         } catch (error) {
-          // Handle any errors (e.g., invalid token format)
           console.error('Error decoding token:', error);
-          // Clear invalid token from local storage
-          localStorage.removeItem('sessionToken');
-          router.push('/'); // Redirect to '/' page
+          sessionStorage.removeItem('sessionToken');
+          router.push('/');
         }
       }
     };
@@ -71,24 +68,44 @@ const Login: React.FC = () => {
         },
         body: JSON.stringify(formData),
       });
+
       if (!response.ok) {
-        throw new Error('Login failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
+
       const data = await response.json();
       sessionStorage.setItem('sessionToken', data.token);
       localStorage.setItem('user', data.user.username);
       router.push('/main');
-      // Redirect or perform any other action after successful login
     } catch (error) {
       console.error('Login error:', error);
-      // Reset fields to previous values on error
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      setIsModalOpen(true);
       setFormData(prevFormData);
     }
   };
 
+  const handleModalConfirm = () => {
+    setIsModalOpen(false);
+    setError(null);
+  };
+
   return (
     <div className='relative flex flex-none w-1/4 flex-col items-center justify-center gap-2'>
-      <form onSubmit={handleSubmit} className='flex flex-col flex-none items-center justify-center gap-4'>
+      <ModalAlert
+        isOpen={isModalOpen} 
+        onConfirm={handleModalConfirm} 
+        title="Error"
+        imageSrc="/ui/galat_img.svg"
+        >
+        <p>{error}</p>
+      </ModalAlert>
+      <form onSubmit={handleSubmit} className='flex flex-col flex-none items-center justify-center gap-2'>
         <input
           type="email"
           placeholder="Email"
@@ -121,7 +138,6 @@ const Login: React.FC = () => {
             MASUK
           </button>
         </div>
-
       </form>
       <p className='text-xs text-white font-sans pt-4'>Hazart Studio @2024</p>
     </div>
