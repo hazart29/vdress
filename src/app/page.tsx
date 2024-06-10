@@ -25,7 +25,7 @@ function Home() {
       });
     }
 
-    if (window.matchMedia('(display-mode: fullscreen)').matches) {
+    if ((window.matchMedia('(display-mode: fullscreen)').matches) || (window.matchMedia('(display-mode: standalone)').matches)) {
       setIsInstalled(true);
     }
 
