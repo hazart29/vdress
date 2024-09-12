@@ -18,7 +18,7 @@ export default function MenuButton() {
         } else if (menu === 'gacha_a') {
             router.push('/main/gacha/gacha_a');
         } //else if (menu === 'gacha_b') {
-            //router.push('/main/test');
+        //router.push('/main/test');
         //}
     }
 
@@ -39,31 +39,44 @@ export default function MenuButton() {
                 </button>
 
                 {/* Tombol Gacha */}
+                <div className="flex p-0 m-0">
+                    <button
+                        type="button"
+                        onClick={() => handleMenu('gacha_a')}
+                        className="flex flex-shrink flex-1 items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 hover:z-50 ease-in-out"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
+                        </svg>
+                        <span className="flex gap-2 text-lg">
+                            {/*<Image src={'/ui/Genshin_Impact_logo.svg'} height={36} width={100} alt="genshin-logo"/>*/}
+                            <p>Gacha A</p>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleMenu('gacha_b')}
+                        className="flex flex-shrink flex-1 items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 hover:z-50 ease-in-out"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
+                        </svg>
+                        <span className="flex gap-2 text-lg">
+                            <p>Gacha B</p>
+                        </span>
+                    </button>
+                </div>
+
+                {/* Tombol Shop */}
                 <button
                     type="button"
-                    onClick={() => handleMenu('gacha_a')}
-                    className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 ease-in-out"
+                    onClick={() => handleMenu('shop')}
+                    className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-cyan-300 transition-all duration-100 hover:scale-125 hover:mb-2 ease-in-out"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
-                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-cart-fill" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
                     </svg>
-                    <span className="flex gap-4 text-4xl">
-                        {/*<Image src={'/ui/Genshin_Impact_logo.svg'} height={36} width={100} alt="genshin-logo"/>*/}
-                        <p>Gacha A</p>
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => handleMenu('gacha_b')}
-                    className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 ease-in-out"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
-                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
-                    </svg>
-                    <span className="flex gap-4 text-4xl">
-                        {/*<Image src={'/ui/Tower_of_Fantasy_logo.svg'} height={36} width={75} alt="tof-logo" />*/}
-                        <p>Gacha B</p>
-                    </span>
+                    <p className="text-3xl">Shop</p>
                 </button>
 
                 {/* Tombol Logout */}
@@ -75,7 +88,7 @@ export default function MenuButton() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-door-open-fill" viewBox="0 0 16 16">
                         <path d="M1.5 15a.5.5 0 0 0 0 1h13a.5.5 0 0 0 0-1H13V2.5A1.5 1.5 0 0 0 11.5 1H11V.5a.5.5 0 0 0-.57-.495l-7 1A.5.5 0 0 0 3 1.5V15zM11 2h.5a.5.5 0 0 1 .5.5V15h-1zm-2.5 8c-.276 0-.5-.448-.5-1s.224-1 .5-1 .5.448.5 1-.224 1-.5 1" />
                     </svg>
-                    <p>Logout</p>
+                    <p className="text-4xl">Logout</p>
                 </button>
             </div>
 
