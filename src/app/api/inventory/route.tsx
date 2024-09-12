@@ -12,8 +12,10 @@ export async function GET() {
 
 export async function POST(req: Request, res: NextApiResponse) {
     const { type, id } = await new Response(req.body).json();
-    const { rows: outfitTop } = await sql`SELECT * FROM inventory WHERE player_id = ${id} AND part_outfit = ${type}`;
-
-    // Mengirim respons dengan data pemain yang telah diperbarui
-    return NextResponse.json(outfitTop, { status: 200 });
+    const { rows } = await sql`SELECT * FROM inventory WHERE uid = ${id} AND part_outfit = ${type}`;
+    if (rows ){
+        return NextResponse.json(rows, { status: 200 });
+    } else {
+        return NextResponse.json(null, { status: 200})
+    }
 }

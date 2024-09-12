@@ -7,12 +7,13 @@ import Modal from '@/app/component/modal';
 import GenshinResource from '@/app/component/GenshinResource';
 import ErrorAlert from '@/app/component/ErrorAlert';
 
-interface InventoryItem {
+interface inventory {
+    id: number;
     uid: number;
     rarity: string;
     item_name: string;
-    part_outfit: string | null;
-    date: string | null;
+    part_outfit: string;
+    created_at: string;
 }
 
 interface users {
@@ -22,17 +23,17 @@ interface users {
     email: string;
     name: string;
     primogems: number;
-    pitycounter: number;
+    pity_counter: number;
     rate_on: boolean;
     created_at: string;
-    inventory: InventoryItem[];
+    inventory: inventory[];
 }
 
 interface users {
     users: users[];
 }
 
-interface pulledItem {
+interface gacha_item {
     id: number;
     item_name: string;
     part_outfit: string;
@@ -48,7 +49,7 @@ const GenshinWishBanner = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [sumGacha, setSumGacha] = useState(0);
     const [data, setData] = useState<users | null>(null);
-    const [pulledItem, setPulledItem] = useState<pulledItem | null>(null);
+    const [pulledItem, setPulledItem] = useState<gacha_item | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const banner = '/banner/banner_seifuku.webp';
     const loading = '/ui/iconVD.svg';
@@ -81,9 +82,17 @@ const GenshinWishBanner = () => {
     }, []);
 
     const handleVideoEnd = async () => {
+        let pulled;
         if (videoRef.current) {
             videoRef.current.style.display = 'none';
-            await pull(sumGacha);
+            pulled = await pull(sumGacha);
+        }
+
+        if (Array.isArray(pulled)) {
+            listGacha(pulled);
+        } else {
+            // Handle the case where pull returns undefined (e.g., display an error message)
+            console.error('Error during gacha pull');
         }
     };
 
@@ -130,11 +139,8 @@ const GenshinWishBanner = () => {
             let pulledCharacterOrItem = await this.pullCharacterOrItem(rarity);
 
             if (pulledCharacterOrItem) {
-                console.log('pulled : ', pulledCharacterOrItem.rarity);
-
                 const dataFetch = { rarity, item: pulledCharacterOrItem };
-                console.log('datafetch: ', dataFetch)
-                await fetchApiGacha('upInven', dataFetch);
+                //await fetchApiGacha('upInven', dataFetch);
             }
 
             if (rarity === "SSR") {
@@ -152,7 +158,7 @@ const GenshinWishBanner = () => {
             if (rand < incSSRProbability || (pity + 1) >= 90) {
                 return "SSR";
             } else if (rand < incSRProbability || (pity + 1) % 10 === 0) {
-                return "SSR";
+                return "SR";
             } else {
                 return "R";
             }
@@ -161,7 +167,7 @@ const GenshinWishBanner = () => {
         async pullCharacterOrItem(rarity: string) {
             let pulledCharacterOrItem: any;
             const dataFetch = { rarity };
-            let data, randomItem;
+            let data;
             if (rarity === "SSR") {
                 const rateON = await fetchApiGacha('getRateOn', null);
                 if (rateON) {
@@ -181,16 +187,28 @@ const GenshinWishBanner = () => {
                     console.log(randomItem);
                     setPulledItem(randomItem);
                     pulledCharacterOrItem = randomItem;
-                    if (randomItem.type === "standard") {
+                    if (randomItem.type === 'standard') {
                         await fetchApiGacha('setRateOn', null);
+                    } else if (randomItem.type === 'limited') {
+                        await fetchApiGacha('setRateOff', null)
                     }
                 }
             } else if (rarity === "SR") {
-                const data = await fetchApiGacha('getGachaItem', dataFetch);
-                console.log('data item gacha : ', data);
-                pulledCharacterOrItem = "SR";
+                data = await fetchApiGacha('getGachaItem', dataFetch);
+                const keys = Object.keys(data);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                const randomItem = data[randomKey];
+                console.log(randomItem);
+                setPulledItem(randomItem);
+                pulledCharacterOrItem = randomItem;
             } else {
-                pulledCharacterOrItem = "R";
+                data = await fetchApiGacha('getGachaItem', dataFetch);
+                const keys = Object.keys(data);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                const randomItem = data[randomKey];
+                console.log(randomItem);
+                setPulledItem(randomItem);
+                pulledCharacterOrItem = randomItem;
             }
             return pulledCharacterOrItem;
         }
@@ -206,8 +224,8 @@ const GenshinWishBanner = () => {
         try {
             const dataPOST = await fetchApiGacha('getPity', null);
 
-            if (Array.isArray(dataPOST) && dataPOST.length > 0 && typeof dataPOST[0].pitycounter === 'number') {
-                pity = dataPOST[0].pitycounter;
+            if (Array.isArray(dataPOST) && dataPOST.length > 0 && typeof dataPOST[0].pity_counter === 'number') {
+                pity = dataPOST[0].pity_counter;
             } else {
                 console.error('Invalid dataPOST structure:', dataPOST);
             }
@@ -221,37 +239,36 @@ const GenshinWishBanner = () => {
             }
 
             const dataFetch1 = { incPity: pity };
-            //await fetchApiGacha('incPity', dataFetch1);
+            await fetchApiGacha('incPity', dataFetch1);
 
             const primo = (a * 160);
             const dataFetch2 = { primogems: primo };
             //await fetchApiGacha('updatePrimo', dataFetch2);
-            listGacha(tenpull);
+
+            return tenpull;
         } catch (error) {
             console.error('Error fetching API:', error);
         }
-
-        setIsLoading(false);
-
     }
 
     const listGacha = async (tenpull: any[]) => {
+        console.log('tenpull : ', tenpull);
         const divDapat: any = document.getElementById('diDapat');
         divDapat.innerHTML = ''; // Clear previous results
         for (let i = 0; i < tenpull.length; i++) {
             const currentItem = tenpull[i];
             let bgColorClass = '';
-            if (currentItem === "SSR") {
+            if (currentItem.rarity.trim() === "SSR") {
                 bgColorClass = 'bg-yellow-400';
-            } else if (currentItem === "SR") {
+            } else if (currentItem.rarity.trim() === "SR") {
                 bgColorClass = 'bg-purple-400';
             } else {
                 bgColorClass = 'bg-gray-300';
             }
             const imgElement = document.createElement('img');
-            imgElement.src = `/items_gacha/${currentItem}.svg`; // Add your image source here
+            imgElement.src = `/items_gacha/${currentItem.item_name}.svg`; // Add your image source here
             imgElement.className = `w-24 h-24 ${bgColorClass} opacity-0 transition-opacity duration-500`; // Add opacity transition
-            imgElement.alt = currentItem;
+            imgElement.alt = currentItem.item_name;
             divDapat.appendChild(imgElement);
 
             // Triggering reflow before adding the animation class to start animation
@@ -259,8 +276,10 @@ const GenshinWishBanner = () => {
             imgElement.classList.add('opacity-100');
 
             // Render each item with a slight delay
-            await new Promise(resolve => setTimeout(resolve, 500)); // Adjust the delay time as needed
+            await new Promise(resolve => setTimeout(resolve, 300)); // Adjust the delay time as needed
         }
+
+        setIsLoading(false);
     }
 
 
@@ -296,10 +315,11 @@ const GenshinWishBanner = () => {
                     </div>
 
                     <Modal isOpen={isModalOpen} onClose={closeModal}>
-                        <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
-                        <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
+                        <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black inset-0 w-auto h-screen' autoPlay muted>
                             <source src="/video/gacha.mp4" type="video/mp4" />
                         </video>
+                        <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
+
                     </Modal>
                 </div>
             </div>

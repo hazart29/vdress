@@ -2,10 +2,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BackButton from "./BackButton";
 
+interface users {
+    uid: number;
+    username: string;
+    password: string;
+    email: string;
+    name: string;
+    primogems: number;
+    pity_counter: number;
+    rate_on: boolean;
+    created_at: string;
+}
+
 const GenshinResource = () => {
     const [primo, setPrimo] = useState(null);
-    const [user, setUser] = useState(null);
-    const userId = sessionStorage.getItem('userId');
+    const [userData, setUser] = useState<users>();
+    const [data, setData] = useState<users | null>(null);
+    const userId: number = Number(sessionStorage.getItem('userId'));
 
     const getData = async (userId: number) => {
         try {
@@ -22,20 +35,21 @@ const GenshinResource = () => {
             }
 
             const reqData = await response.json();
-            setPrimo(reqData[0].primogems);
-            setUser(reqData[0].username);
+            if (reqData) {
+                setData(reqData);
+            } else {
+                console.warn('No user data found for provided userId.');
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
 
     useEffect(() => {
+        getData(userId);
 
-        getData(Number(userId));
+        console.log(userData);
 
-        const intervalId = setInterval(getData, 5000);
-
-        return () => clearInterval(intervalId);
     }, []);
 
     return (

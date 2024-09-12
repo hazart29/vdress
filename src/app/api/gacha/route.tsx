@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     } else if (typeFetch === 'resetPity') {
         const { rows } = await sql`SELECT * FROM users WHERE uid = ${userId}`;
         if (rows.length > 0) { // Check if any rows were returned
-            await sql`UPDATE users SET pitycounter = 0 WHERE uid = ${userId}`;
+            await sql`UPDATE users SET pity_counter = 0 WHERE uid = ${userId}`;
 
             // Return a response indicating success
             return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
@@ -31,13 +31,13 @@ export async function POST(req: Request) {
         }
 
     } else if (typeFetch === 'incPity') {
-        const { rows } = await sql`SELECT pitycounter FROM users WHERE uid = ${userId}`;
+        const { rows } = await sql`SELECT pity_counter FROM users WHERE uid = ${userId}`;
         if (rows.length > 0) {
             // Calculate the new value of primo after subtracting primogems
             const newPity = dataFetch.incPity;
 
             // Update the value of primo in the database
-            await sql`UPDATE users SET pitycounter = ${newPity} WHERE uid = ${userId}`;
+            await sql`UPDATE users SET pity_counter = ${newPity} WHERE uid = ${userId}`;
 
             // Return a response indicating success
             return NextResponse.json({ message: 'pity updated successfully' }, { status: 200 });
@@ -45,10 +45,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'pity not updated' }, { status: 200 });
         }
     } else if (typeFetch === 'upInven') {
-        let item_name = dataFetch.item_name;
-        let rarity = dataFetch.rarity;
-        let part_outfit = dataFetch.part_outfit;
-        const { rows } = await sql`SELECT id FROM users WHERE uid = ${userId}`;
+        let item_name = dataFetch.item.item_name;
+        let rarity = dataFetch.item.rarity;
+        let part_outfit = dataFetch.item.part_outfit;
+        const { rows } = await sql`SELECT * FROM users WHERE uid = ${userId}`;
 
         await sql`INSERT INTO Inventory (uid, rarity, item_name, part_outfit)
         VALUES (${rows[0].uid}, ${rarity}, ${item_name}, ${part_outfit});`;
