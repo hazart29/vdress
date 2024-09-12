@@ -14,12 +14,6 @@ const nextConfig = {
     };
     return config;
   },
-  resolve: {
-    extensions: ['.ts', '.js'],
-    alias: {
-      '@framework': path.resolve(__dirname, './src/app/framework/'),
-    }
-  },
   async headers() {
     return [
       {

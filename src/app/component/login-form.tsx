@@ -77,6 +77,7 @@ const Login: React.FC = () => {
       const data = await response.json();
       sessionStorage.setItem('sessionToken', data.token);
       localStorage.setItem('user', data.user.username);
+      sessionStorage.setItem('userId', data.user.uid);
       router.push('/main');
     } catch (error) {
       console.error('Login error:', error);

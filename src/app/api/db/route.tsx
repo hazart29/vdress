@@ -4,22 +4,22 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
     // Mengambil data pemain
-    const { rows: players } = await sql`SELECT * FROM players`;
+    const { rows: users } = await sql`SELECT * FROM users`;
 
     // Mengambil data inventaris untuk setiap pemain
-    for (let i = 0; i < players.length; i++) {
-        const playerId = players[i].id;
-        const { rows: inventory } = await sql`SELECT * FROM inventory WHERE player_id = ${playerId}`;
-        players[i].inventory = inventory;
+    for (let i = 0; i < users.length; i++) {
+        const playerId = users[i].id;
+        const { rows: inventory } = await sql`SELECT * FROM inventory WHERE uid = ${playerId}`;
+        users[i].inventory = inventory;
     }
 
     // Mengirim respons dengan data pemain yang telah diperbarui
-    return NextResponse.json(players, { status: 200 });
+    return NextResponse.json(users, {status: 200 });
 }
 
 
-export async function POST(req: Request, res: NextApiResponse) {
-    const { user } = await new Response(req.body).json();
-    const { rows } = await sql`SELECT * FROM players where username = ${user}`;
+export async function POST(req: Request) {
+    const { userId } = await new Response(req.body).json();
+    const { rows } = await sql`SELECT * FROM users where uid = ${userId}`;
     return NextResponse.json(rows, {status: 200});
 }

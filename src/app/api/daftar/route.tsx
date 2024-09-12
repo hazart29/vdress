@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         }
 
         // Check if user already exists
-        const existingUser = await sql`SELECT * FROM players WHERE email = ${email} OR username = ${username}`;
+        const existingUser = await sql`SELECT * FROM users WHERE email = ${email} OR username = ${username}`;
         if (existingUser.rowCount > 0) {
             return NextResponse.json({ message: 'User already exists' }, { status: 400 });
         }
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         // Save new user to database
         // Save new user to database using parameterized query
         const { rows } = await sql`
-        INSERT INTO players (username, password, email, name, primogems, pitycounter)
+        INSERT INTO users (username, password, email, name, primogems, pitycounter)
         VALUES (${username}, ${hashedPassword}, ${email}, ${name}, 0, 0)
         RETURNING *
         `;

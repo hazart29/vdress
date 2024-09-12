@@ -8,14 +8,18 @@ export default function MenuButton() {
         if (menu === 'logout') {
             // Clear session token from localStorage
             sessionStorage.removeItem('sessionToken');
+            sessionStorage.removeItem('userId');
+            localStorage.removeItem('user');
 
             // Redirect to login page
             router.push('/');
         } else if (menu === 'outfit') {
             router.push('/main/outfit');
-        } else if (menu === 'gacha_genshin') {
-            router.push('/main/gacha/genshin');
-        }
+        } else if (menu === 'gacha_a') {
+            router.push('/main/gacha/gacha_a');
+        } //else if (menu === 'gacha_b') {
+            //router.push('/main/test');
+        //}
     }
 
 
@@ -37,28 +41,28 @@ export default function MenuButton() {
                 {/* Tombol Gacha */}
                 <button
                     type="button"
-                    onClick={() => handleMenu('gacha_genshin')}
+                    onClick={() => handleMenu('gacha_a')}
                     className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 ease-in-out"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
                         <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
                     </svg>
                     <span className="flex gap-4 text-4xl">
-                        <Image src={'/ui/Genshin_Impact_logo.svg'} height={36} width={100} alt="genshin-logo"/>
-                        <p>Gacha</p>
+                        {/*<Image src={'/ui/Genshin_Impact_logo.svg'} height={36} width={100} alt="genshin-logo"/>*/}
+                        <p>Gacha A</p>
                     </span>
                 </button>
                 <button
                     type="button"
-                    onClick={() => handleMenu('gacha')}
+                    onClick={() => handleMenu('gacha_b')}
                     className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 ease-in-out"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-credit-card-2-back-fill" viewBox="0 0 16 16">
                         <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1z" />
                     </svg>
                     <span className="flex gap-4 text-4xl">
-                        <Image src={'/ui/Tower_of_Fantasy_logo.svg'} height={36} width={75} alt="genshin-logo"/>
-                        <p>Gacha</p>
+                        {/*<Image src={'/ui/Tower_of_Fantasy_logo.svg'} height={36} width={75} alt="tof-logo" />*/}
+                        <p>Gacha B</p>
                     </span>
                 </button>
 

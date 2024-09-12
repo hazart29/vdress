@@ -5,43 +5,54 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image'
 import Modal from '@/app/component/modal';
 import GenshinResource from '@/app/component/GenshinResource';
+import ErrorAlert from '@/app/component/ErrorAlert';
 
 interface InventoryItem {
-    player_id: number;
+    uid: number;
     rarity: string;
     item_name: string;
-    source: string | null;
-    alt: string | null;
-    type: string | null;
+    part_outfit: string | null;
     date: string | null;
 }
 
-interface Players {
-    id: number;
+interface users {
+    uid: number;
     username: string;
     password: string;
     email: string;
     name: string;
     primogems: number;
     pitycounter: number;
-    date: string;
+    rate_on: boolean;
+    created_at: string;
     inventory: InventoryItem[];
 }
 
-interface players {
-    players: Players[];
+interface users {
+    users: users[];
+}
+
+interface pulledItem {
+    id: number;
+    item_name: string;
+    part_outfit: string;
+    rarity: string;
+    rate_up: boolean;
+    type: string;
 }
 
 const GenshinWishBanner = () => {
-    const WishBanner = 'nonse';
+    const WishBanner = '/banner/banner_seifuku.webp';
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [sumGacha, setSumGacha] = useState(0);
-    const [data, setData] = useState<players | null>(null);
+    const [data, setData] = useState<users | null>(null);
+    const [pulledItem, setPulledItem] = useState<pulledItem | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const banner = '/banner/banner_seifuku.webp';
     const loading = '/ui/iconVD.svg';
+    const userId = sessionStorage.getItem('userId');
 
     let baseSSRProbability: number = 0.006;
     let baseSRProbability: number = 0.051;
@@ -50,25 +61,23 @@ const GenshinWishBanner = () => {
     let pity: number = 0;
 
     useEffect(() => {
-        async function getData() {
-            const user = localStorage.getItem('user');
-
+        async function getData(userId: number) {
             const response = await fetch('/api/db', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ user }),
+                body: JSON.stringify({ userId }),
             });
 
             if (!response.ok) {
-                throw new Error('data failed');
+                return <ErrorAlert message='terjadi kesalahan muat ulang kembali' />
             }
             const reqData = await response.json();
             setData(reqData);
         }
 
-        getData();
+        getData(Number(userId));
     }, []);
 
     const handleVideoEnd = async () => {
@@ -97,8 +106,7 @@ const GenshinWishBanner = () => {
     };
 
     async function fetchApiGacha(typeFetch: string, dataFetch: any) {
-        const user = localStorage.getItem('user');
-        const data = { user, typeFetch, dataFetch };
+        const data = { userId, typeFetch, dataFetch };
 
         const response = await fetch('/api/gacha', {
             method: 'POST',
@@ -119,10 +127,13 @@ const GenshinWishBanner = () => {
     class GachaSystem {
         async makeWish() {
             let rarity = this.calculateRarity();
-            let pulledCharacterOrItem = this.pullCharacterOrItem(rarity);
+            let pulledCharacterOrItem = await this.pullCharacterOrItem(rarity);
 
             if (pulledCharacterOrItem) {
+                console.log('pulled : ', pulledCharacterOrItem.rarity);
+
                 const dataFetch = { rarity, item: pulledCharacterOrItem };
+                console.log('datafetch: ', dataFetch)
                 await fetchApiGacha('upInven', dataFetch);
             }
 
@@ -141,17 +152,42 @@ const GenshinWishBanner = () => {
             if (rand < incSSRProbability || (pity + 1) >= 90) {
                 return "SSR";
             } else if (rand < incSRProbability || (pity + 1) % 10 === 0) {
-                return "SR";
+                return "SSR";
             } else {
                 return "R";
             }
         }
 
-        pullCharacterOrItem(rarity: string) {
-            let pulledCharacterOrItem: string;
+        async pullCharacterOrItem(rarity: string) {
+            let pulledCharacterOrItem: any;
+            const dataFetch = { rarity };
+            let data, randomItem;
             if (rarity === "SSR") {
-                pulledCharacterOrItem = "SSR";
+                const rateON = await fetchApiGacha('getRateOn', null);
+                if (rateON) {
+                    data = await fetchApiGacha('getLimitedItem', dataFetch);
+                    const keys = Object.keys(data);
+                    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                    const randomItem = data[randomKey];
+                    console.log(randomItem);
+                    setPulledItem(randomItem);
+                    pulledCharacterOrItem = randomItem;
+                    await fetchApiGacha('setRateOff', null);
+                } else {
+                    data = await fetchApiGacha('getGachaItem', dataFetch);
+                    const keys = Object.keys(data);
+                    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                    const randomItem = data[randomKey];
+                    console.log(randomItem);
+                    setPulledItem(randomItem);
+                    pulledCharacterOrItem = randomItem;
+                    if (randomItem.type === "standard") {
+                        await fetchApiGacha('setRateOn', null);
+                    }
+                }
             } else if (rarity === "SR") {
+                const data = await fetchApiGacha('getGachaItem', dataFetch);
+                console.log('data item gacha : ', data);
                 pulledCharacterOrItem = "SR";
             } else {
                 pulledCharacterOrItem = "R";
@@ -185,11 +221,11 @@ const GenshinWishBanner = () => {
             }
 
             const dataFetch1 = { incPity: pity };
-            await fetchApiGacha('incPity', dataFetch1);
+            //await fetchApiGacha('incPity', dataFetch1);
 
             const primo = (a * 160);
             const dataFetch2 = { primogems: primo };
-            await fetchApiGacha('updatePrimo', dataFetch2);
+            //await fetchApiGacha('updatePrimo', dataFetch2);
             listGacha(tenpull);
         } catch (error) {
             console.error('Error fetching API:', error);
@@ -232,35 +268,44 @@ const GenshinWishBanner = () => {
 
 
     return (
-        <div className={`flex flex-1 items-center justify-center ml-24 flex-col ${style.container}`}>
-            <div className='fixed inset-0 top-0 flex max-h-fit items-center ml-24 justify-between p-8'>
-                <p className='font-bold text-lg'>Genshin Wish</p>
-                <div className='flex gap-2 text-xs'>
-                    <GenshinResource />
+        <>
+            <div className='flex flex-1 gap-4'>
+                <div className='flex flex-none w-[12%] gap-8 justify-end'>
+                    <div className='bg-slate-900 flex flex-none w-1/2'>a</div>
+                </div>
+                <div className='flex flex-1 flex-col'>
+                    <div className='flex p-4 items-center justify-between'>
+                        <p className='font-bold text-lg'>Genshin Wish</p>
+                        <div className='flex gap-2 text-xs'>
+                            <GenshinResource />
+                        </div>
+                    </div>
+                    <div className='flex flex-1 rounded-md justify-end overflow-hidden'>
+                        <img src={WishBanner} alt='Wish Banner' className='flex-none w-3/4 h-full bg-white rounded-md mr-20' />
+                    </div>
+                    <div className='flex justify-between py-4 px-2 max-h-fit text-slate-900'>
+                        <div className='flex gap-2 text-sm'>
+                            <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>Shop</button>
+                            <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>Details</button>
+                            <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>History</button>
+                        </div>
+                        <div className='fixed bottom-0 right-0 p-4 flex gap-4 text-4xl'>
+                            <button onClick={() => openModal(1)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 1x</button>
+                            <button onClick={() => openModal(10)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 10x</button>
+                        </div>
+                    </div>
+
+                    <Modal isOpen={isModalOpen} onClose={closeModal}>
+                        <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
+                        <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
+                            <source src="/video/gacha.mp4" type="video/mp4" />
+                        </video>
+                    </Modal>
                 </div>
             </div>
-            <div className='flex flex-none items-center bg-white w-4/5 h-[75%] justify-center ml-20 rounded-md'>
-                <img src={WishBanner} alt='Wish Banner' />
-            </div>
-            <div className='fixed w-full bottom-0 flex max-h-fit items-end justify-between p-8 text-slate-900'>
-                <div className='flex gap-2 text-sm ml-36'>
-                    <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>Shop</button>
-                    <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>Details</button>
-                    <button className='bg-gray-300 py-1 px-10 rounded-full border border-gray-600 hover:bg-gray-400 shadow-md'>History</button>
-                </div>
-                <div className='mr-20 flex gap-4 text-4xl'>
-                    <button onClick={() => openModal(1)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 1x</button>
-                    <button onClick={() => openModal(10)} className='rounded-full py-4 px-10 shadow-md border border-yellow-500 hover:bg-yellow-300 bg-white'>Wish 10x</button>
-                </div>
-            </div>
-            <Modal isOpen={isModalOpen} onClose={closeModal}>
-                <div id='diDapat' className='flex flex-wrap w-full h-full justify-center items-center gap-1 p-4'></div>
-                <video ref={videoRef} id='video' onEnded={handleVideoEnd} className='flex absolute z-[999] bg-black left-0 top-0 w-auto h-screen' autoPlay muted>
-                    <source src="/video/gacha.mp4" type="video/mp4" />
-                </video>
-            </Modal>
-        </div>
+        </>
     );
+
 }
 
 export default GenshinWishBanner;

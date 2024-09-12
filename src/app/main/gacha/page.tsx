@@ -13,7 +13,7 @@ interface InventoryItem {
     date: string | null;
 }
 
-interface Players {
+interface users {
     id: number;
     username: string;
     password: string;
@@ -25,15 +25,15 @@ interface Players {
     inventory: InventoryItem[];
 }
 
-interface players {
-    players: Players[];
+interface users {
+    users: users[];
 }
 
 export default function Page() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [sumGacha, setSumGacha] = useState(0);
-    const [data, setData] = useState<players | null>(null);
+    const [data, setData] = useState<users | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const banner = '/banner/banner_seifuku.webp';
     const loading = '/ui/iconVD.svg';
