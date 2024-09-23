@@ -127,7 +127,7 @@ const CanvasComponent: React.FC = () => {
       ctx.drawImage(modelImage, startX, startY, newWidth, newHeight);
     };
 
-    modelImage.src = '/avatar/model.svg';
+    modelImage.src = '/avatar/avatar.svg';
     setIsLoading(false);
   };
 
@@ -252,7 +252,7 @@ const CanvasComponent: React.FC = () => {
           <BackButton />
           <DownloadButton onClick={handleDownload} />
         </div>
-        <canvas id='avatar' ref={canvasRef} className={`max-h-[450px] tall:s:max-h-[600px] talles:s:max-h-[650px] tallesmax:s:max-h-[750px] transition-transform duration-1000 transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={1700} height={4500} />
+        <canvas id='avatar' ref={canvasRef} className={`transition-transform duration-1000 h-full transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={1700} height={4500} />
         <form onSubmit={fetchOutfitItem} className={`flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
           <OutfitComponent loc="top" src={topImage} openModal={() => openModal('top')} />
           <OutfitComponent loc="bottom" src={botImage} openModal={() => openModal('bottom')} />
