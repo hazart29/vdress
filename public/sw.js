@@ -2,7 +2,6 @@
 
 const CACHE_NAME = 'VD-Cache';
 const urlsToCache = [
-  '/',
   '/offline',
   '/avatar/model.svg',
   '/ui/btn_gacha.svg',
@@ -55,33 +54,15 @@ self.addEventListener('activate', (event) => {
 // Fetch event
 self.addEventListener('fetch', (event) => {
   if (isDevelopment) {
-    // Jika dalam mode pengembangan, nonaktifkan Service Worker
     console.log('development mode sw disabled')
     return;
-  } else if (event.request.mode === 'navigate' ||
-    (event.request.method === 'GET' &&
-      event.request.headers.get('accept').includes('text/html'))) {
+  } else {
+    // Semua permintaan, termasuk API, langsung diteruskan ke server
+    // Tidak ada caching
     event.respondWith(
-      fetch(event.request.url)
+      fetch(event.request)
         .catch(() => {
           return caches.match('/offline');
-        })
-    );
-  } else if (event.request.method !== 'POST') {
-    event.respondWith(
-      caches.open(CACHE_NAME)
-        .then((cache) => {
-          return cache.match(event.request)
-            .then((response) => {
-              return response || fetch(event.request)
-                .then((networkResponse) => {
-                  cache.put(event.request, networkResponse.clone());
-                  return networkResponse;
-                })
-                .catch(() => {
-                  return caches.match('/offline');
-                });
-            });
         })
     );
   }
