@@ -38,14 +38,18 @@ const CanvasComponent: React.FC = () => {
   const userId = sessionStorage.getItem('userId');
 
   useEffect(() => {
-    // load data wardrobe
+    // load data suited
     const fetchData = async () => {
       try {
         const response = await fetch('/api/outfit', {
-          method: 'GET',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-store',
+          },
+          cache: 'no-store',
+          next: {
+            revalidate: 1,
           },
         });
 
@@ -65,72 +69,70 @@ const CanvasComponent: React.FC = () => {
     };
 
     fetchData();
-    // Load image into canvas element
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
 
-    if (!canvas || !ctx) return;
-
-    loadImage(ctx);
-    setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    console.log('ward: ', wardrobe)
     if (wardrobe) {
-      setTopImage(`/outfit/A/${wardrobe.a}.png`);
-      setBotImage(`/outfit/B/${wardrobe.b}.png`);
-      setFeetImage(`/outfit/C/${wardrobe.c}.png`);
+      setTopImage(`/outfit/A/${wardrobe.a}.svg`);
+      setBotImage(`/outfit/B/${wardrobe.b}.svg`);
+      setFeetImage(`/outfit/C/${wardrobe.c}.svg`);
     } else {
       // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
     }
+  }, [wardrobe]);
 
+  useEffect(() => {
     if (topImage && botImage && feetImage) {
       // Load image into canvas element
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
+      let doneLoad: boolean = false;
 
-      if (!canvas || !ctx) return;
+      if (!canvas || !ctx) {
+        return;
+      } else {
+        loadAvatar(ctx);
+        setIsVisible(true);
+        doneLoad = true
+      }
 
-      loadImage(ctx);
-
-      drawFeetClothing(ctx, feetImage);
-      drawBottomClothing(ctx, botImage);
-      drawTopClothing(ctx, topImage);
-
+      if (doneLoad) {
+        // Draw clothing items in the correct order
+        drawClothingItem(ctx, topImage);
+        drawClothingItem(ctx, feetImage);
+        drawClothingItem(ctx, botImage);
+      }
     } else {
-      console.warn('No top image found');
+      console.warn('No outif image found');
     }
-  }, [topImage, wardrobe]);
+  }, [topImage, botImage, feetImage]);
 
-  const loadImage = (ctx: CanvasRenderingContext2D) => {
+  const loadAvatar = (ctx: CanvasRenderingContext2D) => {
     setIsLoading(true);
     const modelImage = new Image();
 
     modelImage.onload = () => {
-      // Dapatkan lebar dan tinggi gambar sebenarnya
+      // Get actual width and height of the image
       const imageWidth = modelImage.width;
       const imageHeight = modelImage.height;
 
-      // Hitung faktor skala untuk menyesuaikan dengan canvas
+      // Calculate scale factor to fit the canvas
       const canvasWidth = ctx.canvas.width;
       const canvasHeight = ctx.canvas.height;
       const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
 
-      // Hitung lebar dan tinggi gambar baru setelah scaling
+      // Calculate new width and height after scaling
       const newWidth = imageWidth * scaleFactor;
       const newHeight = imageHeight * scaleFactor;
 
-      // Hitung posisi tengah canvas
+      // Calculate center position of the canvas
       const centerX = canvasWidth / 2;
       const centerY = canvasHeight / 2;
 
-      // Hitung posisi awal untuk menggambar gambar di tengah
+      // Calculate starting position to draw the image in the center
       const startX = centerX - newWidth / 2;
       const startY = centerY - newHeight / 2;
 
-      // Gambar gambar dengan posisi dan ukuran yang telah dihitung
+      // Draw the image with calculated position and size
       ctx.drawImage(modelImage, startX, startY, newWidth, newHeight);
     };
 
@@ -138,93 +140,35 @@ const CanvasComponent: React.FC = () => {
     setIsLoading(false);
   };
 
-  const drawTopClothing = (ctx: CanvasRenderingContext2D, src: string) => {
+  const drawClothingItem = (ctx: CanvasRenderingContext2D, src: string) => {
     setIsLoading(true);
     const clothingImage = new Image();
     clothingImage.onload = () => {
-      // Dapatkan lebar dan tinggi gambar sebenarnya
+      // Get actual width and height of the image
       const imageWidth = clothingImage.width;
       const imageHeight = clothingImage.height;
 
-      // Hitung faktor skala untuk menyesuaikan dengan canvas
+      // Calculate scale factor to fit the canvas
       const canvasWidth = ctx.canvas.width;
       const canvasHeight = ctx.canvas.height;
       const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
 
-      // Hitung lebar dan tinggi gambar baru setelah scaling
+      // Calculate new width and height after scaling
       const newWidth = imageWidth * scaleFactor;
       const newHeight = imageHeight * scaleFactor;
 
-      // Hitung posisi tengah canvas
+      // Calculate center position of the canvas
       const centerX = canvasWidth / 2;
       const centerY = canvasHeight / 2;
 
-      // Hitung posisi awal untuk menggambar gambar di tengah
+      // Calculate starting position to draw the image in the center
       const startX = centerX - newWidth / 2;
       const startY = centerY - newHeight / 2;
 
-      ctx.drawImage(clothingImage, startX, startY, newWidth, newHeight);
-    };
-    clothingImage.src = src;
-    setIsLoading(false);
-  };
+      // Ubah mode compositing untuk membuat efek overlay
+      ctx.globalCompositeOperation = 'destination-over';
 
-  const drawBottomClothing = (ctx: CanvasRenderingContext2D, src: string) => {
-    setIsLoading(true);
-    const clothingImage = new Image();
-    clothingImage.onload = () => {
-      // Dapatkan lebar dan tinggi gambar sebenarnya
-      const imageWidth = clothingImage.width;
-      const imageHeight = clothingImage.height;
-
-      // Hitung faktor skala untuk menyesuaikan dengan canvas
-      const canvasWidth = ctx.canvas.width;
-      const canvasHeight = ctx.canvas.height;
-      const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
-
-      // Hitung lebar dan tinggi gambar baru setelah scaling
-      const newWidth = imageWidth * scaleFactor;
-      const newHeight = imageHeight * scaleFactor;
-
-      // Hitung posisi tengah canvas
-      const centerX = canvasWidth / 2;
-      const centerY = canvasHeight / 2;
-
-      // Hitung posisi awal untuk menggambar gambar di tengah
-      const startX = centerX - newWidth / 2;
-      const startY = centerY - newHeight / 2;
-
-      ctx.drawImage(clothingImage, startX, startY, newWidth, newHeight);
-    };
-    clothingImage.src = src;
-    setIsLoading(false);
-  };
-
-  const drawFeetClothing = (ctx: CanvasRenderingContext2D, src: string) => {
-    setIsLoading(true);
-    const clothingImage = new Image();
-    clothingImage.onload = () => {
-      // Dapatkan lebar dan tinggi gambar sebenarnya
-      const imageWidth = clothingImage.width;
-      const imageHeight = clothingImage.height;
-
-      // Hitung faktor skala untuk menyesuaikan dengan canvas
-      const canvasWidth = ctx.canvas.width;
-      const canvasHeight = ctx.canvas.height;
-      const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
-
-      // Hitung lebar dan tinggi gambar baru setelah scaling
-      const newWidth = imageWidth * scaleFactor;
-      const newHeight = imageHeight * scaleFactor;
-
-      // Hitung posisi tengah canvas
-      const centerX = canvasWidth / 2;
-      const centerY = canvasHeight / 2;
-
-      // Hitung posisi awal untuk menggambar gambar di tengah
-      const startX = centerX - newWidth / 2;
-      const startY = centerY - newHeight / 2;
-
+      // Draw the image with calculated position and size
       ctx.drawImage(clothingImage, startX, startY, newWidth, newHeight);
     };
     clothingImage.src = src;
@@ -321,9 +265,9 @@ const CanvasComponent: React.FC = () => {
         </div>
         <canvas id='avatar' ref={canvasRef} className={`transition-transform duration-1000 h-full transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={2000} height={4000} />
         <form onSubmit={fetchOutfitItem} className={`flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-          <OutfitComponent loc="top" src={topImage} openModal={() => openModal('top')} />
-          <OutfitComponent loc="bottom" src={botImage} openModal={() => openModal('bottom')} />
-          <OutfitComponent loc="feet" src={feetImage} openModal={() => openModal('feet')} />
+          <OutfitComponent loc="top" src={`/icons/${topImage}`} openModal={() => openModal('top')} />
+          <OutfitComponent loc="bottom" src={`/icons/${botImage}`} openModal={() => openModal('bottom')} />
+          <OutfitComponent loc="feet" src={`/icons/${feetImage}`} openModal={() => openModal('feet')} />
 
           <ModalWardrobe isOpen={isModalOpen} onClose={closeModal}>
             <div className='flex flex-1 items-center justify-start p-2 select-none gap-3' >

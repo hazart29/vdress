@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import Backsound from "./component/backsound";
-import type { AppProps } from 'next/app';
-import PWAInstallPrompt from '@/app/component/PWAInstallPompt';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -76,11 +71,7 @@ export default function RootLayout({
     <html lang="en">
       <link crossOrigin="use-credentials" rel="manifest" href="/manifest.json" />
       <body contextMenu="return false" className={inter.className}>
-        <Analytics />
-        <SpeedInsights />
-        {/* <Backsound /> */}
-        <div className="landscape:hidden lg:hidden pointer-events-none bg-slate-900 text-yellow-600 flex h-screen w-screen items-center justify-center"><p className="animate-pulse text-center font-sans font-bold text-lg ">please rotate your phone to landscape!</p></div>
-        <div className='relative portrait:hidden select-none h-screen bg-gradient-to-br from-blue-500 to-purple-500 flex flex-1 flex-col items-center justify-center'>
+        <div className='relative select-none h-screen bg-gradient-to-br from-blue-500 to-purple-500 flex flex-1 flex-col items-center justify-center'>
           <div className="absolute inset-0 flex items-center justify-center z-50">
             {children}
           </div>

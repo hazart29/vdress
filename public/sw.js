@@ -3,6 +3,18 @@
 const CACHE_NAME = 'VD-Cache';
 const urlsToCache = [
   '/offline',
+  '/outfit/A/maidA.svg',
+  '/outfit/A/mikoA.svg',
+  '/outfit/A/seifukuA.svg',
+  '/outfit/A/policeA.svg',
+  '/outfit/B/maidB.svg',
+  '/outfit/B/mikoB.svg',
+  '/outfit/B/seifukuB.svg',
+  '/outfit/B/policeB.svg',
+  '/outfit/C/maidC.svg',
+  '/outfit/C/mikoC.svg',
+  '/outfit/C/seifukuC.svg',
+  '/outfit/C/policeC.svg',
   '/avatar/model.svg',
   '/ui/btn_gacha.svg',
   '/ui/btn_home.svg',
@@ -18,7 +30,7 @@ const urlsToCache = [
 ];
 
 // Tentukan apakah aplikasi berada dalam mode pengembangan atau produksi
-const isDevelopment = true; // Ganti dengan logika sesuai dengan kebutuhan Anda
+const isDevelopment = false; // Ganti dengan logika sesuai dengan kebutuhan Anda
 
 // Install service worker
 self.addEventListener('install', (event) => {

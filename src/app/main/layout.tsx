@@ -3,6 +3,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { jwtDecode } from 'jwt-decode';
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import Backsound from "../component/backsound";
 
 export default function Layout({
     children,
@@ -58,7 +61,11 @@ export default function Layout({
 
     return (
         <div id="s" className="overflow-hidden flex flex-1 h-screen w-full">
-            <div className='relative flex flex-1 text-white'>
+            <Analytics />
+            <SpeedInsights />
+            <Backsound />
+            <div className="landscape:hidden lg:hidden pointer-events-none bg-slate-900 text-yellow-600 flex h-screen w-screen items-center justify-center"><p className="animate-pulse text-center font-sans font-bold text-lg ">please rotate your phone to landscape!</p></div>
+            <div className=' portrait:hidden relative flex flex-1 text-white'>
                 {children}
             </div>
         </div>

@@ -26,7 +26,7 @@ function Home() {
     }
 
     if ((window.matchMedia('(display-mode: fullscreen)').matches) || (window.matchMedia('(display-mode: standalone)').matches)) {
-      setIsInstalled(true);
+       setIsInstalled(true);
     }
 
 
@@ -37,7 +37,7 @@ function Home() {
   }
 
   if (!isInstalled) {
-    return <PWAInstallPrompt />;
+  return <PWAInstallPrompt />;
   }  
 
   return (
