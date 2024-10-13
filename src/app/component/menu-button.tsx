@@ -15,11 +15,13 @@ export default function MenuButton() {
             router.push('/');
         } else if (menu === 'outfit') {
             router.push('/main/outfit');
+        } else if (menu === 'shop') {
+            router.push('/main/shop');
         } else if (menu === 'gacha_a') {
             router.push('/main/gacha/gacha_a');
-        } //else if (menu === 'gacha_b') {
-        //router.push('/main/test');
-        //}
+        } else if (menu === 'gacha_b') {
+            router.push('/main/gacha/gacha_b');
+        }
     }
 
 

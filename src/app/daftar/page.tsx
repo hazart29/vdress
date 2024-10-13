@@ -4,14 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from 'next/image';
 import ModalAlert from "../component/ModalAlert";
+import React from "react";
 
 interface FormData {
     username: string;
     password: string;
     email: string;
     name: string;
-    primogems: number;
-    pitycounter: number;
 }
 
 export default function Daftar() {
@@ -31,14 +30,14 @@ export default function Daftar() {
 
     const handleConfirmModal = () => {
         setIsModalOpen(false);
-        router.push('/'); // Redirect to login page after successful registration
+        router.push('/');
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
             ...prevData,
-            [name]: name === 'primogems' || name === 'pitycounter' ? Number(value) : value
+            [name]: value
         }) as FormData);
     };
 
@@ -46,13 +45,11 @@ export default function Daftar() {
         e.preventDefault();
 
         if (formData) {
-            const { username, password, email, name, primogems, pitycounter } = formData;
+            const { username, password, email, name } = formData;
 
             if (username && password && email && name) {
                 const dataToSend = {
                     ...formData,
-                    primogems: primogems ?? 0,
-                    pitycounter: pitycounter ?? 0
                 };
 
                 console.log(dataToSend);
@@ -125,24 +122,6 @@ export default function Daftar() {
                         value={formData?.name ?? ''}
                         onChange={handleChange}
                     />
-                    <input
-                        className="border p-2 w-full"
-                        type="number"
-                        name="primogems"
-                        placeholder="Primogems"
-                        value={formData?.primogems ?? 0}
-                        onChange={handleChange}
-                        hidden
-                    />
-                    <input
-                        className="border p-2 w-full"
-                        type="number"
-                        name="pitycounter"
-                        placeholder="Pity Counter"
-                        value={formData?.pitycounter ?? 0}
-                        onChange={handleChange}
-                        hidden
-                    />
                     <label className="inline-flex items-center">
                         <input
                             type="checkbox"
@@ -155,15 +134,16 @@ export default function Daftar() {
                     <div className="flex md:flex-row flex-col gap-4 justify-center items-center">
                         <Link href="/">
                             <button
-                                className="flex-1 bg-transparent border-2 border-white text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300">
+                                className="flex-1 bg-transparent border-2 border-white text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
+                            >
                                 BACK
                             </button>
                         </Link>
                         <button
                             type="submit"
                             className={`flex-1 bg-transparent border-2 font-bold py-2 px-4 rounded-lg transition-all duration-300 ${isChecked
-                                    ? 'border-white text-white hover:bg-blue-500 hover:text-white hover:border-blue-500'
-                                    : 'border-gray-400 text-gray-400 cursor-not-allowed'
+                                ? 'border-white text-white hover:bg-blue-500 hover:text-white hover:border-blue-500'
+                                : 'border-gray-400 text-gray-400 cursor-not-allowed'
                                 }`}
                             disabled={!isChecked}
                         >

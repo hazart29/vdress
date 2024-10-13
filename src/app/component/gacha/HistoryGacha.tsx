@@ -1,0 +1,169 @@
+import { useEffect, useState } from "react";
+import { HistoryGachaA } from "@/app/interface";
+import ErrorAlert from "../ErrorAlert";
+
+const HistoryGacha = () => {
+  const [gachaList, setGachaList] = useState<HistoryGachaA[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  useEffect(() => {
+    fetchHistoryApi("getHistory", null);
+  }, []);
+
+  const fetchHistoryApi = async (typeFetch: string, dataFetch?: any) => {
+    try {
+      const userId = sessionStorage.getItem('userId');
+
+      const url = new URL('/api/gacha', window.location.origin);
+      url.searchParams.set('userId', userId!);
+      url.searchParams.set('typeFetch', typeFetch);
+
+      if (dataFetch) {
+        for (const key in dataFetch) {
+          url.searchParams.set(key, dataFetch[key]);
+        }
+      }
+
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      switch (typeFetch) {
+        case "getHistory":
+          const reqData: HistoryGachaA[] = await response.json();
+          setGachaList(reqData);
+          break;
+        default:
+          const responseData = await response.json();
+          return responseData;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return <ErrorAlert message='Terjadi kesalahan. Muat ulang kembali.' />;
+    }
+  }
+
+  // Urutkan gachaList berdasarkan gacha_time secara descending (terbaru duluan)
+  const sortedGachaList = [...gachaList].sort(
+    (a, b) => new Date(b.gacha_time).getTime() - new Date(a.gacha_time).getTime()
+  );
+
+  // Logika untuk pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedGachaList.slice(indexOfFirstItem, indexOfLastItem);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Hitung total halaman
+  const totalPages = Math.ceil(sortedGachaList.length / itemsPerPage);
+
+  // Logika untuk pagination boundaries dan siblings
+  const siblings = 1; // Jumlah sibling di setiap sisi halaman aktif
+  const boundaries = 1; // Jumlah boundary di awal dan akhir
+
+  const range = (start: number, end: number) => {
+    let length = end - start + 1;
+    return Array.from({ length }, (_, idx) => idx + start);
+  };
+
+  const paginationRange = () => {
+    const totalNumbers = siblings * 2 + 3 + boundaries * 2;
+    if (totalPages <= totalNumbers) {
+      return range(1, totalPages);
+    }
+
+    const leftSiblingIndex = Math.max(currentPage - siblings, boundaries);
+    const rightSiblingIndex = Math.min(
+      currentPage + siblings,
+      totalPages - boundaries
+    );
+
+    const shouldShowLeftDots = leftSiblingIndex > boundaries + 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - boundaries - 1;
+
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      let leftItemCount = 3 + 2 * siblings;
+      let leftRange = range(1, leftItemCount);
+      return [...leftRange, -1, totalPages];
+    }
+
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      let rightItemCount = 3 + 2 * siblings;
+      let rightRange = range(
+        totalPages - rightItemCount + 1,
+        totalPages
+      );
+      return [1, -1, ...rightRange];
+    }
+
+    if (shouldShowLeftDots && shouldShowRightDots) {
+      let middleRange = range(leftSiblingIndex, rightSiblingIndex);
+      return [1, -1, ...middleRange, -1, totalPages];
+    }
+  };
+
+  return (
+    <>
+      <div className="container flex gap-6 flex-col mx-auto p-4">
+        <div className="flex flex-none flex-wrap p-2">
+          <p className="text-black font-thin text-justify">
+            The Gacha History page provides a detailed record of all your previous gacha pulls. This allows you to review which items you've obtained, when you obtained them, and from which banner they came. Each record includes the item's name, rarity, outfit part, gacha type, and the exact time of the pull. This information can be useful for tracking your gacha spending, remembering which outfit you've acquired, and analyzing your luck over time.
+          </p>
+        </div>
+        <table className="table-auto w-full border-collapse text-2xl">
+          <thead>
+            <tr className="bg-amber-500">
+              <th className="p-4 text-left">Part Outfit</th>
+              <th className="p-4 text-left">Item Name</th>
+              <th className="p-4 text-left">Gacha Type</th>
+              <th className="p-4 text-left">Gacha Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map((gacha) => (
+              <tr key={gacha.gacha_time} className="border-b border-amber-800 bg-amber-100 text-gray-500">
+                <td className="px-4 py-2">{gacha.part_outfit || '-'}</td>
+                <td className="px-4 py-2">
+                  <span className={`${gacha.rarity === 'SSR' ? 'text-yellow-600' : gacha.rarity === 'SR' ? 'text-purple-500' : ''}`}>
+                    {gacha.item_name}
+                  </span>
+                </td>
+                <td className="px-4 py-2">{gacha.gacha_type}</td>
+                <td className="px-4 py-2">{gacha.gacha_time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        <div className="flex justify-center mt-4">
+          {paginationRange()?.map((pageNumber, index) => (
+            <button
+              key={index}
+              onClick={() => paginate(pageNumber)}
+              className={`px-3 py-1 rounded-md mx-1 ${
+                currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-600"
+              } ${pageNumber === -1 ? "pointer-events-none" : ""}`} // Nonaktifkan klik pada "..."
+              disabled={pageNumber === -1} // Nonaktifkan tombol "..."
+            >
+              {pageNumber === -1 ? "..." : pageNumber}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default HistoryGacha;

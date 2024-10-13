@@ -1,23 +1,22 @@
-import { useRouter } from "next/navigation";
+// components/BackButton.js
 
-const BackButton = () => {
-    const navigate = useRouter();
+import React from 'react';
+import Link from 'next/link';
 
-    const handleClose = () => {
-        navigate.back();
-    }
-
-    return (
-        <>
-            <span className='rounded-full flex relative scale-125 bg-gray-400 text-xs py-4 px-4 ml-6 transition-all ease-in-out duration-100 hover:scale-150'>
-                <button onClick={() => handleClose()} className='absolute inset-0 m-1 flex items-center justify-center rounded-full bg-white text-slate-900'>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-12">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </span>
-        </>
-    );
+interface BackButtonProps {
+    href: string;
 }
+
+const BackButton: React.FC<BackButtonProps> = ({ href }) => {
+    return (
+        <Link href={href}>
+            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-left-square-fill" viewBox="0 0 16 16">
+                    <path d="M16 14a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zm-4.5-6.5H5.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L5.707 8.5H11.5a.5.5 0 0 0 0-1" />
+                </svg>
+            </button>
+        </Link>
+    );
+};
 
 export default BackButton;

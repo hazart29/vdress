@@ -26,6 +26,10 @@ interface outfitData {
 
 const CanvasComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const avatarRef = useRef<HTMLCanvasElement>(null);
+  const topRef = useRef<HTMLCanvasElement>(null);
+  const bottomRef = useRef<HTMLCanvasElement>(null);
+  const feetRef = useRef<HTMLCanvasElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [wardrobe, setWardrobe] = useState<clothes>();
   const [topImage, setTopImage] = useState('');
@@ -38,38 +42,10 @@ const CanvasComponent: React.FC = () => {
   const userId = sessionStorage.getItem('userId');
 
   useEffect(() => {
-    // load data suited
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/outfit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
-          },
-          cache: 'no-store',
-          next: {
-            revalidate: 1,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const data = await response.json();
-        console.log(data[0])
-        if (data) {
-          setWardrobe(data[0]);
-        } else {
-          console.log('No data found');
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchData();
+  }, []);
 
+  useEffect(() => {
     if (wardrobe) {
       setTopImage(`/outfit/A/${wardrobe.a}.svg`);
       setBotImage(`/outfit/B/${wardrobe.b}.svg`);
@@ -78,36 +54,65 @@ const CanvasComponent: React.FC = () => {
       // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
     }
-  }, [wardrobe]);
 
-  useEffect(() => {
     if (topImage && botImage && feetImage) {
-      // Load image into canvas element
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext('2d');
-      let doneLoad: boolean = false;
+      // Load image into canvas elements
+      const cAvatar = avatarRef.current;
+      const catx = cAvatar?.getContext('2d');
+      const cTop = topRef.current;
+      const cttx = cTop?.getContext('2d');
+      const cBottom = bottomRef.current;
+      const cbtx = cBottom?.getContext('2d');
+      const cFeet = feetRef.current;
+      const cftx = cFeet?.getContext('2d');
 
-      if (!canvas || !ctx) {
+      if (!cAvatar || !catx || !cTop || !cttx || !cBottom || !cbtx || !cFeet || !cftx) {
         return;
-      } else {
-        loadAvatar(ctx);
-        setIsVisible(true);
-        doneLoad = true
       }
 
-      if (doneLoad) {
-        // Draw clothing items in the correct order
-        drawClothingItem(ctx, topImage);
-        drawClothingItem(ctx, feetImage);
-        drawClothingItem(ctx, botImage);
-      }
+      setIsLoading(true);
+      loadAvatar(catx);
+      setIsVisible(true);
+
+      // Draw clothing items on their respective canvases
+      drawClothingItem(cttx, topImage);
+      drawClothingItem(cbtx, botImage);
+      drawClothingItem(cftx, feetImage);
+
+      setIsLoading(false);
     } else {
       console.warn('No outif image found');
     }
-  }, [topImage, botImage, feetImage]);
+  }, [wardrobe, topImage, botImage, feetImage]);
+
+  // load data suited
+  const fetchData = async () => {
+    try {
+      const response = await fetch('/api/outfit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      const data = await response.json();
+      //console.log(data[0])
+      if (data) {
+        setWardrobe(data[0]);
+      } else {
+        console.log('No data found');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const loadAvatar = (ctx: CanvasRenderingContext2D) => {
-    setIsLoading(true);
     const modelImage = new Image();
 
     modelImage.onload = () => {
@@ -137,11 +142,9 @@ const CanvasComponent: React.FC = () => {
     };
 
     modelImage.src = '/avatar/avatar.svg';
-    setIsLoading(false);
   };
 
   const drawClothingItem = (ctx: CanvasRenderingContext2D, src: string) => {
-    setIsLoading(true);
     const clothingImage = new Image();
     clothingImage.onload = () => {
       // Get actual width and height of the image
@@ -172,7 +175,6 @@ const CanvasComponent: React.FC = () => {
       ctx.drawImage(clothingImage, startX, startY, newWidth, newHeight);
     };
     clothingImage.src = src;
-    setIsLoading(false);
   };
 
   const fetchOutfitItem = async (type: any) => {
@@ -219,7 +221,7 @@ const CanvasComponent: React.FC = () => {
 
       const data = await response.json();
       setOutfitData(data);
-      console.log('outfit: ', outfitData)
+      //console.log('outfit: ', outfitData)
     } catch (error) {
       console.error('Error fetching clothing item:', error);
     }
@@ -229,7 +231,7 @@ const CanvasComponent: React.FC = () => {
     setIsModalOpen(true);
     if (userId) {
       getOutfitItem(loc, Number(userId));
-      console.log('outfit:', outfitData)
+      //console.log('outfit:', outfitData)
     } else {
       console.warn('user id not found!');
     }
@@ -240,13 +242,32 @@ const CanvasComponent: React.FC = () => {
   };
 
   const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const cAvatar = avatarRef.current;
+    const cTop = topRef.current;
+    const cBottom = bottomRef.current;
+    const cFeet = feetRef.current;
 
-    const url = canvas.toDataURL(); // Mengonversi kanvas menjadi URL data gambar
+    if (!cAvatar || !cTop || !cBottom || !cFeet) return;
+
+    // Buat canvas baru dengan ukuran yang sama dengan canvas lainnya
+    const combinedCanvas = document.createElement('canvas');
+    const ctx = combinedCanvas.getContext('2d');
+    combinedCanvas.width = cAvatar.width;
+    combinedCanvas.height = cAvatar.height;
+
+    // Gambar canvas-canvas ke canvas gabungan
+    if (ctx) {
+      ctx.drawImage(cAvatar, 0, 0);
+      ctx.drawImage(cFeet, 0, 0);
+      ctx.drawImage(cBottom, 0, 0);
+      ctx.drawImage(cTop, 0, 0);
+    }
+
+    // Unduh gambar gabungan
+    const url = combinedCanvas.toDataURL();
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'avatar.png'; // Nama file saat diunduh
+    a.download = 'avatar.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -258,13 +279,25 @@ const CanvasComponent: React.FC = () => {
 
   return (
     <>
-      <div className={`relative flex w-screen h-screen justify-center items-center gap-10 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className='absolute flex flex-col gap-8 top-20 right-40 z-50 max-w-fit scale-125'>
-          <BackButton />
+      <div className="relative flex w-screen h-screen justify-center items-center gap-10 transition-opacity duration-1000">
+        <div className="absolute flex flex-col gap-8 top-20 right-40 z-50 max-w-fit scale-125">
+          <BackButton href='/main' />
           <DownloadButton onClick={handleDownload} />
         </div>
-        <canvas id='avatar' ref={canvasRef} className={`transition-transform duration-1000 h-full transform ${isVisible ? 'scale-100' : 'scale-90'}`} width={2000} height={4000} />
-        <form onSubmit={fetchOutfitItem} className={`flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        {isLoading ? (
+          <div className="absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center">
+            <img src={loading} alt="none" width={40} height={40} className="animate-ping" />
+          </div>
+        ) : (
+          <div className="relative flex flex-none w-1/4 flex-shrink transition-transform duration-1000 h-full transform">
+            <canvas id="avatar" ref={avatarRef} className="absolute left-0 h-full z-0" width={2000} height={4000} />
+            <canvas id="oFeet" ref={feetRef} className="absolute inset-0 h-full z-10" width={2000} height={4000} />
+            <canvas id="oBottom" ref={bottomRef} className="absolute inset-0 h-full z-20" width={2000} height={4000} />
+            <canvas id="oTop" ref={topRef} className="absolute inset-0 h-full z-30" width={2000} height={4000} />
+          </div>
+        )}
+
+        <form onSubmit={fetchOutfitItem} className="flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000">
           <OutfitComponent loc="top" src={`/icons/${topImage}`} openModal={() => openModal('top')} />
           <OutfitComponent loc="bottom" src={`/icons/${botImage}`} openModal={() => openModal('bottom')} />
           <OutfitComponent loc="feet" src={`/icons/${feetImage}`} openModal={() => openModal('feet')} />

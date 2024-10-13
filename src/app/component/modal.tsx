@@ -8,14 +8,21 @@ const Modal = ({ isOpen, onClose, children }: Readonly<{
   if (!isOpen) return null;
 
   return (
-    <div className="flex bg-gradient-to-b from-cyan-500 via-blue-700 to-blue-900 absolute inset-0 z-[9999] overflow-hidden w-full h-full top-0 left-0">
-      <div className='flex absolute h-full w-full flex-col inset-0 z-50 select-none bg-hero-patterns items-start p-4 gap-4 top-0'>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm">
+      <div className="fixed inset-0 bg-black opacity-75"></div>
+      <div className="bg-white flex flex-col flex-1 p-4 rounded-lg z-[110]">
         {children}
-        <div className='flex gap-2 justify-end w-full'>
-          <button type='button' onClick={onClose} className='animate-ping p-2 text-white text-md font-bold'>OK{' >'}</button>
+        <div className="flex justify-end mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:outline-none"
+          >
+            Close
+          </button>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 
