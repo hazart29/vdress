@@ -97,21 +97,21 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className='relative flex flex-none w-1/4 flex-col items-center justify-center gap-2'>
+    <div className='relative flex flex-none w-1/3 flex-col items-center justify-center gap-2'>
       <ModalAlert
-        isOpen={isModalOpen} 
-        onConfirm={handleModalConfirm} 
+        isOpen={isModalOpen}
+        onConfirm={handleModalConfirm}
         title="Error"
         imageSrc="/ui/galat_img.svg"
-        >
+      >
         <p>{error}</p>
       </ModalAlert>
-      <form onSubmit={handleSubmit} className='flex flex-col flex-none items-center justify-center gap-2'>
+      <form onSubmit={handleSubmit} className='flex flex-col flex-none w-1/2 items-center justify-center gap-4'>
         <input
           type="email"
           placeholder="Email"
           name="email"
-          className='flex rounded-md p-2 text-black text-sm lg:text-md'
+          className='flex flex-1 w-full rounded-md p-2 text-black text-sm lg:text-md'
           value={formData.email}
           onChange={handleChange}
           required
@@ -120,13 +120,13 @@ const Login: React.FC = () => {
           type="password"
           placeholder="Password"
           name="password"
-          className='flex rounded-md p-2 text-black text-sm lg:text-md'
+          className='flex flex-1 w-full rounded-md p-2 text-black text-sm lg:text-md'
           value={formData.password}
           onChange={handleChange}
           required
         />
 
-        <div className='flex md:flex-row flex-col gap-2 w-full justify-center items-center'>
+        <div className='flex flex-1 gap-2 w-full justify-center items-center'>
           <Link href="/daftar">
             <p
               className="flex-1 bg-transparent border-2 border-white text-white font-bold p-2 rounded-lg hover:bg-white hover:text-green-500 transition-all duration-300">

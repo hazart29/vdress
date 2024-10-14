@@ -333,8 +333,8 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
     return (
         <div className="relative flex flex-col w-full h-screen">
             <div className="relative flex flex-1 flex-col">
-                <div className="absolute w-full p-6 h-10 z-[60] flex flex-row inset-0 top-0 pt-10">
-                    <div className="flex flex-1 justify-start gap-4 items-center">
+                <div className="absolute w-full p-6 lg:h-20 h-16 z-[60] flex flex-row items-center inset-0 top-0">
+                    <div className="flex flex-1 justify-start gap-4 items-center text-xs lg:text-base">
                         <BackButton href="/main" />
                         <p className="font-bold">{activeTab === 'standar' ? 'Symphony of Silk' : 'Whispers of Silk'}</p>
                     </div>
@@ -345,28 +345,28 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
 
                 {activeTab === 'standar' ? <Standard_A /> : <Limited_A />}
             </div>
-            <div className="absolute flex flex-col gap-4 -left-8 bottom-36 z-50">
+            <div className="absolute flex flex-col gap-4 -left-8 lg:bottom-36 bottom-16 z-50">
                 <button
-                    className={`flex flex-1 p-8 shadow-black shadow-xl transform skew-x-12 pl-12 text-2xl font-bold 
+                    className={`flex flex-1 lg:p-8 p-4 shadow-black shadow-xl transform skew-x-12 pl-12 
                     ${activeTab === 'limited' ? 'bg-white opacity-70 text-black' : 'bg-black opacity-50'} 
                     hover:bg-white hover:text-black hover:opacity-100 transition-colors duration-300`}
                     onClick={() => handleTabChange('limited')}
                 >
-                    <p className="transform -skew-x-12">Japanese Miko</p>
+                    <p className="transform -skew-x-12 lg:text-2xl text-xs font-bold">Japanese Miko</p>
                 </button>
                 <button
-                    className={`flex flex-1 p-8  shadow-black shadow-xl transform skew-x-12 pl-12 text-2xl font-bold 
+                    className={`flex flex-1 lg:p-8 p-4  shadow-black shadow-xl transform skew-x-12 pl-12 
                     ${activeTab === 'standar' ? 'bg-white opacity-70 text-black' : 'bg-black opacity-50'} 
                     hover:bg-white hover:text-black hover:opacity-100 transition-colors duration-300`}
                     onClick={() => handleTabChange('standar')}
                 >
-                    <p className="transform -skew-x-12">Symphony of Silk</p>
+                    <p className="transform -skew-x-12 lg:text-2xl text-xs font-bold">Symphony of Silk</p>
                 </button>
             </div>
-            <div className="absolute flex flex-col gap-4 right-16 bottom-16 z-50">
+            <div className="absolute flex flex-col gap-4 lg:right-16 lg:bottom-16 right-8 bottom-6 z-50">
                 <GachaButton onClick={openModal} />
             </div>
-            <div className="absolute flex flex-col gap-4 left-44 bottom-16 z-[70]">
+            <div className="absolute flex flex-col gap-4 lg:left-44 lg:bottom-16 left-10 bottom-4 z-[70]">
                 <MoreBox />
             </div>
 

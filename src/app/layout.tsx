@@ -76,10 +76,10 @@ export default function RootLayout({
             {children}
           </div>
           <div id="bg1" className="absolute inset-0 flex items-center justify-center z-20">
-            <div className="bg-white opacity-30 rounded-full h-96 w-96"></div>
+            <div className="bg-white opacity-30 rounded-full max-h-screen"></div>
           </div>
           <div id="bg2" className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="bg-white opacity-10 rounded-full h-[28rem] w-[28rem]"></div>
+            <div className="bg-white opacity-10 rounded-full max-h-screen"></div>
           </div>
           <div id="bg3" className="absolute inset-0 flex items-center justify-center z-10"/>
         </div>

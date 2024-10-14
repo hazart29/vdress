@@ -61,7 +61,7 @@ const CurrencyResource: React.FC<CurrencyResourceProps> = ({ activeTab }) => {
 
     return (
         <>
-            <div className='flex gap-2 flex-none text-xs p-1 items-center justify-center'>
+            <div className='flex gap-2 flex-none lg:text-xs text-[10px] p-1 items-center justify-center'>
                 <div className='px-2 py-1 items-center justify-center flex rounded-full bg-white w-20'>
                     <p className='text-slate-900'>
                         {userData?.glamour_dust || 0}

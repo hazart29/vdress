@@ -280,7 +280,7 @@ const CanvasComponent: React.FC = () => {
   return (
     <>
       <div className="relative flex w-screen h-screen justify-center items-center gap-10 transition-opacity duration-1000">
-        <div className="absolute flex flex-col gap-8 top-20 right-40 z-50 max-w-fit scale-125">
+        <div className="absolute flex flex-col gap-8 md:top-20 top-50 md:right-40 right-20 z-50 max-w-fit scale-125">
           <BackButton href='/main' />
           <DownloadButton onClick={handleDownload} />
         </div>
