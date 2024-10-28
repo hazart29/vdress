@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import HistoryGacha from './HistoryGacha';
 import InfoGacha from './InfoGacha';
 
-const MoreBox: React.FC = () => {
+const MoreBox: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     const [showModal, setShowModal] = useState(0);
     const router = useRouter();
 
@@ -46,11 +46,11 @@ const MoreBox: React.FC = () => {
             </button>
 
             <ModalBox isOpen={showModal === 2} onClose={handleModalClose} title="Limited Gacha Time">
-                <InfoGacha/>
+                <InfoGacha />
             </ModalBox>
 
             <ModalBox isOpen={showModal === 3} onClose={handleModalClose} title="History Gacha">
-                <HistoryGacha/>
+                <HistoryGacha gachaType={activeTab === "standar" ? "Symphony of Silk" : "Whispers of Silk"} />
             </ModalBox>
         </div>
     );

@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { HistoryGachaA } from "@/app/interface";
 import ErrorAlert from "../ErrorAlert";
 
-const HistoryGacha = () => {
+const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props gachaType
   const [gachaList, setGachaList] = useState<HistoryGachaA[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    fetchHistoryApi("getHistory", null);
-  }, []);
+    fetchHistoryApi("getHistory", { gacha_type: gachaType.toString() }); // Sertakan gachaType di dataFetch
+  }, [gachaType]); // Tambahkan gachaType sebagai dependency
+
 
   const fetchHistoryApi = async (typeFetch: string, dataFetch?: any) => {
     try {
@@ -150,11 +151,10 @@ const HistoryGacha = () => {
             <button
               key={index}
               onClick={() => paginate(pageNumber)}
-              className={`px-3 py-1 rounded-md mx-1 ${
-                currentPage === pageNumber
+              className={`px-3 py-1 rounded-md mx-1 ${currentPage === pageNumber
                   ? "bg-blue-500 text-white"
                   : "bg-gray-200 text-gray-600"
-              } ${pageNumber === -1 ? "pointer-events-none" : ""}`} // Nonaktifkan klik pada "..."
+                } ${pageNumber === -1 ? "pointer-events-none" : ""}`} // Nonaktifkan klik pada "..."
               disabled={pageNumber === -1} // Nonaktifkan tombol "..."
             >
               {pageNumber === -1 ? "..." : pageNumber}

@@ -7,22 +7,7 @@ import DownloadButton from '@/app/component/DownloadButton';
 import CustomImage from 'next/image';
 import OutfitImage from '@/app/component/OutfitImage';
 import UnEquip from '@/app/component/UnEquip';
-
-interface clothes {
-  id: number;
-  uid: number;
-  a: string;
-  b: string;
-  c: string;
-}
-
-interface outfitData {
-  id: number;
-  uid: number;
-  rarity: string;
-  item_name: string;
-  part_outfit: string;
-}
+import { Inventory, Suited } from '@/app/interface';
 
 const CanvasComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,13 +16,13 @@ const CanvasComponent: React.FC = () => {
   const bottomRef = useRef<HTMLCanvasElement>(null);
   const feetRef = useRef<HTMLCanvasElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [wardrobe, setWardrobe] = useState<clothes>();
+  const [wardrobe, setWardrobe] = useState<Suited>();
   const [topImage, setTopImage] = useState('');
   const [botImage, setBotImage] = useState('');
   const [feetImage, setFeetImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [outfitData, setOutfitData] = useState<outfitData[]>([]);
+  const [outfitData, setOutfitData] = useState<Inventory[]>([]);
   const loading = '/ui/iconVD.svg';
   const userId = sessionStorage.getItem('userId');
 
@@ -47,9 +32,9 @@ const CanvasComponent: React.FC = () => {
 
   useEffect(() => {
     if (wardrobe) {
-      setTopImage(`/outfit/A/${wardrobe.a}.svg`);
-      setBotImage(`/outfit/B/${wardrobe.b}.svg`);
-      setFeetImage(`/outfit/C/${wardrobe.c}.svg`);
+      setTopImage(`/outfit/a/${wardrobe.a}.svg`);
+      setBotImage(`/outfit/b/${wardrobe.b}.svg`);
+      setFeetImage(`/outfit/c/${wardrobe.c}.svg`);
     } else {
       // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
@@ -309,19 +294,19 @@ const CanvasComponent: React.FC = () => {
                 outfitData?.length > 0 ? (
                   outfitData?.map((item, index) => (
                     <div key={index}>
-                      {item.part_outfit == 'top' && (
+                      {item.part_outfit.toLowerCase() == 'top' && (
                         <>
-                          <OutfitImage src={`/baju/${item.item_name}.svg`} />
+                          <OutfitImage src={`/outfit/${item.layer}/${item.item_name}.svg`} />
                         </>
                       )}
-                      {item.part_outfit == 'bottom' && (
+                      {item.part_outfit.toLowerCase() == 'bottom' && (
                         <>
-                          <OutfitImage src={`/celana/${item.item_name}.svg`} />
+                          <OutfitImage src={`outfit/${item.layer}/${item.item_name}.svg`} />
                         </>
                       )}
-                      {item.part_outfit == 'feet' && (
+                      {item.part_outfit.toLowerCase() == 'feet' && (
                         <>
-                          <OutfitImage src={`/sepatu/${item.item_name}.svg`} />
+                          <OutfitImage src={`outfit/${item.layer}/${item.item_name}.svg`} />
                         </>
                       )}
                     </div>

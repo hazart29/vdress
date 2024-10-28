@@ -1,11 +1,20 @@
-import ComingSoon from "@/app/component/ComingSoon";
+// app/shop/page.tsx
+"use client";
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-const CanvasComponent: React.FC = () => {
-    return (
-        <>
-            <ComingSoon />
-        </>
-    )
-}
+const Page = () => {
+  const router = useRouter();
 
-export default CanvasComponent;
+  useEffect(() => {
+    router.push('/main/shop/gacha-exchange');
+  }, [router]);
+
+  return (
+    <div>
+      Redirecting to Glimmering Exchange...
+    </div>
+  );
+};
+
+export default Page;

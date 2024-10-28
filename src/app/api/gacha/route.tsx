@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         }
 
         switch (typeFetch) {
-            case 'updatePrimo':
+            case 'updateGems':
                 try {
                     const glamourGems = parseInt(url.searchParams.get('glamour_gems') || '0', 10); // <--- Perbaikan di sini
                     if (isNaN(glamourGems)) {
@@ -61,6 +61,30 @@ export async function POST(req: Request) {
                     return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
                 } else {
                     return NextResponse.json({ message: 'user not found' }, { status: 404 });
+                }
+
+            case 'updateGlimmering_essence':
+                try {
+                    const url = new URL(req.url);
+                    const userId = url.searchParams.get('userId');
+                    const glimmeringEssence = parseInt(url.searchParams.get('glimmering_essence') || '0', 10);
+
+                    if (isNaN(glimmeringEssence)) {
+                        return NextResponse.json({ message: 'Invalid glimmering_essence value' }, { status: 400 });
+                    }
+
+                    // Kurangi glimmering_essence
+                    await sql`
+                        UPDATE user_resources 
+                        SET glimmering_essence = glimmering_essence - ${glimmeringEssence} 
+                        WHERE uid = ${userId}
+                      `;
+
+                    return NextResponse.json({ message: 'Glimmering Essence updated successfully' }, { status: 200 });
+
+                } catch (error) {
+                    console.error('Error updating Glimmering Essence:', error);
+                    return NextResponse.json({ message: 'Failed to update Glimmering Essence', error: error }, { status: 500 });
                 }
 
             case 'incPity':
@@ -169,7 +193,8 @@ export async function POST(req: Request) {
 
             case 'getHistory':
                 try {
-                    const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${userId}`;
+                    const gacha_type = url.searchParams.get('gacha_type');
+                    const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${userId} AND gacha_type = ${gacha_type}`;
                     return NextResponse.json(history.rows, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching history:', error);
@@ -195,6 +220,80 @@ export async function POST(req: Request) {
                 } catch (error) {
                     console.error('Error adding history:', error);
                     return NextResponse.json({ message: 'Error adding history' }, { status: 500 });
+                }
+
+            case 'exchangeGemsForEssence':
+                try {
+                    const url = new URL(req.url);
+                    const userId = url.searchParams.get('userId');
+                    const glamourGems = parseInt(url.searchParams.get('glamour_gems') || '0', 10);
+                    const glimmeringEssence = parseInt(url.searchParams.get('glimmering_essence') || '0', 10);
+
+                    if (isNaN(glamourGems) || isNaN(glimmeringEssence)) {
+                        return NextResponse.json({ message: 'Invalid glamour_gems or glimmering_essence value' }, { status: 400 });
+                    }
+
+                    // 1. Kurangi glamour_gems
+                    await sql`
+                        UPDATE user_resources 
+                        SET glamour_gems = glamour_gems - ${glamourGems} 
+                        WHERE uid = ${userId}
+                      `;
+
+                    // 2. Tambahkan glimmering_essence
+                    await sql`
+                        UPDATE user_resources 
+                        SET glimmering_essence = glimmering_essence + ${glimmeringEssence} 
+                        WHERE uid = ${userId}
+                      `;
+
+                    return NextResponse.json({ message: 'Gems exchanged for essence successfully' }, { status: 200 });
+
+                } catch (error) {
+                    console.error('Error exchanging gems for essence:', error);
+                    return NextResponse.json({ message: 'Failed to exchange gems for essence', error: error }, { status: 500 });
+                }
+
+            case 'updateGlamourDust':
+                try {
+                    const glamourDust = parseInt(url.searchParams.get('glamour_dust') || '0', 10);
+
+                    if (isNaN(glamourDust)) {
+                        return NextResponse.json({ message: 'Invalid glamour_dust value' }, { status: 400 });
+                    }
+
+                    await sql`
+                        UPDATE user_resources 
+                        SET glamour_dust = glamour_dust + ${glamourDust} 
+                        WHERE uid = ${userId}
+                    `;
+
+                    return NextResponse.json({ message: 'Glamour Dust updated successfully' }, { status: 200 });
+
+                } catch (error) {
+                    console.error('Error updating Glamour Dust:', error);
+                    return NextResponse.json({ message: 'Failed to update Glamour Dust', error: error }, { status: 500 });
+                }
+
+                case 'updateFashionTokens': 
+                try {
+                    const glamourDust = parseInt(url.searchParams.get('fashion_tokens') || '0', 10);
+
+                    if (isNaN(glamourDust)) {
+                        return NextResponse.json({ message: 'Invalid fashion_tokens value' }, { status: 400 });
+                    }
+
+                    await sql`
+                        UPDATE user_resources 
+                        SET fashion_tokens = fashion_tokens + ${glamourDust} 
+                        WHERE uid = ${userId}
+                    `;
+
+                    return NextResponse.json({ message: 'fashion_tokens updated successfully' }, { status: 200 });
+
+                } catch (error) {
+                    console.error('Error updating fashion_tokens:', error);
+                    return NextResponse.json({ message: 'Failed to update fashion_tokens', error: error }, { status: 500 });
                 }
 
             default:

@@ -21,6 +21,8 @@ export default function MenuButton() {
             router.push('/main/gacha/gacha_a');
         } else if (menu === 'gacha_b') {
             router.push('/main/gacha/gacha_b');
+        } else if (menu === 'gameplay') {
+            router.push('/main/gameplay');
         }
     }
 
@@ -28,6 +30,18 @@ export default function MenuButton() {
     return (
         <div className="relative flex flex-1 flex-col justify-end items-center">
             <div className="flex flex-1 flex-col gap-4">
+                {/* Tombol Gameplay */}
+                {/* <button
+                    type="button"
+                    onClick={() => handleMenu('gameplay')}
+                    className="flex items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-cyan-300 transition-all duration-100 hover:scale-125 hover:mb-2 ease-in-out"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-person-standing-dress" viewBox="0 0 16 16">
+                        <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-.5 12.25V12h1v3.25a.75.75 0 0 0 1.5 0V12h1l-1-5v-.215a.285.285 0 0 1 .56-.078l.793 2.777a.711.711 0 1 0 1.364-.405l-1.065-3.461A3 3 0 0 0 8.784 3.5H7.216a3 3 0 0 0-2.868 2.118L3.283 9.079a.711.711 0 1 0 1.365.405l.793-2.777a.285.285 0 0 1 .56.078V7l-1 5h1v3.25a.75.75 0 0 0 1.5 0Z" />
+                    </svg>
+                    <p className="flex text-base md:text-4xl">Play Now!</p>
+                </button> */}
+
                 {/* Tombol Outfit */}
                 <button
                     type="button"

@@ -39,6 +39,7 @@ const urlsToCache = [
   '/ui/logoVD.svg',
   '/video/gacha.mp4',
   '/backsound/backsound.mp3',
+  '/background/shop/3d-fantasy-scene.svg',
   '/banner/banner_seifuku.webp'
   // Tambahkan URL lain yang ingin Anda precache di sini
 ];

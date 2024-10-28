@@ -71,15 +71,15 @@ export default function RootLayout({
     <html lang="en">
       <link crossOrigin="use-credentials" rel="manifest" href="/manifest.json" />
       <body contextMenu="return false" className={inter.className}>
-        <div className='relative select-none h-screen bg-gradient-to-br from-blue-500 to-purple-500 flex flex-1 flex-col items-center justify-center'>
+        <div className='relative select-none h-screen bg-gradient-to-br from-blue-500 to-purple-500 flex flex-1 flex-col items-center justify-center overflow-hidden'>
           <div className="absolute inset-0 flex items-center justify-center z-50">
             {children}
           </div>
           <div id="bg1" className="absolute inset-0 flex items-center justify-center z-20">
-            <div className="bg-white opacity-30 rounded-full max-h-screen"></div>
+            {/* <div className="bg-white opacity-30 rounded-full h-96 w-96"></div> */}
           </div>
           <div id="bg2" className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="bg-white opacity-10 rounded-full max-h-screen"></div>
+            {/* <div className="bg-white opacity-10 rounded-full h-64 w-64"></div> */}
           </div>
           <div id="bg3" className="absolute inset-0 flex items-center justify-center z-10"/>
         </div>

@@ -16,6 +16,7 @@ const config: Config = {
         "room": "url('/background/bgroom.svg')",
         "gacha1": "url('/banner/limited/gacha1.svg')",
         "gacha2": "url('/banner/standard/gacha2.svg')",
+        "shop": "url('/background/shop/3d-fantasy-scene.svg')",
       },
       animation: {
         bounce2: 'bounceCustom 4s infinite',
