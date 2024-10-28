@@ -32,9 +32,9 @@ const CanvasComponent: React.FC = () => {
 
   useEffect(() => {
     if (wardrobe) {
-      setTopImage(`/outfit/a/${wardrobe.a}.svg`);
-      setBotImage(`/outfit/b/${wardrobe.b}.svg`);
-      setFeetImage(`/outfit/c/${wardrobe.c}.svg`);
+      setTopImage(`/outfit/A/${wardrobe.a}.svg`);
+      setBotImage(`/outfit/B/${wardrobe.b}.svg`);
+      setFeetImage(`/outfit/C/${wardrobe.c}.svg`);
     } else {
       // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
@@ -296,17 +296,17 @@ const CanvasComponent: React.FC = () => {
                     <div key={index}>
                       {item.part_outfit.toLowerCase() == 'top' && (
                         <>
-                          <OutfitImage src={`/outfit/${item.layer}/${item.item_name}.svg`} />
+                          <OutfitImage src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
                         </>
                       )}
                       {item.part_outfit.toLowerCase() == 'bottom' && (
                         <>
-                          <OutfitImage src={`outfit/${item.layer}/${item.item_name}.svg`} />
+                          <OutfitImage src={`outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
                         </>
                       )}
                       {item.part_outfit.toLowerCase() == 'feet' && (
                         <>
-                          <OutfitImage src={`outfit/${item.layer}/${item.item_name}.svg`} />
+                          <OutfitImage src={`outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
                         </>
                       )}
                     </div>
