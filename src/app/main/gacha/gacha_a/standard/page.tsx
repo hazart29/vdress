@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import BoxItem from "@/app/component/gacha/BoxItem";
@@ -178,13 +179,13 @@ const Standard_A = () => {
                     try {
                         await fetchGachaApi('upInven', dataFetch);
                         await fetchGachaApi('upHistoryA', dataFetch);
-                         // Tambahkan glamour_dust jika rarity R
+                        // Tambahkan glamour_dust jika rarity R
                         if (rarity === "R") {
-                            await fetchGachaApi('updateGlamourDust', { glamour_dust: '15' }); 
+                            await fetchGachaApi('updateGlamourDust', { glamour_dust: '15' });
                         } else if (rarity === "SR") {
-                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '5' }); 
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '5' });
                         } else if (rarity === "SSR") {
-                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '25' }); 
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '25' });
                         }
                     } catch (error) {
                         console.error('Error updating inventory or history:', error);
