@@ -6,6 +6,7 @@ import GachaButton from "@/app/component/gacha/GachaButton";
 import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
 import ErrorAlert from "@/app/component/ErrorAlert";
+import sjcl from 'sjcl';
 
 const Limited_A = () => {
     const [userData, setUserData] = useState<Users | null>(null);
@@ -27,6 +28,7 @@ const Limited_A = () => {
     let ProbabilitySSRNow: number;
     let ProbabilitySRNow: number;
     let pity: number;
+    const activeTab = 'limited';
 
     useEffect(() => {
         fetchGachaApi("getUserData", null);
@@ -34,25 +36,25 @@ const Limited_A = () => {
 
     const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
         try {
-            const userId = sessionStorage.getItem('userId'); // Pastikan userId tersedia
+            const uid = sessionStorage.getItem('uid'); // Pastikan uid tersedia
 
-            // Bangun URL dengan query parameters
-            const url = new URL('/api/gacha', window.location.origin);
-            url.searchParams.set('userId', userId!);
-            url.searchParams.set('typeFetch', typeFetch);
+            // Gabungkan data yang akan dikirimkan dalam body
+            const requestBody = {
+                uid: uid!,
+                typeFetch: typeFetch,
+                ...(dataFetch || {}) // Gabungkan dataFetch jika ada
+            };
 
-            // Tambahkan dataFetch sebagai query parameters jika ada
-            if (dataFetch) {
-                for (const key in dataFetch) {
-                    url.searchParams.set(key, dataFetch[key]);
-                }
-            }
+            // Enkripsi data dengan SJCL
+            const password = 'virtualdressing'; // Ganti dengan password yang lebih kuat dan aman
+            const encryptedData = sjcl.encrypt(password, JSON.stringify(requestBody));
 
-            const response = await fetch(url.toString(), {
-                method: 'POST', // Gunakan metode POST karena API Anda sekarang hanya menerima POST
+            const response = await fetch('/api/gacha', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ encryptedData }), // Kirim data sebagai JSON
             });
 
             if (!response.ok) {
@@ -67,7 +69,7 @@ const Limited_A = () => {
                     break;
                 case "getPity":
                     const pityData = await response.json();
-                    pity = Number(pityData[0].pity); // Konversi ke number
+                    pity = Number(pityData[0].pity);
                     break;
                 case "getRateUpItem":
                     const RateUpItems = await response.json();
@@ -88,7 +90,19 @@ const Limited_A = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-        window.location.reload();
+
+        // Ambil URL saat ini
+        const currentURL = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentURL.search);
+
+        // Pastikan parameter 'tab' ada dan nilainya 'standar'
+        searchParams.set('tab', 'limited');
+
+        // Update URL dengan parameter baru
+        currentURL.search = searchParams.toString();
+
+        // Reload halaman dengan URL yang sudah diperbarui
+        window.location.href = currentURL.toString();
     };
 
     const closeInsufficientModal = () => {
@@ -102,7 +116,7 @@ const Limited_A = () => {
         }
 
         await fetchGachaApi("getUserData", null);
-        console.log('ge: ', userData.user_resources[0].glimmering_essence);
+        // console.log('ge: ', userData.user_resources[0].glimmering_essence);
 
         const essenceCost = a === 1 ? 1 : 10;
 
@@ -135,6 +149,7 @@ const Limited_A = () => {
     const handleExchange = async () => {
         try {
             await fetchGachaApi('exchangeGemsForEssence', {
+                type: 'glimmering_essence',
                 glamour_gems: (exchangeAmount * 160).toString(),
                 glimmering_essence: exchangeAmount.toString()
             });
@@ -231,7 +246,7 @@ const Limited_A = () => {
                         rarity: pulledCharacterOrItem.rarity,
                         item_name: pulledCharacterOrItem.item_name,
                         part_outfit: pulledCharacterOrItem.part_outfit,
-                        gacha_type: 'Whisper_of_Silk'
+                        gacha_type: 'Whispers_of_Silk'
                     });
 
                     // Update glamour dust for R rarity
@@ -268,7 +283,7 @@ const Limited_A = () => {
 
         calculateRarity() {
             let rand = random(); // Gunakan generator MCRNG 
-            console.log(rand, ':', ProbabilitySSRNow)
+            // console.log(rand, ':', ProbabilitySSRNow)
 
             if (rand < ProbabilitySSRNow || (pity + 1) >= 90) {
                 return "SSR";
@@ -322,11 +337,11 @@ const Limited_A = () => {
                 const keys = Object.keys(data);
                 const randomKey = keys[Math.floor(Math.random() * keys.length)];
                 const randomItem = data[randomKey];
-                console.log('rand item : ', randomItem);
+                // console.log('rand item : ', randomItem);
                 pulledCharacterOrItem = randomItem;
             }
 
-            console.log('pulled : ', pulledCharacterOrItem)
+            // console.log('pulled : ', pulledCharacterOrItem)
 
             return pulledCharacterOrItem;
         }
@@ -342,8 +357,8 @@ const Limited_A = () => {
                 // Hitung probabilitas SR dan SSR berdasarkan pity saat ini
                 ProbabilitySRNow = baseSRProbability + ((pity % 10) * 0.0087);
                 ProbabilitySSRNow = baseSSRProbability + (pity * 0.00111);
-                console.log('ProbabilitySRNow', ProbabilitySRNow)
-                console.log('ProbabilitySSRNow', ProbabilitySSRNow)
+                // console.log('ProbabilitySRNow', ProbabilitySRNow)
+                // console.log('ProbabilitySSRNow', ProbabilitySSRNow)
 
                 const result = await gacha.makeWish();
                 // Gunakan if-else untuk incSRProbability
@@ -359,14 +374,20 @@ const Limited_A = () => {
                 tenpull[i] = result;
             }
 
-            console.log('pity after loop:', pity);
+            // console.log('pity after loop:', pity);
 
             // Update pity di server
-            await fetchGachaApi('incPity', { incPity: pity });
+            await fetchGachaApi('incPity', {
+                incPity: pity,
+                type: 'limited'
+            });
 
             // Update glamour_gems di server (pastikan endpoint API Anda mengharapkan string)
             const GlimmeringEssence = (a).toString();
-            await fetchGachaApi('updateGlimmering_essence', { glimmering_essence: GlimmeringEssence });
+            await fetchGachaApi('updateEssence', {
+                glimmering_essence: GlimmeringEssence,
+                type: 'limited'
+            });
 
             return tenpull;
 
@@ -378,10 +399,10 @@ const Limited_A = () => {
 
     const listGacha = async (tenpull: any[]) => {
         setPulledItems(tenpull);
-    
+
         // Assume fetchGachaApi("getUserData", null) has been called before listGacha
         const currentInventory = userData?.inventory || [];
-    
+
         // Create dustInfo and tokenInfo arrays
         const newDustInfo = tenpull.map((item) => {
             if (item.rarity.trim() === "R") {
@@ -390,7 +411,7 @@ const Limited_A = () => {
             return '';
         });
         setDustInfo(newDustInfo);
-    
+
         const newTokenInfo = tenpull.map((item) => {
             const isDuplicate = currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
             if (item.rarity.trim() === "SR") {
@@ -411,15 +432,29 @@ const Limited_A = () => {
             <div className="absolute w-full h-full flex flex-1 pt-10 bg-gradient-to-b from-transparent via-transparent to-black to-100% z-10" />
             <div className="absolute w-full h-full flex flex-1 z-20 lg:pt-20 pt-14">
                 <div className="flex flex-none flex-shrink w-2/5">
-                    <div className="relative h-full w-full hover:scale-105 transition-transform duration-200">
-                        <Image
-                            id="mikoImg"
-                            src={"/banner/avatar/limited.svg"}
-                            alt={"miko"}
-                            layout="fill"
-                            objectFit="contain"
-                            objectPosition="bottom"
-                        />
+                    <div className="relative h-full w-full transition-transform duration-200">
+                        <div className="absolute flex justify-end w-full h-full -bottom-32 -right-10">
+                            <Image
+                                id="mikoImg"
+                                src={"/banner/avatar/limitedA.png"}
+                                alt={"miko"}
+                                layout="fill"
+                                objectFit="contain"
+                                objectPosition="bottom"
+                                className="scale-150"
+                            />
+                        </div>
+                        <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
+                            <Image
+                                id="mikoImg"
+                                src={"/banner/avatar/limitedB.png"}
+                                alt={"miko"}
+                                layout="fill"
+                                objectFit="contain"
+                                objectPosition="bottom"
+                                className="scale-95"
+                            />
+                        </div>
                     </div>
                 </div>
                 <div className="relative flex flex-1">
@@ -437,21 +472,24 @@ const Limited_A = () => {
                         <div className="flex flex-none items-start justify-end pr-16">
                             <p className="text-end lg:text-sm text-[9px] lg:w-5/6 w-full">Rasakan keagungan kuil dengan gacha Miko terbaru! Dapatkan kostum gadis kuil yang cantik dengan jubah putih bersih dan rok merah menyala, lengkap dengan aksesoris seperti gohei dan ofuda. Raih kesempatan untuk memanggil roh keberuntungan dan keindahan! Jangan lewatkan kesempatan langka ini, tersedia untuk waktu terbatas!</p>
                         </div>
-                        <div className="flex flex-none flex-col gap-12">
-                            <div className="flex flex-1 items-center justify-end gap-8">
-                                <BoxItem imageUrl={"/icons/outfit/A/mikoA.svg"} altText={"miko a"} />
-                                <BoxItem imageUrl={"/icons/outfit/B/mikoB.svg"} altText={"miko b"} />
-                                <BoxItem imageUrl={"/icons/outfit/C/mikoC.svg"} altText={"miko c"} />
-                                <p className="pr-16 flex animate-pulse text-yellow-400">Rate Up!</p>
+                        <div className="flex flex-1 flex-col gap-12">
+                            <div className="flex flex-1 items-end justify-end gap-8 pr-16">
+                                <BoxItem imageUrl={"/icons/outfit/A/mikoA.png"} altText={"miko a"} />
+                                <BoxItem imageUrl={"/icons/outfit/B/mikoB.png"} altText={"miko b"} />
+                                <BoxItem imageUrl={"/icons/outfit/C/mikoC.png"} altText={"miko c"} />
+                                <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
+                            </div>
+                            <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">
+                                <GachaButton onClick={openModal} activeTab={activeTab} />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             {/* Gacha Button */}
-            <div className="absolute flex flex-col gap-4 lg:right-16 lg:bottom-16 right-8 bottom-6 z-50">
-                <GachaButton onClick={openModal} />
-            </div>
+            {/* <div className="absolute flex flex-col gap-4 lg:right-16 lg:bottom-14 right-8 bottom-4 z-50">
+                <GachaButton onClick={openModal} activeTab={activeTab} />
+            </div> */}
 
             {/* Gacha Modal */}
             <Modal isOpen={isModalOpen} onClose={closeModal}>

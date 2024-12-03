@@ -14,10 +14,10 @@ const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props
 
   const fetchHistoryApi = async (typeFetch: string, dataFetch?: any) => {
     try {
-      const userId = sessionStorage.getItem('userId');
+      const uid = sessionStorage.getItem('uid');
 
       const url = new URL('/api/gacha', window.location.origin);
-      url.searchParams.set('userId', userId!);
+      url.searchParams.set('uid', uid!);
       url.searchParams.set('typeFetch', typeFetch);
 
       if (dataFetch) {

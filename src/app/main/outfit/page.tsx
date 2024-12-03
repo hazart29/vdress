@@ -1,12 +1,11 @@
 'use client'
 import React, { useRef, useEffect, useState } from 'react';
-import ModalWardrobe from '@/app/component/ModalWardrobe';
-import OutfitComponent from '@/app/component/OutfitComponent';
+import ModalWardrobe from '@/app/component/outfit/ModalWardrobe';
+import OutfitComponent from '@/app/component/outfit/OutfitComponent';
 import BackButton from '@/app/component/BackButton';
 import DownloadButton from '@/app/component/DownloadButton';
-import CustomImage from 'next/image';
-import OutfitImage from '@/app/component/OutfitImage';
-import UnEquip from '@/app/component/UnEquip';
+import OutfitImage from '@/app/component/outfit/OutfitImage';
+import UnEquip from '@/app/component/outfit/UnEquip';
 import { Inventory, Suited } from '@/app/interface';
 
 const CanvasComponent: React.FC = () => {
@@ -24,17 +23,48 @@ const CanvasComponent: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [outfitData, setOutfitData] = useState<Inventory[]>([]);
   const loading = '/ui/iconVD.svg';
-  const userId = sessionStorage.getItem('userId');
+  const uid = sessionStorage.getItem('uid');
+
+  const changeOutfit = (newOutfit: { layer: string, item_name: string }) => {
+    // 1. Update the wardrobe state
+    setWardrobe((prevWardrobe) => {
+      if (prevWardrobe) {
+        const updatedWardrobe = {
+          ...prevWardrobe,
+          // Update the correct property based on the layer
+          [newOutfit.layer.toLowerCase()]: newOutfit.item_name
+        };
+
+        // 2. Send API request to update the outfit in the database
+        fetchData("updateOutfit", {
+          uid: uid,
+          top: updatedWardrobe.a,
+          bottom: updatedWardrobe.b,
+          feet: updatedWardrobe.c
+        });
+
+        window.location.reload();
+
+        return updatedWardrobe;
+
+      } else {
+        console.error("Previous wardrobe is undefined!");
+        return prevWardrobe;
+      }
+    });
+
+    closeModal();
+  };
 
   useEffect(() => {
-    fetchData();
+    fetchData("getOutfitData", { uid: uid });
   }, []);
 
   useEffect(() => {
     if (wardrobe) {
-      setTopImage(`/outfit/A/${wardrobe.a}.svg`);
-      setBotImage(`/outfit/B/${wardrobe.b}.svg`);
-      setFeetImage(`/outfit/C/${wardrobe.c}.svg`);
+      setTopImage(`/outfit/A/${wardrobe.a}.png`);
+      setBotImage(`/outfit/B/${wardrobe.b}.png`);
+      setFeetImage(`/outfit/C/${wardrobe.c}.png`);
     } else {
       // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
@@ -71,27 +101,59 @@ const CanvasComponent: React.FC = () => {
   }, [wardrobe, topImage, botImage, feetImage]);
 
   // load data suited
-  const fetchData = async () => {
+  const fetchData = async (action: string, dataFetch: any) => {
     try {
-      const response = await fetch('/api/outfit', {
+      // Construct the URL with search parameters
+      const url = new URL('/api/outfit', window.location.origin);
+      url.searchParams.set('action', action);
+      for (const key in dataFetch) {
+        url.searchParams.set(key, dataFetch[key]);
+      }
+
+      const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-        cache: 'no-store',
+        }
       });
 
       if (!response.ok) {
         throw new Error('Failed to fetch data');
       }
+
       const data = await response.json();
-      //console.log(data[0])
-      if (data) {
-        setWardrobe(data[0]);
-      } else {
-        console.log('No data found');
+      // Handle specific responses based on the action
+      switch (action) {
+        case "getOutfitData":
+          if (data) {
+            setWardrobe(data[0]);
+          } else {
+            console.log('No data found for getOutfitData');
+          }
+          break;
+
+        case "updateOutfit":
+          // Handle the response for updateOutfit action, e.g., show a success message
+          console.log('Outfit updated successfully:', data);
+          break;
+
+        case "getOutfitByLayer":
+          if (data) {
+            setOutfitData(data); // Assuming the API returns an array of Inventory
+          } else {
+            console.log('No outfit data found for getOutfitByLayer');
+          }
+          break;
+
+        // Add more cases for other actions as needed
+        // case "addOutfit":
+        //   // ... handle addOutfit response
+        //   break;
+
+        default:
+          console.log('Default action handler in fetchData');
       }
+
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -126,7 +188,7 @@ const CanvasComponent: React.FC = () => {
       ctx.drawImage(modelImage, startX, startY, newWidth, newHeight);
     };
 
-    modelImage.src = '/avatar/avatar.svg';
+    modelImage.src = '/avatar/model.png';
   };
 
   const drawClothingItem = (ctx: CanvasRenderingContext2D, src: string) => {
@@ -162,60 +224,13 @@ const CanvasComponent: React.FC = () => {
     clothingImage.src = src;
   };
 
-  const fetchOutfitItem = async (type: any) => {
-    try {
-      const response = await fetch('/api/inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          playerId: 'player_id_here',
-          source: 'item_name_here',
-          type: type // Specify the type of clothing item
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const data = await response.json();
-      //setClothingImageSrc(data.clothingImageUrl);
-    } catch (error) {
-      console.error('Error fetching clothing item:', error);
-    }
-  };
-
-  const getOutfitItem = async (type: string, userId: number) => {
-    try {
-      const response = await fetch('/api/inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: userId,
-          type: type // Specify the type of clothing item
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const data = await response.json();
-      setOutfitData(data);
-      //console.log('outfit: ', outfitData)
-    } catch (error) {
-      console.error('Error fetching clothing item:', error);
-    }
-  }
-
   const openModal = (loc: string) => {
     setIsModalOpen(true);
-    if (userId) {
-      getOutfitItem(loc, Number(userId));
+    if (uid) {
+      fetchData("getOutfitByLayer", {
+        uid: uid,
+        layer: loc
+      });
       //console.log('outfit:', outfitData)
     } else {
       console.warn('user id not found!');
@@ -252,7 +267,7 @@ const CanvasComponent: React.FC = () => {
     const url = combinedCanvas.toDataURL();
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'avatar.png';
+    a.download = 'model.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -282,10 +297,10 @@ const CanvasComponent: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={fetchOutfitItem} className="flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000">
-          <OutfitComponent loc="top" src={`/icons/${topImage}`} openModal={() => openModal('top')} />
-          <OutfitComponent loc="bottom" src={`/icons/${botImage}`} openModal={() => openModal('bottom')} />
-          <OutfitComponent loc="feet" src={`/icons/${feetImage}`} openModal={() => openModal('feet')} />
+        <form className="flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000">
+          <OutfitComponent loc="top" src={`/icons${topImage}`} openModal={() => openModal('a')} />
+          <OutfitComponent loc="bottom" src={`/icons${botImage}`} openModal={() => openModal('b')} />
+          <OutfitComponent loc="feet" src={`/icons${feetImage}`} openModal={() => openModal('c')} />
 
           <ModalWardrobe isOpen={isModalOpen} onClose={closeModal}>
             <div className='flex flex-1 items-center justify-start p-2 select-none gap-3' >
@@ -294,20 +309,24 @@ const CanvasComponent: React.FC = () => {
                 outfitData?.length > 0 ? (
                   outfitData?.map((item, index) => (
                     <div key={index}>
+                      {/* Pass the changeOutfit function to OutfitImage */}
                       {item.part_outfit.toLowerCase() == 'top' && (
-                        <>
-                          <OutfitImage src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
-                        </>
+                        <OutfitImage
+                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
+                        />
                       )}
                       {item.part_outfit.toLowerCase() == 'bottom' && (
-                        <>
-                          <OutfitImage src={`outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
-                        </>
+                        <OutfitImage
+                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
+                        />
                       )}
                       {item.part_outfit.toLowerCase() == 'feet' && (
-                        <>
-                          <OutfitImage src={`outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.svg`} />
-                        </>
+                        <OutfitImage
+                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
+                        />
                       )}
                     </div>
                   ))

@@ -42,7 +42,7 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
                     <div className="flex flex-1 justify-start gap-4 items-center text-xs lg:text-base">
                         <BackButton href="/main" />
                         <p className="font-bold transition-opacity duration-300">
-                            {activeTab === "standar" ? "Symphony of Silk" : "Whispers of Silk"}
+                            {activeTab === "standard" ? "Symphony of Silk" : "Whispers of Silk"}
                         </p>
                     </div>
                     <div className="flex flex-1 justify-end items-center">
@@ -51,7 +51,7 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
                 </div>
 
                 {/* Content */}
-                <div className=" flex flex-1 bg-blue-800 transition-opacity duration-500 ease-in-out">
+                <div className=" flex flex-1 bg-black transition-opacity duration-500 ease-in-out">
                     {activeTab === "standar" ? <Standard_A /> : <Limited_A />}
                 </div>
             </div>

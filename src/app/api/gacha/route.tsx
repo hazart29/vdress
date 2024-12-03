@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
+import sjcl from 'sjcl';
 
 export async function GET(req: Request) {
     try {
@@ -18,102 +19,127 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const url = new URL(req.url);
-        const userId = url.searchParams.get('userId');
-        const typeFetch = url.searchParams.get('typeFetch');
+        const { encryptedData } = await req.json(); // Terima data terenkripsi
+        console.log("Data terenkripsi yang diterima:", encryptedData);
+        const password = process.env.SJCL_PASSWORD; // Password yang sama dengan di client
 
-        if (!userId || !typeFetch) {
-            return NextResponse.json({ message: 'userId and typeFetch are required' }, { status: 400 });
+        if (!password) {
+            return NextResponse.json({ status: "invalidPassword", message: 'Invalid password', errorCode: 400 }, { status: 400 })
+        }
+
+        // Dekripsi data
+        const decryptedData = JSON.parse(sjcl.decrypt(password as string, encryptedData));
+
+        // Akses data yang sudah didekripsi
+        const { uid, typeFetch, ...data } = decryptedData;
+
+        if (!uid || !typeFetch) {
+            return NextResponse.json({ message: 'uid and typeFetch are required' }, { status: 400 });
         }
 
         switch (typeFetch) {
             case 'updateGems':
                 try {
-                    const glamourGems = parseInt(url.searchParams.get('glamour_gems') || '0', 10); // <--- Perbaikan di sini
+                    const glamourGems = parseInt(data.glamour_gems || '0', 10);
                     if (isNaN(glamourGems)) {
                         return NextResponse.json({ message: 'Invalid glamour_gems value' }, { status: 400 });
                     }
 
-                    // Validasi userId (contoh)
-                    if (!userId || userId.length < 3) {
-                        return NextResponse.json({ message: 'Invalid userId' }, { status: 400 });
+                    // Validasi uid (contoh)
+                    if (!uid || uid.length < 3) {
+                        return NextResponse.json({ message: 'Invalid uid' }, { status: 400 });
                     }
 
-                    const { rows: primoRows } = await sql`SELECT glamour_gems FROM user_resources WHERE uid = ${userId}`;
+                    const { rows: primoRows } = await sql`SELECT glamour_gems FROM user_resources WHERE uid = ${uid}`;
 
                     if (primoRows.length === 0) {
                         return NextResponse.json({ message: 'User resources not found' }, { status: 404 });
                     }
 
                     const currentGlamourGems = primoRows[0].glamour_gems;
-                    const newGlamourGems = currentGlamourGems - glamourGems; // <--- Perbaikan di sini
-                    await sql`UPDATE user_resources SET glamour_gems = ${newGlamourGems} WHERE uid = ${userId}`; // <--- Perbaikan di sini
+                    const newGlamourGems = currentGlamourGems - glamourGems;
+                    await sql`UPDATE user_resources SET glamour_gems = ${newGlamourGems} WHERE uid = ${uid}`;
                     return NextResponse.json({ message: 'glamour_gems updated successfully' }, { status: 200 });
 
                 } catch (error) {
                     console.error('Error updating glamour_gems:', error);
                     return NextResponse.json({ message: 'Failed to update glamour_gems', error: error }, { status: 500 });
                 }
+
             case 'resetPity':
-                const { rows: resetRows } = await sql`SELECT * FROM user_resources WHERE uid = ${userId}`;
+                const { rows: resetRows } = await sql`SELECT * FROM user_resources WHERE uid = ${uid}`;
                 if (resetRows.length > 0) {
-                    await sql`UPDATE user_resources SET pity = 0 WHERE uid = ${userId}`;
+                    await sql`UPDATE user_resources SET pity = 0 WHERE uid = ${uid}`;
                     return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
                 } else {
                     return NextResponse.json({ message: 'user not found' }, { status: 404 });
                 }
 
-            case 'updateGlimmering_essence':
+            case 'updateEssence':
                 try {
-                    const url = new URL(req.url);
-                    const userId = url.searchParams.get('userId');
-                    const glimmeringEssence = parseInt(url.searchParams.get('glimmering_essence') || '0', 10);
+                    let essence: number;
+                    const typeEssence = data.type;
 
-                    if (isNaN(glimmeringEssence)) {
-                        return NextResponse.json({ message: 'Invalid glimmering_essence value' }, { status: 400 });
+                    if (typeEssence == 'limited') {
+                        essence = parseInt(data.glimmering_essence || '0', 10);
+                    } else {
+                        essence = parseInt(data.shimmering_essence || '0', 10);
                     }
 
-                    // Kurangi glimmering_essence
+                    if (isNaN(essence)) {
+                        return NextResponse.json({ message: 'Invalid essence value' }, { status: 400 });
+                    }
+
                     await sql`
                         UPDATE user_resources 
-                        SET glimmering_essence = glimmering_essence - ${glimmeringEssence} 
-                        WHERE uid = ${userId}
-                      `;
+                        SET ${typeEssence} = ${typeEssence} - ${essence} 
+                        WHERE uid = ${uid}
+                    `;
 
-                    return NextResponse.json({ message: 'Glimmering Essence updated successfully' }, { status: 200 });
+                    return NextResponse.json({ message: `${typeEssence} Essence updated successfully` }, { status: 200 });
 
                 } catch (error) {
-                    console.error('Error updating Glimmering Essence:', error);
-                    return NextResponse.json({ message: 'Failed to update Glimmering Essence', error: error }, { status: 500 });
+                    console.error('Error updating Essence:', error);
+                    return NextResponse.json({ message: 'Failed to update Essence', error: error }, { status: 500 });
                 }
 
             case 'incPity':
-                const incPity = parseInt(url.searchParams.get('incPity') || '0', 10);
+                const incPity = parseInt(data.incPity || '0', 10);
+                const typePity = data.type;
+                let updateQuery;
+
                 if (isNaN(incPity)) {
                     return NextResponse.json({ message: 'Invalid incPity value' }, { status: 400 });
                 }
-                const { rows: incRows } = await sql`SELECT pity FROM user_resources WHERE uid = ${userId}`;
-                if (incRows.length > 0) {
-                    await sql`UPDATE user_resources SET pity = ${incPity} WHERE uid = ${userId}`;
-                    return NextResponse.json({ message: 'pity updated successfully' }, { status: 200 });
+
+                if (typePity === 'limited') {
+                    updateQuery = sql`UPDATE user_resources SET pity = ${incPity} WHERE uid = ${uid}`;
                 } else {
-                    return NextResponse.json({ message: 'pity not updated' }, { status: 200 });
+                    updateQuery = sql`UPDATE user_resources SET standard_pity = ${incPity} WHERE uid = ${uid}`;
+                }
+
+                try {
+                    const result = await updateQuery;
+                    if (result.rowCount > 0) {
+                        return NextResponse.json({ message: 'Pity updated successfully' }, { status: 200 });
+                    } else {
+                        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+                    }
+                } catch (error) {
+                    console.error('Error updating pity:', error);
+                    return NextResponse.json({ message: 'Failed to update pity' }, { status: 500 });
                 }
 
             case 'upInven':
                 try {
-                    const userId = url.searchParams.get('userId');
-                    const rarity = url.searchParams.get('rarity');
-                    const item_name = url.searchParams.get('item_name');
-                    const part_outfit = url.searchParams.get('part_outfit');
-                    const layer = url.searchParams.get('layer');
+                    const { rarity, item_name, part_outfit, layer } = data;
 
                     if (!item_name || !rarity || !part_outfit || !layer) {
                         return NextResponse.json({ message: 'item_name, rarity, part_outfit, and layer are required' }, { status: 400 });
                     }
 
                     await sql`INSERT INTO inventory (uid, rarity, item_name, part_outfit, layer) 
-                              VALUES (${userId}, ${rarity}, ${item_name}, ${part_outfit}, ${layer});`;
+                        VALUES (${uid}, ${rarity}, ${item_name}, ${part_outfit}, ${layer});`;
 
                     return NextResponse.json({ message: `${item_name}, push successfully` }, { status: 200 });
 
@@ -124,15 +150,24 @@ export async function POST(req: Request) {
 
             case 'getPity':
                 try {
-                    const { rows: getPityRows } = await sql`SELECT pity FROM user_resources WHERE uid = ${userId}`;
+                    const { rows: getPityRows } = await sql`SELECT pity FROM user_resources WHERE uid = ${uid}`;
                     return NextResponse.json(getPityRows, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching pity:', error);
                     return NextResponse.json({ message: 'Failed to fetch pity', error: error }, { status: 500 });
                 }
 
+            case 'getStandardPity':
+                try {
+                    const { rows: getStandardRows } = await sql`SELECT standard_pity FROM user_resources WHERE uid = ${uid}`;
+                    return NextResponse.json(getStandardRows, { status: 200 });
+                } catch (error) {
+                    console.error('Error fetching pity:', error);
+                    return NextResponse.json({ message: 'Failed to fetch pity', error: error }, { status: 500 });
+                }
+
             case 'getRateUpItem':
-                const getRarity = url.searchParams.get('rarity');
+                const getRarity = data.rarity;
                 if (!getRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
@@ -140,7 +175,7 @@ export async function POST(req: Request) {
                 return NextResponse.json(getLimitedRows, { status: 200 });
 
             case 'getRateOffItem':
-                const getOffRarity = url.searchParams.get('rarity');
+                const getOffRarity = data.rarity;
                 if (!getOffRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
@@ -148,31 +183,39 @@ export async function POST(req: Request) {
                 return NextResponse.json(getOffRows, { status: 200 });
 
             case 'getRateOn':
-                const { rows: rateOnRows } = await sql`SELECT is_rate FROM user_resources WHERE uid = ${userId}`;
+                const { rows: rateOnRows } = await sql`SELECT is_rate FROM user_resources WHERE uid = ${uid}`;
                 return NextResponse.json(rateOnRows[0].is_rate, { status: 200 });
 
             case 'setRateOn':
-                await sql`UPDATE user_resources SET is_rate = true WHERE uid = ${userId}`;
+                await sql`UPDATE user_resources SET is_rate = true WHERE uid = ${uid}`;
                 return NextResponse.json({ message: 'is_rate set to true successfully' }, { status: 200 });
 
             case 'setRateOff':
-                await sql`UPDATE user_resources SET is_rate = false WHERE uid = ${userId}`;
+                await sql`UPDATE user_resources SET is_rate = false WHERE uid = ${uid}`;
                 return NextResponse.json({ message: 'is_rate set to false successfully' }, { status: 200 });
 
             case 'getGachaItem':
-                const getGachaRarity = url.searchParams.get('rarity');
+                const getGachaRarity = data.rarity;
                 if (!getGachaRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
                 const { rows: getGachaRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${getGachaRarity}`;
                 return NextResponse.json(getGachaRows, { status: 200 });
 
+            case 'getStandardItem':
+                const rarity = data.rarity;
+                if (!getGachaRarity) {
+                    return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
+                }
+                const { rows: standardRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${rarity} AND isLimited = 'false'`;
+                return NextResponse.json(standardRows, { status: 200 });
+
             case 'getUserData':
                 try {
-                    const user = await sql`SELECT * FROM users WHERE uid = ${userId}`;
-                    const inventory = await sql`SELECT * FROM inventory WHERE uid = ${userId}`;
-                    const userResources = await sql`SELECT * FROM user_resources WHERE uid = ${userId}`;
-                    const suited = await sql`SELECT * FROM suited WHERE uid = ${userId}`;
+                    const user = await sql`SELECT * FROM users WHERE uid = ${uid}`;
+                    const inventory = await sql`SELECT * FROM inventory WHERE uid = ${uid}`;
+                    const userResources = await sql`SELECT * FROM user_resources WHERE uid = ${uid}`;
+                    const suited = await sql`SELECT * FROM suited WHERE uid = ${uid}`;
 
                     if (user.rows.length === 0) {
                         return NextResponse.json({ message: 'User not found' }, { status: 404 });
@@ -193,8 +236,8 @@ export async function POST(req: Request) {
 
             case 'getHistory':
                 try {
-                    const gacha_type = url.searchParams.get('gacha_type');
-                    const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${userId} AND gacha_type = ${gacha_type}`;
+                    const gacha_type = data.gacha_type;
+                    const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${uid} AND gacha_type = ${gacha_type}`;
                     return NextResponse.json(history.rows, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching history:', error);
@@ -203,17 +246,17 @@ export async function POST(req: Request) {
 
             case 'upHistoryA':
                 try {
-                    const item_name = url.searchParams.get('item_name');
-                    const rarity = url.searchParams.get('rarity');
-                    const part_outfit = url.searchParams.get('part_outfit');
-                    const gacha_type = url.searchParams.get('gacha_type');
+                    const item_name = data.item_name;
+                    const rarity = data.rarity;
+                    const part_outfit = data.part_outfit;
+                    const gacha_type = data.gacha_type;
 
                     if (!item_name || !rarity || !part_outfit || !gacha_type) {
                         return NextResponse.json({ message: 'item_name, rarity, part_outfit, and gacha_type are required' }, { status: 400 });
                     }
                     await sql`
                           INSERT INTO gacha_history_a (uid, rarity, item_name, part_outfit, gacha_type) 
-                          VALUES (${userId}, ${rarity}, ${item_name}, ${part_outfit}, ${gacha_type});
+                          VALUES (${uid}, ${rarity}, ${item_name}, ${part_outfit}, ${gacha_type});
                         `;
 
                     return NextResponse.json({ message: `${item_name} push successfully` }, { status: 200 });
@@ -224,27 +267,32 @@ export async function POST(req: Request) {
 
             case 'exchangeGemsForEssence':
                 try {
-                    const url = new URL(req.url);
-                    const userId = url.searchParams.get('userId');
-                    const glamourGems = parseInt(url.searchParams.get('glamour_gems') || '0', 10);
-                    const glimmeringEssence = parseInt(url.searchParams.get('glimmering_essence') || '0', 10);
+                    const type = data.type;
+                    const glamourGems = parseInt(data.glamour_gems || '0', 10);
+                    let essence;
+                    if (type === 'glimmering_essence') {
+                        essence = parseInt(data.glimmering_essence || '0', 10);
+                    } else {
+                        essence = parseInt(data.shimmering_essence || '0', 10);
+                    }
 
-                    if (isNaN(glamourGems) || isNaN(glimmeringEssence)) {
-                        return NextResponse.json({ message: 'Invalid glamour_gems or glimmering_essence value' }, { status: 400 });
+
+                    if (isNaN(glamourGems) || isNaN(essence)) {
+                        return NextResponse.json({ message: 'Invalid glamour_gems or essence value' }, { status: 400 });
                     }
 
                     // 1. Kurangi glamour_gems
                     await sql`
                         UPDATE user_resources 
                         SET glamour_gems = glamour_gems - ${glamourGems} 
-                        WHERE uid = ${userId}
+                        WHERE uid = ${uid}
                       `;
 
                     // 2. Tambahkan glimmering_essence
                     await sql`
                         UPDATE user_resources 
-                        SET glimmering_essence = glimmering_essence + ${glimmeringEssence} 
-                        WHERE uid = ${userId}
+                        SET ${type} = ${type} + ${essence} 
+                        WHERE uid = ${uid}
                       `;
 
                     return NextResponse.json({ message: 'Gems exchanged for essence successfully' }, { status: 200 });
@@ -256,7 +304,7 @@ export async function POST(req: Request) {
 
             case 'updateGlamourDust':
                 try {
-                    const glamourDust = parseInt(url.searchParams.get('glamour_dust') || '0', 10);
+                    const glamourDust = parseInt(data.glamour_dust || '0', 10);
 
                     if (isNaN(glamourDust)) {
                         return NextResponse.json({ message: 'Invalid glamour_dust value' }, { status: 400 });
@@ -265,7 +313,7 @@ export async function POST(req: Request) {
                     await sql`
                         UPDATE user_resources 
                         SET glamour_dust = glamour_dust + ${glamourDust} 
-                        WHERE uid = ${userId}
+                        WHERE uid = ${uid}
                     `;
 
                     return NextResponse.json({ message: 'Glamour Dust updated successfully' }, { status: 200 });
@@ -275,9 +323,9 @@ export async function POST(req: Request) {
                     return NextResponse.json({ message: 'Failed to update Glamour Dust', error: error }, { status: 500 });
                 }
 
-                case 'updateFashionTokens': 
+            case 'updateFashionTokens':
                 try {
-                    const glamourDust = parseInt(url.searchParams.get('fashion_tokens') || '0', 10);
+                    const glamourDust = parseInt(data.fashion_tokens || '0', 10);
 
                     if (isNaN(glamourDust)) {
                         return NextResponse.json({ message: 'Invalid fashion_tokens value' }, { status: 400 });
@@ -286,7 +334,7 @@ export async function POST(req: Request) {
                     await sql`
                         UPDATE user_resources 
                         SET fashion_tokens = fashion_tokens + ${glamourDust} 
-                        WHERE uid = ${userId}
+                        WHERE uid = ${uid}
                     `;
 
                     return NextResponse.json({ message: 'fashion_tokens updated successfully' }, { status: 200 });

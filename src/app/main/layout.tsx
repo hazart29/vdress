@@ -22,7 +22,7 @@ export default function Layout({
     useEffect(() => {
         const checkAuth = () => {
             // Get the session token from local storage
-            const token = sessionStorage.getItem('sessionToken');
+            const token = sessionStorage.getItem('token');
 
             if (!token) {
                 router.push('/'); // Redirect to '/' page if no token found
@@ -36,7 +36,7 @@ export default function Layout({
                         const isTokenExpired = decodedToken.exp * 1000 < currentDate.getTime();
                         if (isTokenExpired) {
                             // Clear expired token from local storage
-                            localStorage.removeItem('sessionToken');
+                            sessionStorage.removeItem('token');
                             router.push('/'); // Redirect to '/' page if token is expired
                         } else {
                             router.push(currentUrl); // Redirect to '/main' page if token is valid
@@ -47,7 +47,7 @@ export default function Layout({
                     // Handle any errors (e.g., invalid token format)
                     console.error('Error decoding token:', error);
                     // Clear invalid token from local storage
-                    localStorage.removeItem('sessionToken');
+                    sessionStorage.removeItem('token');
                     router.push('/'); // Redirect to '/' page
                 }
             }

@@ -3,94 +3,102 @@
 const CACHE_NAME = 'VD-Cache';
 const urlsToCache = [
   '/offline',
-  '/outfit/A/maidA.svg',
-  '/outfit/A/mikoA.svg',
-  '/outfit/A/seifukuA.svg',
-  '/outfit/A/policeA.svg',
-  '/outfit/B/maidB.svg',
-  '/outfit/B/mikoB.svg',
-  '/outfit/B/seifukuB.svg',
-  '/outfit/B/policeB.svg',
-  '/outfit/C/maidC.svg',
-  '/outfit/C/mikoC.svg',
-  '/outfit/C/seifukuC.svg',
-  '/outfit/C/policeC.svg',
-  
-  '/icons/outfit/A/maidA.svg',
-  '/icons/outfit/A/mikoA.svg',
-  '/icons/outfit/A/seifukuA.svg',
-  '/icons/outfit/A/policeA.svg',
-  '/icons/outfit/B/maidB.svg',
-  '/icons/outfit/B/mikoB.svg',
-  '/icons/outfit/B/seifukuB.svg',
-  '/icons/outfit/B/policeB.svg',
-  '/icons/outfit/C/maidC.svg',
-  '/icons/outfit/C/mikoC.svg',
-  '/icons/outfit/C/seifukuC.svg',
-  '/icons/outfit/C/policeC.svg',
-
-  '/avatar/model.svg',
-  '/ui/btn_gacha.svg',
-  '/ui/btn_home.svg',
-  '/ui/btn_outfit.svg',
-  '/ui/btn_room.svg',
-  '/ui/iconVD.svg',
-  '/ui/logo.svg',
-  '/ui/logoVD.svg',
-  '/video/gacha.mp4',
+  '/outfit/A/maidA.png',
+  '/outfit/A/mikoA.png',
+  '/outfit/A/seifukuA.png',
+  '/outfit/A/policeA.png',
+  '/outfit/B/maidB.png',
+  '/outfit/B/mikoB.png',
+  '/outfit/B/seifukuB.png',
+  '/outfit/B/policeB.png',
+  '/outfit/C/maidC.png',
+  '/outfit/C/mikoC.png',
+  '/outfit/C/seifukuC.png',
+  '/outfit/C/policeC.png',
+  '/icons/outfit/A/maidA.png',
+  '/icons/outfit/A/mikoA.png',
+  '/icons/outfit/A/seifukuA.png',
+  '/icons/outfit/A/policeA.png',
+  '/icons/outfit/B/maidB.png',
+  '/icons/outfit/B/mikoB.png',
+  '/icons/outfit/B/seifukuB.png',
+  '/icons/outfit/B/policeB.png',
+  '/icons/outfit/C/maidC.png',
+  '/icons/outfit/C/mikoC.png',
+  '/icons/outfit/C/seifukuC.png',
+  '/icons/outfit/C/policeC.png',
+  '/avatar/model.png',
   '/backsound/backsound.mp3',
   '/background/shop/3d-fantasy-scene.svg',
-  '/banner/banner_seifuku.webp'
   // Tambahkan URL lain yang ingin Anda precache di sini
 ];
 
 // Tentukan apakah aplikasi berada dalam mode pengembangan atau produksi
-const isDevelopment = false; // Ganti dengan logika sesuai dengan kebutuhan Anda
+const isDevelopment = true; // Ganti dengan logika sesuai dengan kebutuhan Anda
 
 // Install service worker
-self.addEventListener('install', (event) => {
-  console.log('Service worker installed');
+self.addEventListener('install', event => {
   event.waitUntil(
-    new Promise((resolve) => {
-      // Tambahkan delay dengan setTimeout
-      setTimeout(() => {
-        caches.open(CACHE_NAME).then((cache) => {
-          console.log('Cache opened');
-          resolve(cache.addAll(urlsToCache));
-        });
-      }, 5000); // Delay 5 detik
-    })
-    .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())   
+ // Activate immediately
   );
 });
 
-// Aktivasi service worker
-self.addEventListener('activate', (event) => {
+// Activate service worker
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => {
-        return Promise.all(keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-        );
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(cacheName => cacheName !== CACHE_NAME)
+          .map(cacheName => caches.delete(cacheName))
+      );
+    })
+    .then(() => self.clients.claim())
+ // Claim control
   );
 });
 
 // Fetch event
-self.addEventListener('fetch', (event) => {
-  if (isDevelopment) {
-    console.log('development mode sw disabled')
-    return;
-  } else {
-    // Semua permintaan, termasuk API, langsung diteruskan ke server
-    // Tidak ada caching
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match('/offline');
-        })
-    );
+self.addEventListener('fetch', event => {
+  // Exclude API requests from service worker handling
+  if (event.request.url.includes('/api/')) {
+    console.log('api route excessed');
+    return fetch(event.request); // Directly fetch from network
   }
+
+  if (isDevelopment) {
+    console.log('Development mode: bypassing service worker');
+    return fetch(event.request); // Directly fetch from the network
+  }
+
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+
+        return fetch(event.request)
+          .then(response => {
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache   => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          })
+          .catch(() => {
+            return caches.match('/offline');   
+ 
+          });
+      })
+  );
 });

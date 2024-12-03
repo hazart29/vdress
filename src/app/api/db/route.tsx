@@ -20,8 +20,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await new Response(req.body).json();
-        const { rows } = await sql`SELECT * FROM users where uid = ${userId}`;
+        const { uid } = await new Response(req.body).json();
+        const { rows } = await sql`SELECT * FROM users where uid = ${uid}`;
         const user = rows;
         return NextResponse.json(user, { status: 200 });
     } catch (error) {

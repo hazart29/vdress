@@ -44,7 +44,7 @@
     "public/Core/live2dcubismcore.d.ts",
     "public/Core/*.ts",
     "src/app/main/room/coba.d.ts"
-  ],
+, "src/app/login/page.tsxaa"  ],
   "exclude": [
     "node_modules"
   ]

@@ -6,6 +6,7 @@ import GachaButton from "@/app/component/gacha/GachaButton";
 import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
 import ErrorAlert from "@/app/component/ErrorAlert";
+import sjcl from 'sjcl';
 
 const Standard_A = () => {
     const [userData, setUserData] = useState<Users | null>(null);
@@ -13,16 +14,21 @@ const Standard_A = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isInsufficientModalOpen, setIsInsufficientModalOpen] = useState(false); // State for insufficient gems modal
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [pulledItem, setPulledItem] = useState<GachaItem | null>(null);
+    const [pulledItems, setPulledItems] = useState<GachaItem[]>([]);
+    const [dustInfo, setDustInfo] = useState<string[]>([]);
+    const [tokenInfo, setTokenInfo] = useState<string[]>([]);
 
     const [showExchangeModal, setShowExchangeModal] = useState(false);
     const [exchangeAmount, setExchangeAmount] = useState(0);
+
+    const [isLoading, setIsLoading] = useState(false);
 
     let baseSSRProbability: number = 0.006;
     let baseSRProbability: number = 0.051;
     let ProbabilitySSRNow: number;
     let ProbabilitySRNow: number;
-    let pity: number;
+    let standard_pity: number;
+    const activeTab = 'standard';
 
     useEffect(() => {
         fetchGachaApi("getUserData", null);
@@ -30,25 +36,25 @@ const Standard_A = () => {
 
     const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
         try {
-            const userId = sessionStorage.getItem('userId'); // Pastikan userId tersedia
+            const uid = sessionStorage.getItem('uid'); // Pastikan uid tersedia
 
-            // Bangun URL dengan query parameters
-            const url = new URL('/api/gacha', window.location.origin);
-            url.searchParams.set('userId', userId!);
-            url.searchParams.set('typeFetch', typeFetch);
+            // Gabungkan data yang akan dikirimkan dalam body
+            const requestBody = {
+                uid: uid!,
+                typeFetch: typeFetch,
+                ...(dataFetch || {}) // Gabungkan dataFetch jika ada
+            };
 
-            // Tambahkan dataFetch sebagai query parameters jika ada
-            if (dataFetch) {
-                for (const key in dataFetch) {
-                    url.searchParams.set(key, dataFetch[key]);
-                }
-            }
+            // Enkripsi data dengan SJCL
+            const password = 'virtualdressing'; // Ganti dengan password yang lebih kuat dan aman
+            const encryptedData = sjcl.encrypt(password, JSON.stringify(requestBody));
 
-            const response = await fetch(url.toString(), {
-                method: 'POST', // Gunakan metode POST karena API Anda sekarang hanya menerima POST
+            const response = await fetch('/api/gacha', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ encryptedData }), // Kirim data sebagai JSON
             });
 
             if (!response.ok) {
@@ -61,9 +67,9 @@ const Standard_A = () => {
                     const reqData: Users = await response.json();
                     setUserData(reqData);
                     break;
-                case "getPity":
+                case "getStandardPity":
                     const pityData = await response.json();
-                    pity = Number(pityData[0].pity); // Konversi ke number
+                    standard_pity = Number(pityData[0].standard_pity);
                     break;
                 case "getRateUpItem":
                     const RateUpItems = await response.json();
@@ -84,6 +90,19 @@ const Standard_A = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
+
+        // Ambil URL saat ini
+        const currentURL = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentURL.search);
+
+        // Pastikan parameter 'tab' ada dan nilainya 'standar'
+        searchParams.set('tab', 'standar');
+
+        // Update URL dengan parameter baru
+        currentURL.search = searchParams.toString();
+
+        // Reload halaman dengan URL yang sudah diperbarui
+        window.location.href = currentURL.toString();
     };
 
     const closeInsufficientModal = () => {
@@ -97,7 +116,7 @@ const Standard_A = () => {
         }
 
         await fetchGachaApi("getUserData", null);
-        console.log('ge: ', userData.user_resources[0].shimmering_essence);
+        // console.log('ge: ', userData.user_resources[0].glimmering_essence);
 
         const essenceCost = a === 1 ? 1 : 10;
 
@@ -114,11 +133,14 @@ const Standard_A = () => {
         } else {
             // Jika essence cukup, langsung jalankan gacha
             setIsModalOpen(true);
+            setIsLoading(true);
             try {
                 const pulledItems = await pull(a);
                 setGachaItem(pulledItems);
             } catch (error) {
                 console.error('Error during gacha pull:', error);
+            } finally {
+                setIsLoading(false); // Nonaktifkan loading indicator setelah selesai
             }
         }
         await fetchGachaApi("getUserData", null);
@@ -127,6 +149,7 @@ const Standard_A = () => {
     const handleExchange = async () => {
         try {
             await fetchGachaApi('exchangeGemsForEssence', {
+                type: 'shimmering_essence',
                 glamour_gems: (exchangeAmount * 160).toString(),
                 shimmering_essence: exchangeAmount.toString()
             });
@@ -155,11 +178,32 @@ const Standard_A = () => {
         if (videoRef.current) {
             videoDiv?.classList.add('hidden');
             videoRef.current.style.display = 'none';
-            if (gachaItem) {
-                listGacha(gachaItem);
-            }
+            // if (gachaItem) {
+            //     listGacha(gachaItem);
+            // }
         }
     };
+
+    useEffect(() => {
+        if (gachaItem) {
+            listGacha(gachaItem);
+        }
+    }, [gachaItem]);
+
+    function multiplicativeCRNG(seed: number) {
+        const a = 1664525; // Multiplier
+        const c = 1013904223; // Increment (can be 0 for multiplicative)
+        const m = Math.pow(2, 32); // Modulus
+        let xn = seed;
+
+        return function () {
+            xn = (a * xn + c) % m;
+            return xn / m; // Normalize to 0 - 1 range
+        }
+    }
+
+    // Inisialisasi generator MCRNG dengan seed
+    let random = multiplicativeCRNG(Date.now());
 
     class GachaSystem {
         async makeWish() {
@@ -168,34 +212,52 @@ const Standard_A = () => {
                 let pulledCharacterOrItem = await this.pullCharacterOrItem(rarity);
 
                 if (pulledCharacterOrItem) {
-                    const dataFetch = {
+                    // Check for duplicates using existing getUserData API
+                    const isDuplicate = await this.checkDuplicateItem(pulledCharacterOrItem);
+
+                    if (isDuplicate) {
+                        // If duplicate, update fashion tokens based on rarity
+                        if (pulledCharacterOrItem.rarity === "SSR") {
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '25' });
+                        } else if (pulledCharacterOrItem.rarity === "SR") {
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '5' });
+                        }
+                        // You might want to add a notification here to inform the user about the duplicate and token conversion
+                    } else {
+                        // If not duplicate, update inventory and add initial tokens
+                        await fetchGachaApi('upInven', {
+                            rarity: pulledCharacterOrItem.rarity,
+                            item_name: pulledCharacterOrItem.item_name,
+                            part_outfit: pulledCharacterOrItem.part_outfit,
+                            layer: pulledCharacterOrItem.layer,
+                            gacha_type: 'Symphony_of_Silk'
+                        });
+
+                        if (pulledCharacterOrItem.rarity === "SSR") {
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '10' });
+                        } else if (pulledCharacterOrItem.rarity === "SR") {
+                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '2' });
+                        }
+                    }
+
+                    // Update history regardless of duplicate status
+                    await fetchGachaApi('upHistoryA', {
                         rarity: pulledCharacterOrItem.rarity,
                         item_name: pulledCharacterOrItem.item_name,
                         part_outfit: pulledCharacterOrItem.part_outfit,
-                        layer: pulledCharacterOrItem.layer,
-                        gacha_type: 'Whisper of Silk'
-                    };
+                        gacha_type: 'Symphony_of_Silk'
+                    });
 
-                    try {
-                        await fetchGachaApi('upInven', dataFetch);
-                        await fetchGachaApi('upHistoryA', dataFetch);
-                        // Tambahkan glamour_dust jika rarity R
-                        if (rarity === "R") {
-                            await fetchGachaApi('updateGlamourDust', { glamour_dust: '15' });
-                        } else if (rarity === "SR") {
-                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '5' });
-                        } else if (rarity === "SSR") {
-                            await fetchGachaApi('updateFashionTokens', { fashion_tokens: '25' });
-                        }
-                    } catch (error) {
-                        console.error('Error updating inventory or history:', error);
+                    // Update glamour dust for R rarity
+                    if (rarity === "R") {
+                        await fetchGachaApi('updateGlamourDust', { glamour_dust: '15' });
                     }
                 }
 
                 if (rarity === "SSR") {
-                    pity = 0;
+                    standard_pity = 0;
                 } else {
-                    pity += 1;
+                    standard_pity += 1;
                 }
 
                 return pulledCharacterOrItem;
@@ -205,55 +267,50 @@ const Standard_A = () => {
             }
         }
 
-        calculateRarity() {
-            let rand = Math.random();
-            console.log(rand, ':', ProbabilitySSRNow)
+        async checkDuplicateItem(item: GachaItem): Promise<boolean> {
+            try {
+                await fetchGachaApi("getUserData", null); // Refresh user data
+                const currentInventory = userData?.inventory || []; // Get updated inventory from userData
 
-            if (rand < ProbabilitySSRNow || (pity + 1) >= 90) {
+                // Check if item with the same name already exists
+                return currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
+            } catch (error) {
+                console.error('Error checking duplicate item:', error);
+                return false;
+            }
+        }
+
+        calculateRarity() {
+            let rand = random(); // Gunakan generator MCRNG 
+            // console.log(rand, ':', ProbabilitySSRNow)
+
+            if (rand < ProbabilitySSRNow || (standard_pity + 1) >= 90) {
                 return "SSR";
-            } else if (rand < ProbabilitySRNow || (pity + 1) % 10 === 0) {
+            } else if (rand < ProbabilitySRNow || (standard_pity + 1) % 10 === 0) {
                 return "SR";
             } else {
                 return "R";
             }
         }
 
+
         async pullCharacterOrItem(rarity: string) {
             let pulledCharacterOrItem: any;
             const dataFetch = { rarity };
             let data;
 
-            if (rarity === "SSR" || rarity === "SR") {
-                const isRateUp = await fetchGachaApi('getRateOn');
+            if (rarity === "SSR") {
 
-                if (isRateUp && rarity === "SSR") {
-                    // Rate ON: Ambil item limited
-                    data = await fetchGachaApi('getRateUpItem', dataFetch);
-                } else {
-                    // Rate OFF: 50:50 limited atau tidak (untuk SSR dan SR)
-                    if (Math.random() < 0.5) {
-                        data = await fetchGachaApi('getRateUpItem', dataFetch);
-                    } else {
-                        data = await fetchGachaApi('getRateOffItem', dataFetch);
-                    }
-                }
+                // Rate ON: Ambil item limited
+                data = await fetchGachaApi('getStandardItem', dataFetch);
 
                 // Pilih item dari data yang sudah difilter
                 const keys = Object.keys(data);
                 const randomKey = keys[Math.floor(Math.random() * keys.length)];
                 const randomItem = data[randomKey];
                 console.log('rand item : ', randomItem);
-                setPulledItem(randomItem);
                 pulledCharacterOrItem = randomItem;
 
-                // Update is_rate (khusus SSR)
-                if (rarity === "SSR") {
-                    if (randomItem.islimited) {
-                        await fetchGachaApi('setRateOff');
-                    } else {
-                        await fetchGachaApi('setRateOn');
-                    }
-                }
             } else { // Untuk rarity R
                 data = await fetchGachaApi('getGachaItem', dataFetch);
 
@@ -261,12 +318,11 @@ const Standard_A = () => {
                 const keys = Object.keys(data);
                 const randomKey = keys[Math.floor(Math.random() * keys.length)];
                 const randomItem = data[randomKey];
-                console.log('rand item : ', randomItem);
-                setPulledItem(randomItem);
+                // console.log('rand item : ', randomItem);
                 pulledCharacterOrItem = randomItem;
             }
 
-            console.log('pulled : ', pulledCharacterOrItem)
+            // console.log('pulled : ', pulledCharacterOrItem)
 
             return pulledCharacterOrItem;
         }
@@ -276,13 +332,14 @@ const Standard_A = () => {
         let tenpull: GachaItem[] = [];
 
         try {
-            await fetchGachaApi('getPity');
+            await fetchGachaApi('getStandardPity');
 
             for (let i = 0; i < a; i++) {
                 // Hitung probabilitas SR dan SSR berdasarkan pity saat ini
-                ProbabilitySRNow = baseSRProbability + ((pity % 10) * 0.0087);
-                ProbabilitySSRNow = baseSSRProbability + (pity * 0.00111);
-                console.log('ProbabilitySRNow', ProbabilitySRNow)
+                ProbabilitySRNow = baseSRProbability + ((standard_pity % 10) * 0.0087);
+                ProbabilitySSRNow = baseSSRProbability + (standard_pity * 0.00111);
+                // console.log('ProbabilitySRNow', ProbabilitySRNow)
+                // console.log('ProbabilitySSRNow', ProbabilitySSRNow)
 
                 const result = await gacha.makeWish();
                 // Gunakan if-else untuk incSRProbability
@@ -298,14 +355,20 @@ const Standard_A = () => {
                 tenpull[i] = result;
             }
 
-            console.log('pity after loop:', pity);
+            // console.log('pity after loop:', standard_pity);
 
             // Update pity di server
-            await fetchGachaApi('incPity', { incPity: pity });
+            await fetchGachaApi('incPity', {
+                incPity: standard_pity,
+                type: 'standard'
+            });
 
             // Update glamour_gems di server (pastikan endpoint API Anda mengharapkan string)
-            const GlimmeringEssence = (a).toString();
-            await fetchGachaApi('updateshimmering_essence', { shimmering_essence: GlimmeringEssence });
+            const ShimmeringEssence = (a).toString();
+            await fetchGachaApi('updateEssence', {
+                shimmering_essence: ShimmeringEssence,
+                type: 'standard'
+            });
 
             return tenpull;
 
@@ -316,103 +379,135 @@ const Standard_A = () => {
     }
 
     const listGacha = async (tenpull: any[]) => {
-        console.log('tenpull : ', tenpull);
-        const divDapat: any = document.getElementById('diDapat');
-        divDapat.innerHTML = '';
-        for (let i = 0; i < tenpull.length; i++) {
-            const currentItem = tenpull[i];
-            let bgColorClass = '';
-            if (currentItem.rarity.trim() === "SSR") {
-                bgColorClass = 'bg-yellow-400';
-            } else if (currentItem.rarity.trim() === "SR") {
-                bgColorClass = 'bg-purple-400';
-            } else {
-                bgColorClass = 'bg-gray-300';
+        setPulledItems(tenpull);
+
+        // Assume fetchGachaApi("getUserData", null) has been called before listGacha
+        const currentInventory = userData?.inventory || [];
+
+        // Create dustInfo and tokenInfo arrays
+        const newDustInfo = tenpull.map((item) => {
+            if (item.rarity.trim() === "R") {
+                return '+15 Glamour Dust';
             }
-            const imgElement = document.createElement('img');
-            imgElement.src = `/items_gacha/${currentItem.item_name}.svg`;
-            imgElement.className = `w-24 h-24 ${bgColorClass} opacity-0 transition-opacity duration-500`;
-            imgElement.alt = currentItem.item_name;
-            divDapat.appendChild(imgElement);
+            return '';
+        });
+        setDustInfo(newDustInfo);
 
-            void imgElement.offsetWidth;
-            imgElement.classList.add('opacity-100');
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
-
-    }
+        const newTokenInfo = tenpull.map((item) => {
+            const isDuplicate = currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
+            if (item.rarity.trim() === "SR") {
+                return isDuplicate ? '+5 Fashion Token' : '+2 Fashion Token';
+            } else if (item.rarity.trim() === "SSR") {
+                return isDuplicate ? '+25 Fashion Token' : '+10 Fashion Token';
+            }
+            return '';
+        });
+        setTokenInfo(newTokenInfo);
+    };
 
     const gacha = new GachaSystem();
 
     return (
         <>
-            <div className="flex flex-1 lg:pt-10 pt-4 bg-gacha1 bg-cover lg:blur-md blur-sm animate-pulse" />
+            <div className="flex flex-1 lg:pt-10 pt-4 bg-gacha2 bg-cover lg:blur-md blur-sm animate-pulse" />
             <div className="absolute w-full h-full flex flex-1 pt-10 bg-gradient-to-b from-transparent via-transparent to-black to-100% z-10" />
             <div className="absolute w-full h-full flex flex-1 z-20 lg:pt-20 pt-14">
                 <div className="flex flex-none flex-shrink w-2/5">
-                    <div className="relative h-full w-full hover:scale-105 transition-transform duration-200">
-                        <Image
-                            id="mikoImg"
-                            src={"/banner/avatar/limited.svg"}
-                            alt={"miko"}
-                            layout="fill"
-                            objectFit="contain"
-                            objectPosition="bottom"
-                        />
+                    <div className="relative h-full w-full transition-transform duration-200">
+                        <div className="absolute flex justify-end w-full h-full -bottom-28 -right-10">
+                            <Image
+                                id="mikoImg"
+                                src={"/banner/avatar/standardA.png"}
+                                alt={"miko"}
+                                layout="fill"
+                                objectFit="contain"
+                                objectPosition="bottom"
+                                className="scale-150"
+                            />
+                        </div>
+                        <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
+                            <Image
+                                id="mikoImg"
+                                src={"/banner/avatar/standardB.png"}
+                                alt={"miko"}
+                                layout="fill"
+                                objectFit="contain"
+                                objectPosition="bottom"
+                                className="scale-95"
+                            />
+                        </div>
                     </div>
                 </div>
                 <div className="relative flex flex-1">
                     <div className="absolute z-40 flex flex-1 w-full h-full flex-col lg:gap-4 gap-2">
-                        <div className="absolute flex items-center justify-end px-12 transform -skew-x-12 bg-gradient-to-r from-transparent via-red-600 to-red-600 to-100% bg-opacity-50 -right-10 transition-opacity duration-1000">
-                            <p className="lg:text-8xl text-5xl text-end font-black transform skew-x-12 text-white pr-12">JAPANESE MIKO</p>
+                        <div className="absolute flex items-center justify-end px-12 transform -skew-x-12 bg-gradient-to-r from-transparent via-violet-600 to-violet-600 to-100% bg-opacity-50 -right-10 transition-opacity duration-1000">
+                            <p className="lg:text-8xl text-5xl text-end font-black transform skew-x-12 text-white pr-12">CELESTIAL MAIDENS</p>
                         </div>
 
                         {/* transparent div */}
                         <div className="flex items-end justify-end px-12 transform -skew-x-12 bg-transparent">
-                            <p className="lg:text-8xl text-5xl text-end font-black transform skew-x-12 text-transparent pr-12">JAPANESE MIKO</p>
+                            <p className="lg:text-8xl text-5xl text-end font-black transform skew-x-12 text-transparent pr-12">Celestial Maidens</p>
                         </div>
                         {/* transparent div */}
 
                         <div className="flex flex-none items-start justify-end pr-16">
-                            <p className="text-end lg:text-sm text-[9px] lg:w-5/6 w-full">Rasakan keagungan kuil dengan gacha Miko terbaru! Dapatkan kostum gadis kuil yang cantik dengan jubah putih bersih dan rok merah menyala, lengkap dengan aksesoris seperti gohei dan ofuda. Raih kesempatan untuk memanggil roh keberuntungan dan keindahan! Jangan lewatkan kesempatan langka ini, tersedia untuk waktu terbatas!</p>
+                            <p className="text-end lg:text-sm text-[9px] lg:w-5/6 w-full">Dalam sebuah kerajaan yang jauh, para maid adalah sosok yang sangat dihormati. Mereka dikenal karena kecantikan, keanggunan, dan dedikasi mereka yang tinggi. Dengan kostum yang mencerminkan status sosial mereka, para maid ini adalah simbol keindahan dan kemewahan. Dapatkan kostum maid ekslusif dan jadilah bagian dari kisah mereka.</p>
                         </div>
-                        <div className="flex flex-none flex-col gap-12">
-                            <div className="flex flex-1 items-center justify-end gap-8">
-                                <BoxItem imageUrl={"/icons/outfit/A/mikoA.svg"} altText={"miko a"} />
-                                <BoxItem imageUrl={"/icons/outfit/B/mikoB.svg"} altText={"miko b"} />
-                                <BoxItem imageUrl={"/icons/outfit/C/mikoC.svg"} altText={"miko c"} />
-                                <p className="pr-16 flex animate-pulse text-yellow-400">Rate Up!</p>
+                        <div className="flex flex-1 flex-col gap-12">
+                            <div className="flex flex-1 items-end justify-end gap-8 pr-16">
+                                <BoxItem imageUrl={"/icons/outfit/A/mikoA.png"} altText={"miko a"} />
+                                <BoxItem imageUrl={"/icons/outfit/B/mikoB.png"} altText={"miko b"} />
+                                <BoxItem imageUrl={"/icons/outfit/C/mikoC.png"} altText={"miko c"} />
+                                <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
+                            </div>
+                            <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">
+                                <GachaButton onClick={openModal} activeTab={activeTab} />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            {/* Gacha Button */}
-            <div className="absolute flex flex-col gap-4 lg:right-16 lg:bottom-16 right-8 bottom-6 z-50">
-                <GachaButton onClick={openModal} />
-            </div>
 
             {/* Gacha Modal */}
-            <Modal isOpen={isModalOpen} onClose={closeModal}>
+            <Modal isOpen={isModalOpen} onClose={closeModal} >
                 <div className="relative w-full h-full flex flex-1 flex-col items-center justify-center">
-                    <div id="video" className="fixed flex flex-1 inset-0 z-50 bg-black justify-center items-center">
-                        <video
-                            ref={videoRef}
-                            id="video"
-                            onEnded={handleVideoEnd}
-                            autoPlay
-                            muted
-                        >
-                            <source className="bg-black" src="/video/gacha.mp4" type="video/mp4" />
-                        </video>
-                    </div>
-                    <div className="flex flex-1 flex-col w-full h-full bg-white p-8">
-                        <div id="diDapat" className="bg-red-300 flex flex-1 flex-wrap w-full justify-center items-center gap-1 p-4 animate-pulse">
-                            {/* Result will be displayed here */}
-                        </div>
-                        <div id="addResource" className="bg-yellow-200 flex flex-none flex-warp w-full justify-center items-center gap-1 p-4 animate-pulse">
-                            {/* Resource will be displayed here */}
+                    <div className="flex flex-1 flex-col w-full h-full justify-between bg-white p-8">
+                        <div className="flex flex-1 flex-col items-center justify-center">
+                            {isLoading && <div className="fixed z-[9999] flex w-full h-screen bg-black text-center items-center justify-center text-white">
+                                <div id="video" className="fixed flex flex-1 inset-0 z-[999] bg-black justify-center items-center">
+                                    <video
+                                        ref={videoRef}
+                                        id="video"
+                                        onEnded={handleVideoEnd}
+                                        autoPlay
+                                        muted
+                                    >
+                                        <source className="bg-black" src="/video/gacha.mp4" type="video/mp4" />
+                                    </video>
+                                </div></div>} {/* Loading indicator */}
+                            {!isLoading && pulledItems.length > 0 && ( // Conditional rendering
+                                <div id="diDapat" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse">
+                                    {pulledItems.map((item, index) => (
+                                        <img
+                                            key={index}
+                                            src={`/items_gacha/${item.item_name}.svg`}
+                                            alt={item.item_name}
+                                            className={`w-24 h-24 ${item.rarity.trim() === "SSR" ? 'bg-yellow-400' : item.rarity.trim() === "SR" ? 'bg-purple-400' : 'bg-gray-500'} opacity-100 transition-opacity duration-500`}
+                                            onLoad={(e) => {
+                                                (e.target as HTMLImageElement).classList.add('opacity-100');
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            <div id="addResource" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse text-[8px]">
+                                {dustInfo.map((dust, index) => (
+                                    <p key={index} className="text-black font-bold">{dust}</p>
+                                ))}
+                                {tokenInfo.map((token, index) => (
+                                    <p key={index} className="text-black font-bold">{token}</p>
+                                ))}
+                            </div>
                         </div>
                         <div className="flex justify-end mt-4">
                             <button
@@ -424,11 +519,12 @@ const Standard_A = () => {
                             </button>
                         </div>
                     </div>
+
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Insufficient Gems Modal */}
-            <Modal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal}>
+            <Modal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal} >
                 <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
                     <p className="text-black">Glamour Gems tidak cukup!</p>
                     <div className="flex justify-end mt-4">
@@ -441,14 +537,14 @@ const Standard_A = () => {
                         </button>
                     </div>
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Modal Konfirmasi Penukaran */}
             <Modal isOpen={showExchangeModal} onClose={() => setShowExchangeModal(false)}>
                 <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
                     <p className="text-black mb-4 text-center">
-                        Glimmering Essence tidak cukup! <br />
-                        Tukarkan <span className="text-amber-400">{exchangeAmount * 160} Glamour Gems</span> dengan <span className="text-blue-400">{exchangeAmount} Glimmering Essence</span>?
+                        Shimmering Essence tidak cukup! <br />
+                        Tukarkan <span className="text-amber-400">{exchangeAmount * 160} Glamour Gems</span> dengan <span className="text-blue-400">{exchangeAmount} Shimmering Essence</span>?
                     </p>
                     <div className="flex gap-4">
                         <button
@@ -466,7 +562,7 @@ const Standard_A = () => {
                         </button>
                     </div>
                 </div>
-            </Modal>
+            </Modal >
 
         </>
 

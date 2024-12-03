@@ -6,10 +6,9 @@ export default function MenuButton() {
     const router = useRouter();
     const handleMenu = (menu: any) => {
         if (menu === 'logout') {
-            // Clear session token from localStorage
-            sessionStorage.removeItem('sessionToken');
-            sessionStorage.removeItem('userId');
-            localStorage.removeItem('user');
+            // Clear session token from sessionStorage
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('uid');
 
             // Redirect to login page
             router.push('/');

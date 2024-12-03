@@ -1,8 +1,8 @@
 import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ModalAlert from '@/app/component/ModalAlert';
+import { signIn, getSession } from 'next-auth/react';
 
 interface FormData {
   email: string;
@@ -11,42 +11,18 @@ interface FormData {
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
-  const [prevFormData, setPrevFormData] = useState<FormData>({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setPrevFormData(formData);
-  }, [formData]);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const token = sessionStorage.getItem('sessionToken');
-
-      if (!token) {
-        router.push('/');
-      } else {
-        try {
-          const currentDate = new Date();
-          const decodedToken = jwtDecode<{ exp: number }>(token);
-          if (decodedToken.exp) {
-            const isTokenExpired = decodedToken.exp * 1000 < currentDate.getTime();
-            if (isTokenExpired) {
-              sessionStorage.removeItem('sessionToken');
-              router.push('/');
-            } else {
-              router.push('/main');
-            }
-          }
-        } catch (error) {
-          console.error('Error decoding token:', error);
-          sessionStorage.removeItem('sessionToken');
-          router.push('/');
-        }
+    // Redirect ke halaman utama jika sudah login
+    const checkAuth = async () => {
+      const session = await getSession(); // Gunakan fungsi getSession dari next-auth
+      if (session) {
+        router.push('/main');
       }
     };
-
     checkAuth();
   }, [router]);
 
@@ -61,23 +37,17 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      // Gunakan signIn dari next-auth
+      const result = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false // Agar tidak redirect otomatis
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
-      const data = await response.json();
-      sessionStorage.setItem('sessionToken', data.token);
-      localStorage.setItem('user', data.user.username);
-      sessionStorage.setItem('userId', data.user.uid);
       router.push('/main');
     } catch (error) {
       console.error('Login error:', error);
@@ -87,7 +57,6 @@ const Login: React.FC = () => {
         setError('An unknown error occurred');
       }
       setIsModalOpen(true);
-      setFormData(prevFormData);
     }
   };
 
