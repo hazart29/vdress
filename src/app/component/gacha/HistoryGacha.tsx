@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HistoryGachaA } from "@/app/interface";
 import ErrorAlert from "../ErrorAlert";
+import sjcl from "sjcl";
 
 const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props gachaType
   const [gachaList, setGachaList] = useState<HistoryGachaA[]>([]);
@@ -8,29 +9,35 @@ const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props
   const itemsPerPage = 5;
 
   useEffect(() => {
+    console.log(gachaType);
     fetchHistoryApi("getHistory", { gacha_type: gachaType.toString() }); // Sertakan gachaType di dataFetch
   }, [gachaType]); // Tambahkan gachaType sebagai dependency
 
 
   const fetchHistoryApi = async (typeFetch: string, dataFetch?: any) => {
     try {
-      const uid = sessionStorage.getItem('uid');
+      const uid = sessionStorage.getItem('uid'); // Pastikan uid tersedia
 
-      const url = new URL('/api/gacha', window.location.origin);
-      url.searchParams.set('uid', uid!);
-      url.searchParams.set('typeFetch', typeFetch);
+      // Gabungkan data yang akan dikirimkan dalam body
+      const requestBody = {
+        uid: uid!,
+        typeFetch: typeFetch,
+        ...(dataFetch || {}) // Gabungkan dataFetch jika ada
+      };
 
-      if (dataFetch) {
-        for (const key in dataFetch) {
-          url.searchParams.set(key, dataFetch[key]);
-        }
+      // Enkripsi data dengan SJCL
+      const password = 'virtualdressing'; // Ganti dengan password yang lebih kuat dan aman
+      if (!password) {
+        throw new Error('SJCL_PASSWORD tidak ditemukan');
       }
+      const encryptedData = sjcl.encrypt(password, JSON.stringify(requestBody));
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch('/api/gacha', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ encryptedData }), // Kirim data sebagai JSON
       });
 
       if (!response.ok) {
@@ -114,7 +121,7 @@ const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props
 
   return (
     <>
-      <div className="container flex gap-6 flex-col mx-auto p-4">
+      <div className="container flex gap-6 flex-col mx-auto p-4 overflow-y-scroll">
         <div className="flex flex-none flex-wrap p-2">
           <p className="text-black font-thin text-justify">
             The Gacha History page provides a detailed record of all your previous gacha pulls. This allows you to review which items you've obtained, when you obtained them, and from which banner they came. Each record includes the item's name, rarity, outfit part, gacha type, and the exact time of the pull. This information can be useful for tracking your gacha spending, remembering which outfit you've acquired, and analyzing your luck over time.
@@ -152,8 +159,8 @@ const HistoryGacha = ({ gachaType }: { gachaType: string }) => { // Terima props
               key={index}
               onClick={() => paginate(pageNumber)}
               className={`px-3 py-1 rounded-md mx-1 ${currentPage === pageNumber
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-600"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-600"
                 } ${pageNumber === -1 ? "pointer-events-none" : ""}`} // Nonaktifkan klik pada "..."
               disabled={pageNumber === -1} // Nonaktifkan tombol "..."
             >

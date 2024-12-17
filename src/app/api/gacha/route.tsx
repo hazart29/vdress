@@ -237,6 +237,7 @@ export async function POST(req: Request) {
             case 'getHistory':
                 try {
                     const gacha_type = data.gacha_type;
+                    console.log('gacha type : ', gacha_type);
                     const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${uid} AND gacha_type = ${gacha_type}`;
                     return NextResponse.json(history.rows, { status: 200 });
                 } catch (error) {

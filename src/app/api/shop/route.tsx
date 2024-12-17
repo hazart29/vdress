@@ -10,8 +10,8 @@ const password = process.env.SJCL_PASSWORD; // Retrieve password from environmen
 export async function GET() {
     try {
         // Fetch all gacha items (or implement filtering/pagination as needed)
-        const gachaItemsResult = await sql<GachaItem>`SELECT * FROM gacha_items`;
-        return NextResponse.json({ message: 'api run successfully' }, { status: 200 });
+        const { rows } = await sql`SELECT * FROM products`;
+        return NextResponse.json({ rows }, { status: 200 });
 
     } catch (error) {
         console.error(error);
@@ -34,6 +34,32 @@ export async function POST(req: Request) {
                 const glamourGems = userResourcesResult.rows[0]?.glamour_gems || 0;
                 return NextResponse.json({ glamourGems }, { status: 200 });
             }
+            case "topUp": {
+                const { packageId } = dataFetch;
+                console.log('id: ', packageId);
+
+                // 1. Retrieve package details
+                const { rows: [packageInfo] } = await sql`SELECT glamour_gems FROM products WHERE id = ${packageId}`;
+
+                if (!packageInfo) {
+                    return NextResponse.json({ message: 'Package not found' }, { status: 404 });
+                }
+
+                const { rows: [userGems] } = await sql`SELECT glamour_gems FROM user_resources WHERE uid = ${uid}`;
+
+                if (!userGems) {
+                    return NextResponse.json({ error: 'user_resources not found' }, { status: 404 });
+                }
+
+                const oldGems = userGems.glamour_gems; // Extract the glamour_gems value
+
+                // 3. Update the user's glamour_gems balance
+                const newGems = oldGems + packageInfo.glamour_gems; // Add the package's gems to the user's gems
+
+                await sql`UPDATE user_resources SET glamour_gems = ${newGems} WHERE uid = ${uid}`;
+
+                return NextResponse.json({ message: 'Top-up successful', new_gems: newGems }, { status: 200 });
+            }
             case "exchangeManyGems":
                 try {
                     const essence = dataFetch.formData.essence;
@@ -55,7 +81,7 @@ export async function POST(req: Request) {
                     }
 
                     // 3. Update user resources
-                    let updatedGlamourGems = userResources.glamour_gems - (160*essence);
+                    let updatedGlamourGems = userResources.glamour_gems - (160 * essence);
                     let updatedShimmeringEssence = userResources.shimmering_essence;
                     let updatedGlimmeringEssence = userResources.glimmering_essence;
 

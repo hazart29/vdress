@@ -455,9 +455,9 @@ const Standard_A = () => {
                         </div>
                         <div className="flex flex-1 flex-col gap-12">
                             <div className="flex flex-1 items-end justify-end gap-8 pr-16">
-                                <BoxItem imageUrl={"/icons/outfit/A/mikoA.png"} altText={"miko a"} />
-                                <BoxItem imageUrl={"/icons/outfit/B/mikoB.png"} altText={"miko b"} />
-                                <BoxItem imageUrl={"/icons/outfit/C/mikoC.png"} altText={"miko c"} />
+                                <BoxItem imageUrl={"/icons/outfit/A/maidA.png"} altText={"maid a"} />
+                                <BoxItem imageUrl={"/icons/outfit/B/maidB.png"} altText={"maid b"} />
+                                <BoxItem imageUrl={"/icons/outfit/C/maidC.png"} altText={"maid c"} />
                                 <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
                             </div>
                             <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">
