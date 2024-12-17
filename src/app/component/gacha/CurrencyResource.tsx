@@ -1,56 +1,45 @@
 'use client'
 import { useEffect, useState } from "react";
 import React from "react";
-import { Users, User_resources } from "@/app/interface";
+import { User_resources } from "@/app/interface"; // Adjust path if needed
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useRefresh } from "@/app/component/RefreshContext"; // Import context
 
 interface CurrencyResourceProps {
     activeTab: string;
-    refreshTrigger: number; // Tambahkan refreshTrigger di sini
 }
 
-const CurrencyResource: React.FC<CurrencyResourceProps> = ({ activeTab, refreshTrigger }) => {
-
+const CurrencyResource: React.FC<CurrencyResourceProps> = ({ activeTab }) => {
     const [userData, setUserData] = useState<User_resources | null>(null);
     const router = useRouter();
-
-    // Mengambil uid dan melakukan parsing ke number, handle jika null
+    const { refresh } = useRefresh();
     const uid = sessionStorage.getItem('uid') ? Number(sessionStorage.getItem('uid')) : null;
 
     const getData = async (uid: number) => {
         try {
-            const response = await fetch('/api/user_resources', {
+            const response = await fetch('/api/user_resources', { // Your API endpoint
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ uid: uid }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid }),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch user resources');
-            }
-
-            const reqData = await response.json();
-            if (reqData) {
-                setUserData(reqData);
-            } else {
-                console.warn('No user data found for provided uid.');
-            }
+            if (!response.ok) throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+            const data = await response.json();
+            setUserData(data || null);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error("Error fetching data:", error);
+            setUserData(null);
         }
     };
 
     useEffect(() => {
-        if (uid) {
-            getData(uid);
-        } else {
-            // Handle kondisi uid null (misalnya, redirect ke halaman login)
-            console.error("User ID not found in session storage.");
+        if (uid) getData(uid);
+        else {
+            console.error("User ID not found.");
+            setUserData(null);
+            router.push('/login'); // Or handle as needed
         }
-    }, [uid, activeTab, refreshTrigger]); // Jalankan useEffect saat uid atau activeTab berubah
+    }, [uid, activeTab, refresh, router]);
 
     return (
         <>
@@ -91,7 +80,6 @@ const CurrencyResource: React.FC<CurrencyResourceProps> = ({ activeTab, refreshT
                         </a>
                     </span>
                 </div>
-                {/* ... other divs ... */}
             </div>
         </>
     );

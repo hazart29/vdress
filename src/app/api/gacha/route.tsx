@@ -77,26 +77,25 @@ export async function POST(req: Request) {
 
             case 'updateEssence':
                 try {
-                    let essence: number;
-                    const typeEssence = data.type;
-
-                    if (typeEssence == 'limited') {
-                        essence = parseInt(data.glimmering_essence || '0', 10);
-                    } else {
-                        essence = parseInt(data.shimmering_essence || '0', 10);
-                    }
+                    const { essence, type } = data;
+                    console.log('updateessence data :', essence, type)
 
                     if (isNaN(essence)) {
                         return NextResponse.json({ message: 'Invalid essence value' }, { status: 400 });
                     }
 
-                    await sql`
-                        UPDATE user_resources 
-                        SET ${typeEssence} = ${typeEssence} - ${essence} 
-                        WHERE uid = ${uid}
-                    `;
+                    switch (type) {
+                        case 'limited':
+                            await sql`UPDATE user_resources SET glimmering_essence = glimmering_essence - ${essence} WHERE uid = ${uid}`;
+                            break;
+                        case 'standard':
+                            await sql`UPDATE user_resources SET shimmering_essence = shimmering_essence - ${essence} WHERE uid = ${uid}`;
+                            break;
+                        default:
+                            break;
+                    }
 
-                    return NextResponse.json({ message: `${typeEssence} Essence updated successfully` }, { status: 200 });
+                    return NextResponse.json({ message: `${type} Essence updated successfully` }, { status: 200 });
 
                 } catch (error) {
                     console.error('Error updating Essence:', error);

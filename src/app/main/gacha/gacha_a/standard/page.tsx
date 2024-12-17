@@ -7,6 +7,7 @@ import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
 import ErrorAlert from "@/app/component/ErrorAlert";
 import sjcl from 'sjcl';
+import { useRefresh } from "@/app/component/RefreshContext";
 
 const Standard_A = () => {
     const [userData, setUserData] = useState<Users | null>(null);
@@ -21,6 +22,7 @@ const Standard_A = () => {
     const [showExchangeModal, setShowExchangeModal] = useState(false);
     const [exchangeAmount, setExchangeAmount] = useState(0);
 
+    const { refresh } = useRefresh();
     const [isLoading, setIsLoading] = useState(false);
 
     let baseSSRProbability: number = 0.006;
@@ -91,18 +93,7 @@ const Standard_A = () => {
     const closeModal = () => {
         setIsModalOpen(false);
 
-        // Ambil URL saat ini
-        const currentURL = new URL(window.location.href);
-        const searchParams = new URLSearchParams(currentURL.search);
-
-        // Pastikan parameter 'tab' ada dan nilainya 'standar'
-        searchParams.set('tab', 'standar');
-
-        // Update URL dengan parameter baru
-        currentURL.search = searchParams.toString();
-
-        // Reload halaman dengan URL yang sudah diperbarui
-        window.location.href = currentURL.toString();
+        refresh()
     };
 
     const closeInsufficientModal = () => {
@@ -366,7 +357,7 @@ const Standard_A = () => {
             // Update glamour_gems di server (pastikan endpoint API Anda mengharapkan string)
             const ShimmeringEssence = (a).toString();
             await fetchGachaApi('updateEssence', {
-                shimmering_essence: ShimmeringEssence,
+                essence: ShimmeringEssence,
                 type: 'standard'
             });
 

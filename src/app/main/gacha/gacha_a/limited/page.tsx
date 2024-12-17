@@ -7,6 +7,7 @@ import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
 import ErrorAlert from "@/app/component/ErrorAlert";
 import sjcl from 'sjcl';
+import { useRefresh } from "@/app/component/RefreshContext"; // Import context
 
 const Limited_A = () => {
     const [userData, setUserData] = useState<Users | null>(null);
@@ -22,6 +23,7 @@ const Limited_A = () => {
     const [exchangeAmount, setExchangeAmount] = useState(0);
 
     const [isLoading, setIsLoading] = useState(false);
+    const { refresh } = useRefresh();
 
     let baseSSRProbability: number = 0.006;
     let baseSRProbability: number = 0.051;
@@ -91,18 +93,7 @@ const Limited_A = () => {
     const closeModal = () => {
         setIsModalOpen(false);
 
-        // Ambil URL saat ini
-        const currentURL = new URL(window.location.href);
-        const searchParams = new URLSearchParams(currentURL.search);
-
-        // Pastikan parameter 'tab' ada dan nilainya 'standar'
-        searchParams.set('tab', 'limited');
-
-        // Update URL dengan parameter baru
-        currentURL.search = searchParams.toString();
-
-        // Reload halaman dengan URL yang sudah diperbarui
-        window.location.href = currentURL.toString();
+        refresh();
     };
 
     const closeInsufficientModal = () => {
@@ -385,7 +376,7 @@ const Limited_A = () => {
             // Update glamour_gems di server (pastikan endpoint API Anda mengharapkan string)
             const GlimmeringEssence = (a).toString();
             await fetchGachaApi('updateEssence', {
-                glimmering_essence: GlimmeringEssence,
+                essence: GlimmeringEssence,
                 type: 'limited'
             });
 

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Limited_A from "./limited/page";
 import Standard_A from "./standard/page";
 import MoreBox from "@/app/component/gacha/MoreBox";
+import { RefreshProvider } from "@/app/component/RefreshContext";
 
 interface PityResponse {
     pity: number;
@@ -36,6 +37,7 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
 
 
     return (
+        <RefreshProvider>
         <div className="relative flex flex-col w-full h-screen">
             <div className="relative flex flex-1 flex-col">
                 <div className="absolute w-full p-6 lg:h-20 h-16 z-[60] flex flex-row items-center inset-0 top-0 transition-transform duration-300">
@@ -46,13 +48,13 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
                         </p>
                     </div>
                     <div className="flex flex-1 justify-end items-center">
-                        <CurrencyResource activeTab={activeTab} refreshTrigger={refreshTrigger} />
+                        <CurrencyResource activeTab={activeTab} />
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className=" flex flex-1 bg-black transition-opacity duration-500 ease-in-out">
-                    {activeTab === "standar" ? <Standard_A /> : <Limited_A />}
+                    {activeTab === "standard" ? <Standard_A /> : <Limited_A />}
                 </div>
             </div>
 
@@ -69,10 +71,10 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
                 </button>
                 <button
                     className={`flex flex-1 lg:p-8 p-4 shadow-black shadow-xl transform skew-x-12 pl-12 
-            ${activeTab === "standar" ? "bg-white opacity-70 text-black" : "bg-black opacity-50"} 
+            ${activeTab === "standard" ? "bg-white opacity-70 text-black" : "bg-black opacity-50"} 
             hover:bg-white hover:text-black hover:opacity-100 duration-300
             hover:scale-105 transform transition-transform`}
-                    onClick={() => handleTabChange("standar")}
+                    onClick={() => handleTabChange("standard")}
                 >
                     <p className="transform -skew-x-12 lg:text-2xl text-xs font-bold pl-4">Symphony of Silk</p>
                 </button>
@@ -83,5 +85,6 @@ export default function GachaALayout({ children }: { children: React.ReactNode }
                 <MoreBox activeTab={activeTab} />
             </div>
         </div>
+        </RefreshProvider>
     )
 }
