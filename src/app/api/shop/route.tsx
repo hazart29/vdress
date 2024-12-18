@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { sql } from "@vercel/postgres";
-import { GachaItem, User_resources } from "@/app/interface";
+import { GachaItem, TokenItems, User_resources } from "@/app/interface";
 import sjcl from "sjcl";
 import { NextResponse } from "next/server";
 
@@ -23,11 +23,18 @@ export async function POST(req: Request) {
     const { uid, typeFetch, ...dataFetch } = decryptedData;
 
     switch (typeFetch) {
-      case "getGlamourGems": {
+      case "getUserResource": {
         const { rows: [userResources] } = await sql<User_resources>`SELECT * FROM user_resources WHERE uid = ${uid}`;
         return NextResponse.json({ message: 'Successful', userResources: userResources || 0 }, { status: 200 });
       }
-
+      case "getTokenItems": {
+        const { rows: tokenItems } = await sql<TokenItems[]>`SELECT * FROM token_items`;
+        return NextResponse.json({ message: 'Successful', tokenItems: tokenItems || [] }, { status: 200 });
+      }
+      case "restockTokenItems": {
+        await sql`UPDATE token_items SET "limit" = initial_limit WHERE id IN (3, 4, 5);`; // Gunakan "limit" dengan double quotes
+        return NextResponse.json({ message: 'Successful update' }, { status: 200 });
+      }
       case "topUp": {
         const { packageId } = dataFetch;
 

@@ -51,10 +51,25 @@ export interface GachaItem {
 }
 
 export interface HistoryGachaA {
-    uid: number; 
-    rarity: string; 
+    uid: number;
+    rarity: string;
     item_name: string;
     part_outfit: string;
     gacha_type: string;
     gacha_time: string;
+}
+
+export interface Products {
+    id: number;
+    name: string;
+    price: number;
+    glamour_gems: number;
+}
+
+export interface TokenItems {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    limit: number;
 }

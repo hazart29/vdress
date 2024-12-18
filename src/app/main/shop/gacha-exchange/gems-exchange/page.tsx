@@ -103,7 +103,7 @@ export default function GemsExchange() {
 
   useEffect(() => {
     const fetchUserResources = async () => {
-      const response = await fetchApi('getGlamourGems');
+      const response = await fetchApi('getUserResource');
       setUserResources(response.userResources)
     };
 

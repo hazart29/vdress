@@ -12,6 +12,8 @@ const ShopLayout = ({ children }: { children: React.ReactNode }) => {
       setActiveTab(1);
     } else if (pathname === '/main/shop/gacha-exchange/glamour-dust-exchange') {
       setActiveTab(2);
+    } else if (pathname === '/main/shop/gacha-exchange/gems-exchange') {
+      setActiveTab(3);
     }
   }, [pathname]);
 
