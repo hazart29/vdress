@@ -8,6 +8,7 @@ import ErrorAlert from '@/app/component/ErrorAlert';
 import React from 'react';
 import { TokenItems } from '@/app/interface';
 import { useRefresh } from "@/app/component/RefreshContext";
+import Loading from '@/app/component/Loading';
 
 export default function TokenShop() {
   const [tokenItems, setTokenItems] = useState<TokenItems[] | null>([]);
@@ -17,6 +18,7 @@ export default function TokenShop() {
   const [quantity, setQuantity] = useState(1);
   const [exchangeSuccess, setExchangeSuccess] = useState(false);
   const { refresh } = useRefresh();
+  const [inventoryItemNames, setInventoryItemNames] = useState<string[]>([]);
 
   const handleSelectItem = (item: TokenItems) => {
     setSelectedItem(item);
@@ -40,14 +42,14 @@ export default function TokenShop() {
 
     try {
       const response = await fetchApi('buyTokenItem', { itemId: selectedItem.id, quantity });
-      if (response && response.success) {
+      // if (response && response.success) {
         console.log('Purchase successful:', response);
-        setExchangeSuccess(true);
-        refresh();
         setShowModal(false);
-      } else {
-        setError(response?.error || "Purchase failed.");
-      }
+        setExchangeSuccess(true); // Set success state to true
+        refresh();
+      // } else {
+      //   setError(response?.error || "Purchase failed.");
+      // }
     } catch (error: any) {
       console.error('Error during purchase:', error);
       setError(error.message || "An error occurred during purchase.");
@@ -92,8 +94,41 @@ export default function TokenShop() {
     }
   };
 
+  const fetchInventoryItems = async () => {
+    try {
+      const uid = sessionStorage.getItem('uid');
+      if (!uid) {
+        console.error("User ID not found in sessionStorage");
+        return;
+      }
+
+      const encryptedData = sjcl.encrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', JSON.stringify({ uid })); // Encrypt the data
+
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ encryptedData }), // Send encrypted data in the body
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Network response was not ok");
+      }
+
+      const data = await response.json();
+      // Decrypt data if needed (see server-side changes)
+      const decryptedData = JSON.parse(sjcl.decrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
+      const itemNames = decryptedData?.inventory?.map((item: { item_name: any; }) => item.item_name) || [];
+
+      setInventoryItemNames(itemNames);
+    } catch (error: any) {
+      console.error('Error fetching inventory:', error.message);
+    }
+  };
+
   useEffect(() => {
     fetchTokenItems();
+    fetchInventoryItems();
   }, []);
 
   useEffect(() => {
@@ -123,36 +158,58 @@ export default function TokenShop() {
 
   return (
     <div className="flex flex-wrap gap-4 px-16 justify-center">
-      {tokenItems && tokenItems.length > 0 ? (
-        tokenItems.map((item) => (
-          <button
-            key={item.id}
-            className="flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md"
-            onClick={() => handleSelectItem(item)}
-          >
-            <div className="flex flex-1 w-full justify-center items-center bg-white p-4">
-              <Image
-                src={`/icons/shop_items/${item.name}.png`} // Use item name for image
-                alt={item.name}
-                width={72}
-                height={72}
-                onError={(e) => {
-                  e.currentTarget.src = '/icons/placeholder.png'; // Placeholder if image fails
-                }}
-              />
-            </div>
-            <div className="flex flex-col flex-none w-full p-2 bg-amber-500 text-white">
-              <p className="text-sm font-bold truncate">{item.name}</p>
-              <p className="text-xs">Price: {item.price}</p>
-              {item.limit !== null && <p className="text-xs">Limit: {item.limit}</p>}
-            </div>
-          </button>
-        ))
+      { tokenItems && tokenItems.length > 0 ? (
+        tokenItems.map((item) => {
+          // Cek apakah item dengan id 3, 4, atau 5 sudah ada di inventory
+          const isItemInInventory = inventoryItemNames.includes(item.name);
+
+          return (
+            <button
+              key={item.id}
+              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !isItemInInventory && item.limit !== 0 && handleSelectItem(item)} // Kondisi onClick diperbarui
+              disabled={isItemInInventory || item.limit === 0} // Atribut disabled diperbarui
+            >
+              <div className="flex flex-1 flex-col w-full justify-between items-center bg-white p-4">
+                <Image
+                  src={`/icons/shop_items/${item.name}.png`} // Use item name for image
+                  alt={item.name}
+                  width={72}
+                  height={72}
+                  onError={(e) => {
+                    e.currentTarget.src = '/icons/placeholder.png'; // Placeholder if image fails
+                  }}
+                />
+                {item.limit !== null && <p className="text-xs text-gray-400">Limit: {item.limit}</p>}
+              </div>
+              {/* Menampilkan status limit dan status sudah dimiliki */}
+              <div className="flex flex-col flex-none w-full p-2 bg-amber-500 text-white">
+                <p className="text-xs flex gap-1 items-center justify-center">
+
+                  {isItemInInventory ? (
+                    <p className="text-xs text-gray-300 text-center">Sudah dimiliki</p>
+                  ) : (
+                    <>
+                      <Image
+                        src={`/icons/currency/fashion_tokens.png`}
+                        alt={item.name}
+                        width={20}
+                        height={20}
+                        onError={(e) => {
+                          e.currentTarget.src = '/icons/placeholder.png';
+                        }}
+                      />
+                      <p className="text-xs text-white text-center">{item.price}</p>
+                    </>
+                  )}
+
+                </p>
+              </div>
+            </button>
+          );
+        })
       ) : (
-        <div>
-          {/* Display loading or no items message */}
-          {tokenItems === null ? "Loading..." : "No items found."}
-        </div>
+        <Loading/>
       )}
 
       <Modal isOpen={showModal} onClose={closeModal}>

@@ -1,13 +1,3 @@
-export interface Inventory {
-    id: number;
-    uid: number;
-    rarity: string;
-    item_name: string;
-    part_outfit: string;
-    layer: string;
-    created_at: string;
-}
-
 export interface Users {
     uid: number;
     username: string;
@@ -48,6 +38,27 @@ export interface GachaItem {
     rate_up: boolean;
     islimited: boolean;
     layer: string;
+    stat: Stat;
+    power: number;
+}
+
+interface Stat {
+    attack?: number;
+    defense?: number;
+    magic?: number;
+    speed?: number;
+}
+
+export interface Inventory {
+    id: number;
+    uid: number;
+    rarity: string;
+    item_name: string;
+    part_outfit: string;
+    layer: string;
+    created_at: string;
+    stat: Stat;
+    power: number;
 }
 
 export interface HistoryGachaA {
@@ -67,6 +78,14 @@ export interface Products {
 }
 
 export interface TokenItems {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    limit: number;
+}
+
+export interface DustItems {
     id: number;
     name: string;
     description: string;

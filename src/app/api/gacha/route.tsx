@@ -288,12 +288,13 @@ export async function POST(req: Request) {
                         WHERE uid = ${uid}
                       `;
 
-                    // 2. Tambahkan glimmering_essence
-                    await sql`
-                        UPDATE user_resources 
-                        SET ${type} = ${type} + ${essence} 
-                        WHERE uid = ${uid}
-                      `;
+                    if (type === 'glimmering_essence') {
+                        // 2. Tambahkan glimmering_essence
+                        await sql`UPDATE user_resources SET glimmering_essence = glimmering_essence + ${essence} WHERE uid = ${uid}`;
+                    } else {
+                        await sql`UPDATE user_resources SET shimmering_essence = shimmering_essence + ${essence} WHERE uid = ${uid}`;
+                    }
+
 
                     return NextResponse.json({ message: 'Gems exchanged for essence successfully' }, { status: 200 });
 

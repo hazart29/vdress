@@ -7,6 +7,8 @@ import DownloadButton from '@/app/component/DownloadButton';
 import OutfitImage from '@/app/component/outfit/OutfitImage';
 import UnEquip from '@/app/component/outfit/UnEquip';
 import { Inventory, Suited } from '@/app/interface';
+import sjcl from 'sjcl';
+import Loading from '@/app/component/Loading';
 
 const CanvasComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,35 +17,29 @@ const CanvasComponent: React.FC = () => {
   const bottomRef = useRef<HTMLCanvasElement>(null);
   const feetRef = useRef<HTMLCanvasElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [wardrobe, setWardrobe] = useState<Suited>();
+  const [wardrobe, setWardrobe] = useState<Suited | null>(null);
   const [topImage, setTopImage] = useState('');
   const [botImage, setBotImage] = useState('');
   const [feetImage, setFeetImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [outfitData, setOutfitData] = useState<Inventory[]>([]);
   const loading = '/ui/iconVD.svg';
   const uid = sessionStorage.getItem('uid');
+  const password = process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing';
 
   const changeOutfit = (newOutfit: { layer: string, item_name: string }) => {
-    // 1. Update the wardrobe state
     setWardrobe((prevWardrobe) => {
       if (prevWardrobe) {
         const updatedWardrobe = {
           ...prevWardrobe,
-          // Update the correct property based on the layer
           [newOutfit.layer.toLowerCase()]: newOutfit.item_name
         };
 
-        // 2. Send API request to update the outfit in the database
         fetchData("updateOutfit", {
-          uid: uid,
           top: updatedWardrobe.a,
           bottom: updatedWardrobe.b,
           feet: updatedWardrobe.c
         });
-
-        window.location.reload();
 
         return updatedWardrobe;
 
@@ -57,7 +53,7 @@ const CanvasComponent: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData("getOutfitData", { uid: uid });
+    fetchData("getOutfitData", { uid });
   }, []);
 
   useEffect(() => {
@@ -66,12 +62,10 @@ const CanvasComponent: React.FC = () => {
       setBotImage(`/outfit/B/${wardrobe.b}.png`);
       setFeetImage(`/outfit/C/${wardrobe.c}.png`);
     } else {
-      // Handle case when wardrobe is empty or null
       console.log('Wardrobe data is not available');
     }
 
     if (topImage && botImage && feetImage) {
-      // Load image into canvas elements
       const cAvatar = avatarRef.current;
       const catx = cAvatar?.getContext('2d');
       const cTop = topRef.current;
@@ -87,74 +81,62 @@ const CanvasComponent: React.FC = () => {
 
       setIsLoading(true);
       loadAvatar(catx);
-      setIsVisible(true);
 
-      // Draw clothing items on their respective canvases
       drawClothingItem(cttx, topImage);
       drawClothingItem(cbtx, botImage);
       drawClothingItem(cftx, feetImage);
 
       setIsLoading(false);
     } else {
-      console.warn('No outif image found');
+      console.warn('No outfit image found');
     }
   }, [wardrobe, topImage, botImage, feetImage]);
 
-  // load data suited
-  const fetchData = async (action: string, dataFetch: any) => {
+  const fetchData = async (action: string, dataFetch?: any) => {
     try {
-      // Construct the URL with search parameters
-      const url = new URL('/api/outfit', window.location.origin);
-      url.searchParams.set('action', action);
-      for (const key in dataFetch) {
-        url.searchParams.set(key, dataFetch[key]);
-      }
+      const uid = sessionStorage.getItem('uid');
+      if (!uid) throw new Error("User ID not found");
 
-      const response = await fetch(url.toString(), {
+      const encryptedData = sjcl.encrypt(password, JSON.stringify({ action, uid, ...dataFetch }));
+
+      const response = await fetch('/api/outfit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ encryptedData }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Network response was not ok");
       }
 
-      const data = await response.json();
-      // Handle specific responses based on the action
+      const responseData = await response.json();
+      const decryptedData = JSON.parse(sjcl.decrypt(password, responseData.encryptedData));
+
       switch (action) {
         case "getOutfitData":
-          if (data) {
-            setWardrobe(data[0]);
+          if (decryptedData && decryptedData.length > 0) {
+            setWardrobe(decryptedData[0]);
           } else {
             console.log('No data found for getOutfitData');
+            setWardrobe(null);
           }
           break;
-
         case "updateOutfit":
-          // Handle the response for updateOutfit action, e.g., show a success message
-          console.log('Outfit updated successfully:', data);
+          console.log('Outfit updated successfully:', decryptedData);
           break;
-
         case "getOutfitByLayer":
-          if (data) {
-            setOutfitData(data); // Assuming the API returns an array of Inventory
+          if (decryptedData && decryptedData.length > 0) {
+            setOutfitData(decryptedData);
           } else {
             console.log('No outfit data found for getOutfitByLayer');
+            setOutfitData([]);
           }
           break;
-
-        // Add more cases for other actions as needed
-        // case "addOutfit":
-        //   // ... handle addOutfit response
-        //   break;
-
         default:
-          console.log('Default action handler in fetchData');
+          console.log('Unknown action:', action);
       }
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
     }
   };
@@ -163,28 +145,22 @@ const CanvasComponent: React.FC = () => {
     const modelImage = new Image();
 
     modelImage.onload = () => {
-      // Get actual width and height of the image
       const imageWidth = modelImage.width;
       const imageHeight = modelImage.height;
 
-      // Calculate scale factor to fit the canvas
       const canvasWidth = ctx.canvas.width;
       const canvasHeight = ctx.canvas.height;
       const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
 
-      // Calculate new width and height after scaling
       const newWidth = imageWidth * scaleFactor;
       const newHeight = imageHeight * scaleFactor;
 
-      // Calculate center position of the canvas
       const centerX = canvasWidth / 2;
       const centerY = canvasHeight / 2;
 
-      // Calculate starting position to draw the image in the center
       const startX = centerX - newWidth / 2;
       const startY = centerY - newHeight / 2;
 
-      // Draw the image with calculated position and size
       ctx.drawImage(modelImage, startX, startY, newWidth, newHeight);
     };
 
@@ -192,33 +168,28 @@ const CanvasComponent: React.FC = () => {
   };
 
   const drawClothingItem = (ctx: CanvasRenderingContext2D, src: string) => {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
     const clothingImage = new Image();
     clothingImage.onload = () => {
-      // Get actual width and height of the image
       const imageWidth = clothingImage.width;
       const imageHeight = clothingImage.height;
 
-      // Calculate scale factor to fit the canvas
       const canvasWidth = ctx.canvas.width;
       const canvasHeight = ctx.canvas.height;
       const scaleFactor = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
 
-      // Calculate new width and height after scaling
       const newWidth = imageWidth * scaleFactor;
       const newHeight = imageHeight * scaleFactor;
 
-      // Calculate center position of the canvas
       const centerX = canvasWidth / 2;
       const centerY = canvasHeight / 2;
 
-      // Calculate starting position to draw the image in the center
       const startX = centerX - newWidth / 2;
       const startY = centerY - newHeight / 2;
 
-      // Ubah mode compositing untuk membuat efek overlay
       ctx.globalCompositeOperation = 'destination-over';
 
-      // Draw the image with calculated position and size
       ctx.drawImage(clothingImage, startX, startY, newWidth, newHeight);
     };
     clothingImage.src = src;
@@ -228,10 +199,9 @@ const CanvasComponent: React.FC = () => {
     setIsModalOpen(true);
     if (uid) {
       fetchData("getOutfitByLayer", {
-        uid: uid,
+        uid,
         layer: loc
       });
-      //console.log('outfit:', outfitData)
     } else {
       console.warn('user id not found!');
     }
@@ -273,10 +243,6 @@ const CanvasComponent: React.FC = () => {
     document.body.removeChild(a);
   };
 
-  // if (isLoading) {
-  //   return <div className='absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center'><img src={loading} alt="none" width={40} height={40} className='animate-ping' /></div>;
-  // }
-
   return (
     <>
       <div className="relative flex w-screen h-screen justify-center items-center gap-10 transition-opacity duration-1000">
@@ -285,9 +251,7 @@ const CanvasComponent: React.FC = () => {
           <DownloadButton onClick={handleDownload} />
         </div>
         {isLoading ? (
-          <div className="absolute flex w-full h-full z-[999] top-0 left-0 justify-center items-center">
-            <img src={loading} alt="none" width={40} height={40} className="animate-ping" />
-          </div>
+          <Loading/>
         ) : (
           <div className="relative flex flex-none w-1/4 flex-shrink transition-transform duration-1000 h-full transform">
             <canvas id="avatar" ref={avatarRef} className="absolute left-0 h-full z-0" width={2000} height={4000} />
@@ -312,19 +276,19 @@ const CanvasComponent: React.FC = () => {
                       {/* Pass the changeOutfit function to OutfitImage */}
                       {item.part_outfit.toLowerCase() == 'top' && (
                         <OutfitImage
-                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
                         />
                       )}
                       {item.part_outfit.toLowerCase() == 'bottom' && (
                         <OutfitImage
-                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
                         />
                       )}
                       {item.part_outfit.toLowerCase() == 'feet' && (
                         <OutfitImage
-                          src={`/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                          src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
                         />
                       )}

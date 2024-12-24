@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/app/component/modal"; // Adjust the path as needed
 import sjcl from "sjcl";
 import { useRefresh } from "@/app/component/RefreshContext"; // Import context
+import Loading from "@/app/component/Loading";
 
 interface Package {
   id: any;
@@ -14,8 +15,9 @@ interface Package {
 export default function TopUp() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setErrorMessage] = useState<string | null>(null);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false); // Modal konfirmasi pembelian
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // Modal sukses top-up
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { refresh } = useRefresh();
 
   // Fetch packages on component mount and add cache busting
@@ -45,11 +47,17 @@ export default function TopUp() {
 
   const handleOpenModal = (pkg: Package) => {
     setSelectedPackage(pkg);
-    setIsModalOpen(true);
+    setIsPurchaseModalOpen(true); // Buka modal konfirmasi pembelian
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleClosePurchaseModal = () => {
+    setIsPurchaseModalOpen(false);
+    setErrorMessage(null); // Clear error message when closing purchase modal
+  };
+
+  const handleCloseSuccessModal = () => {
+    setIsSuccessModalOpen(false);
+    setErrorMessage(null); // Clear error message when closing success modal
   };
 
   const handlePackageSelect = (pkg: Package) => {
@@ -92,7 +100,7 @@ export default function TopUp() {
       if (!response.ok) {
         const errorMessage = 'Purchase failed';
         setErrorMessage(errorMessage);
-        setIsModalOpen(true); // Keep modal open to show error
+        setIsPurchaseModalOpen(true); // Keep modal open to show error
         console.error("Purchase failed:", errorMessage);
         return;
       }
@@ -101,19 +109,20 @@ export default function TopUp() {
       if (responseData && responseData.message === 'Top-up successful') {
         console.log('Purchase successful!');
         setSelectedPackage(null);
+        setIsPurchaseModalOpen(false); // Tutup modal konfirmasi pembelian
         setErrorMessage('Top-up successful!');
-        setIsModalOpen(true); // Keep modal open to show success
+        setIsSuccessModalOpen(true); // Buka modal sukses
         refresh();
       } else {
         const errorMessage = responseData?.message || 'Purchase failed';
         setErrorMessage(errorMessage);
-        setIsModalOpen(true); // Keep modal open to show error
+        setIsPurchaseModalOpen(true); // Keep modal open to show error
         console.error("Purchase failed:", errorMessage);
       }
     } catch (error: any) {
       console.error('Error during purchase:', error);
       setErrorMessage(error.message || "An unexpected error occurred.");
-      setIsModalOpen(true); // Keep modal open to show error
+      setIsPurchaseModalOpen(true); // Keep modal open to show error
     }
   };
 
@@ -121,7 +130,7 @@ export default function TopUp() {
     <button
       className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
       onClick={handlePurchase}
-      disabled={error !== null} // Disable button if there's an error
+      disabled={errorMessage !== null} // Disable button if there's an error
     >
       Purchase
     </button>
@@ -130,7 +139,7 @@ export default function TopUp() {
   return (
     <div className="flex flex-col">
       {/* Package Display */}
-      {packages.length > 0 && (
+      {packages.length > 0 ? (
         <div className="p-12 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {packages.map((pkg) => (
             <div
@@ -144,29 +153,40 @@ export default function TopUp() {
             </div>
           ))}
         </div>
+      ) : (
+        <Loading />
       )}
 
-      {/* Modal */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+      {/* Modal Konfirmasi Pembelian */}
+      <Modal isOpen={isPurchaseModalOpen} onClose={handleClosePurchaseModal}>
         <div className="mt-4 bg-white p-4 rounded-md">
-          {error && <p className={`mb-4 ${error === 'Top-up successful!' ? 'text-green-500' : 'text-red-500'}`}>{error}</p>}
-          {selectedPackage && error !== 'Top-up successful!' && (
+          {errorMessage && errorMessage !== 'Top-up successful!' && <p className="text-red-500 mb-4">{errorMessage}</p>}
+          {selectedPackage && (
             <>
               <p className="text-lg font-semibold">Selected Package:</p>
               <p className="text-gray-600">{selectedPackage.name}</p>
-              <p className="gray-600">{selectedPackage.price}</p>
+              <p className="text-gray-600">{selectedPackage.price}</p>
               <p className="text-gray-600">{selectedPackage.glamour_gems} Glamour Gems</p>
             </>
           )}
           <div className="flex flex-1 gap-2 mt-4">
-            {error !== 'Top-up successful!' && purchaseButton}
+            {purchaseButton}
             <button
               className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-              onClick={handleCloseModal}
+              onClick={handleClosePurchaseModal}
             >
-              {error === 'Top-up successful!' ? 'Close' : 'Cancel'}
+              Cancel
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal Sukses Top-up */}
+      <Modal isOpen={isSuccessModalOpen} onClose={handleCloseSuccessModal}>
+        <div className="flex flex-col justify-center items-center p-6 bg-white rounded-md">
+          <h2 className="text-lg font-bold text-green-500 mb-4">Berhasil!</h2>
+          <p className="text-center">Top-up Berhasil.</p>
+          <button onClick={handleCloseSuccessModal} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">Tutup</button>
         </div>
       </Modal>
     </div>

@@ -8,6 +8,7 @@ import ErrorAlert from '@/app/component/ErrorAlert';
 import React from 'react';
 import { User_resources } from '@/app/interface';
 import { useRefresh } from "@/app/component/RefreshContext"; // Import context
+import Loading from '@/app/component/Loading';
 
 
 interface FormData {
@@ -113,7 +114,7 @@ export default function GemsExchange() {
   return (
     <div className="flex flex-1 gap-4 px-16">
       {/* Shimmering Essence */}
-      {userResources && (
+      {userResources ? (
         <button
           className="flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden"
           onClick={() => handleExchange("shimmering_essence")}
@@ -137,6 +138,8 @@ export default function GemsExchange() {
             <p>160</p>
           </div>
         </button>
+      ) : (
+        <Loading/>
       )}
 
       {/* Glimmering Essence */}
