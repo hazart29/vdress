@@ -102,7 +102,7 @@ export default function TokenShop() {
         return;
       }
 
-      const encryptedData = sjcl.encrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', JSON.stringify({ uid })); // Encrypt the data
+      const encryptedData = sjcl.encrypt(process.env.SJCL_PASSWORD || 'virtualdressing', JSON.stringify({ uid })); // Encrypt the data
 
       const response = await fetch('/api/inventory', {
         method: 'POST',
@@ -117,7 +117,7 @@ export default function TokenShop() {
 
       const data = await response.json();
       // Decrypt data if needed (see server-side changes)
-      const decryptedData = JSON.parse(sjcl.decrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
+      const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
       const itemNames = decryptedData?.inventory?.map((item: { item_name: any; }) => item.item_name) || [];
 
       setInventoryItemNames(itemNames);

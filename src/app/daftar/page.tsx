@@ -5,6 +5,7 @@ import { useState } from "react";
 import Image from 'next/image';
 import ModalAlert from "../component/ModalAlert";
 import React from "react";
+import sjcl from "sjcl";
 
 interface FormData {
     username: string;
@@ -52,15 +53,16 @@ export default function Daftar() {
                     ...formData,
                 };
 
-                console.log(dataToSend);
-
                 try {
                     const response = await fetch('/api/daftar', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify(dataToSend),
+                        body: JSON.stringify({
+                            encryptedData: sjcl.encrypt(process.env.SJCL_PASSWORD || 'virtualdressing', JSON.stringify(dataToSend)),
+                        }),
+
                     });
 
                     if (!response.ok) {
@@ -68,8 +70,11 @@ export default function Daftar() {
                         throw new Error(errorData.message || 'An error occurred');
                     }
 
-                    const responseData = await response.json();
-                    console.log('User registered:', responseData);
+                    const data = await response.json();
+                    // Decrypt data if needed (see server-side changes)
+                    const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', data.encryptedReturnData));
+
+                    console.log('User registered:', decryptedData);
                     handleOpenModal();
                 } catch (error: any) {
                     console.error('Error registering user:', error);

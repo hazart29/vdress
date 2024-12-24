@@ -42,7 +42,7 @@ export default function GlamourDustExchange() {
 
     try {
       const response = await fetchApi('buyDustItem', { itemId: selectedItem.id, quantity });
-      const decryptedData = JSON.parse(sjcl.decrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', response.encryptedData));
+      const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', response.encryptedData));
       console.log('Purchase successful:', decryptedData);
       setShowModal(false);
       setExchangeSuccess(true);
@@ -107,7 +107,7 @@ export default function GlamourDustExchange() {
 
       if (response.encryptedData) {
         try {
-          const decryptedData = JSON.parse(sjcl.decrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', response.encryptedData));
+          const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', response.encryptedData));
           setDustItems(decryptedData.dustItems);
           console.log('Dust items set:', decryptedData.dustItems); // Log data yang sudah didekripsi
         } catch (decryptionError) {
@@ -132,7 +132,7 @@ export default function GlamourDustExchange() {
         return;
       }
 
-      const encryptedData = sjcl.encrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', JSON.stringify({ uid })); // Encrypt the data
+      const encryptedData = sjcl.encrypt(process.env.SJCL_PASSWORD || 'virtualdressing', JSON.stringify({ uid })); // Encrypt the data
 
       const response = await fetch('/api/inventory', {
         method: 'POST',
@@ -147,7 +147,7 @@ export default function GlamourDustExchange() {
 
       const data = await response.json();
       // Decrypt data if needed (see server-side changes)
-      const decryptedData = JSON.parse(sjcl.decrypt(process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
+      const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
       const itemNames = decryptedData?.inventory?.map((item: { item_name: any; }) => item.item_name) || [];
 
       setInventoryItemNames(itemNames);

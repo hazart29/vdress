@@ -25,7 +25,7 @@ const CanvasComponent: React.FC = () => {
   const [outfitData, setOutfitData] = useState<Inventory[]>([]);
   const loading = '/ui/iconVD.svg';
   const uid = sessionStorage.getItem('uid');
-  const password = process.env.NEXT_PUBLIC_SJCL_PASSWORD || 'virtualdressing';
+  const password = process.env.SJCL_PASSWORD || 'virtualdressing';
 
   const changeOutfit = (newOutfit: { layer: string, item_name: string }) => {
     setWardrobe((prevWardrobe) => {

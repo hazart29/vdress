@@ -3,6 +3,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcrypt';
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
+import sjcl from 'sjcl';
+
+const pwd = process.env.SJCL_PASSWORD; // Retrieve password from environment variables
 
 export async function GET() {
   try {
@@ -20,7 +23,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { username, password, email, name } = await new Response(req.body).json();
+  const { encryptedData } = await req.json();
+  const decryptedData = JSON.parse(sjcl.decrypt(pwd as string, encryptedData));
+  const { username, password, email, name } = decryptedData;
 
   try {
     // Validate input
@@ -54,7 +59,8 @@ export async function POST(req: Request) {
           RETURNING *
         `;
 
-        return NextResponse.json(newUser, { status: 201 });
+        const encryptedReturnData = sjcl.encrypt(password as string, JSON.stringify(newUser));
+        return NextResponse.json({encryptedReturnData: encryptedReturnData}, { status: 201 });
       } catch (error) {
         // If there's an error creating the user resource, delete the user
         console.error('Error creating user resource:', error);
@@ -62,7 +68,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Failed to create user resource. User registration rolled back.' }, { status: 500 });
       }
     } else {
-      return NextResponse.json({ message: 'Failed to create user' }, { status: 500 }); 
+      return NextResponse.json({ message: 'Failed to create user' }, { status: 500 });
     }
 
   } catch (error) {
