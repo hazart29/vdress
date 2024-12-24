@@ -59,7 +59,7 @@ export async function POST(req: Request) {
           RETURNING *
         `;
 
-        const encryptedReturnData = sjcl.encrypt(password as string, JSON.stringify(newUser));
+        const encryptedReturnData = sjcl.encrypt(pwd as string, JSON.stringify(newUser));
         return NextResponse.json({encryptedReturnData: encryptedReturnData}, { status: 201 });
       } catch (error) {
         // If there's an error creating the user resource, delete the user
