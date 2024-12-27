@@ -24,8 +24,9 @@ export async function GET() {
 export async function POST(req: Request, res: NextApiResponse) {
   const { email, password } = await new Response(req.body).json();
   const rows = await sql`SELECT * FROM users where email = ${email}`;
+  console.log(rows)
 
-  if (rows.length === 0) {
+  if (!rows) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });
   } else {
     const user = rows;
