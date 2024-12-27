@@ -454,9 +454,9 @@ const Limited_A = () => {
                             <div className="relative h-full w-full transition-transform duration-200">
                                 <div className="absolute flex justify-end w-full h-full -bottom-32 -right-10">
                                     <Image
-                                        id="mikoImg"
+                                        id="MikoImg"
                                         src={"/banner/avatar/limitedA.png"}
-                                        alt={"miko"}
+                                        alt={"Miko"}
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
@@ -465,9 +465,9 @@ const Limited_A = () => {
                                 </div>
                                 <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
                                     <Image
-                                        id="mikoImg"
+                                        id="MikoImg"
                                         src={"/banner/avatar/limitedB.png"}
-                                        alt={"miko"}
+                                        alt={"Miko"}
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
@@ -493,9 +493,9 @@ const Limited_A = () => {
                                 </div>
                                 <div className="flex flex-1 flex-col gap-12">
                                     <div className="flex flex-1 items-end justify-end gap-8 pr-16">
-                                        <BoxItem imageUrl={"/icons/outfit/A/mikoA.png"} altText={"miko a"} />
-                                        <BoxItem imageUrl={"/icons/outfit/B/mikoB.png"} altText={"miko b"} />
-                                        <BoxItem imageUrl={"/icons/outfit/C/mikoC.png"} altText={"miko c"} />
+                                        <BoxItem imageUrl={"/icons/outfit/A/MikoA.png"} altText={"Miko a"} />
+                                        <BoxItem imageUrl={"/icons/outfit/B/MikoB.png"} altText={"Miko b"} />
+                                        <BoxItem imageUrl={"/icons/outfit/C/MikoC.png"} altText={"Miko c"} />
                                         <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
                                     </div>
                                     <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">

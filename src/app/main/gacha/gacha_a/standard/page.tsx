@@ -422,9 +422,9 @@ const Standard_A = () => {
                             <div className="relative h-full w-full transition-transform duration-200">
                                 <div className="absolute flex justify-end w-full h-full -bottom-28 -right-10">
                                     <Image
-                                        id="mikoImg"
+                                        id="MikoImg"
                                         src={"/banner/avatar/standardA.png"}
-                                        alt={"miko"}
+                                        alt={"Miko"}
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
@@ -433,9 +433,9 @@ const Standard_A = () => {
                                 </div>
                                 <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
                                     <Image
-                                        id="mikoImg"
+                                        id="MikoImg"
                                         src={"/banner/avatar/standardB.png"}
-                                        alt={"miko"}
+                                        alt={"Miko"}
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
@@ -457,13 +457,13 @@ const Standard_A = () => {
                                 {/* transparent div */}
 
                                 <div className="flex flex-none items-start justify-end pr-16">
-                                    <p className="text-end lg:text-sm text-[9px] lg:w-5/6 w-full">Dalam sebuah kerajaan yang jauh, para maid adalah sosok yang sangat dihormati. Mereka dikenal karena kecantikan, keanggunan, dan dedikasi mereka yang tinggi. Dengan kostum yang mencerminkan status sosial mereka, para maid ini adalah simbol keindahan dan kemewahan. Dapatkan kostum maid ekslusif dan jadilah bagian dari kisah mereka.</p>
+                                    <p className="text-end lg:text-sm text-[9px] lg:w-5/6 w-full">Dalam sebuah kerajaan yang jauh, para Maid adalah sosok yang sangat dihormati. Mereka dikenal karena kecantikan, keanggunan, dan dedikasi mereka yang tinggi. Dengan kostum yang mencerminkan status sosial mereka, para Maid ini adalah simbol keindahan dan kemewahan. Dapatkan kostum Maid ekslusif dan jadilah bagian dari kisah mereka.</p>
                                 </div>
                                 <div className="flex flex-1 flex-col gap-12">
                                     <div className="flex flex-1 items-end justify-end gap-8 pr-16">
-                                        <BoxItem imageUrl={"/icons/outfit/A/maidA.png"} altText={"maid a"} />
-                                        <BoxItem imageUrl={"/icons/outfit/B/maidB.png"} altText={"maid b"} />
-                                        <BoxItem imageUrl={"/icons/outfit/C/maidC.png"} altText={"maid c"} />
+                                        <BoxItem imageUrl={"/icons/outfit/A/MaidA.png"} altText={"Maid a"} />
+                                        <BoxItem imageUrl={"/icons/outfit/B/MaidB.png"} altText={"Maid b"} />
+                                        <BoxItem imageUrl={"/icons/outfit/C/MaidC.png"} altText={"Maid c"} />
                                         <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
                                     </div>
                                     <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">
