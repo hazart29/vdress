@@ -144,11 +144,14 @@ export default function TopUp() {
           {packages.map((pkg) => (
             <div
               key={pkg.id} // Use a unique key, preferably an ID
-              className={`border p-4 bg-white text-black rounded-md hover:bg-gray-100 cursor-pointer ${selectedPackage === pkg ? "bg-blue-500 text-white" : ""}`}
+              className={`border p-4 bg-white text-black rounded-md hover:bg-gray-100 cursor-pointer ${selectedPackage === pkg ? "bg-blue-500 text-blue-600" : ""}`}
               onClick={() => handlePackageSelect(pkg)}
             >
               <h2 className="text-lg font-semibold">{pkg.name}</h2>
-              <p className="text-gray-600">{pkg.price}</p>
+              <p className="text-gray-600 flex gap-1">
+                <p>IDR.</p>
+                {pkg.price}
+              </p>
               <p className="text-gray-600">{pkg.glamour_gems} Glamour Gems</p>
             </div>
           ))}
@@ -164,9 +167,8 @@ export default function TopUp() {
           {selectedPackage && (
             <>
               <p className="text-lg font-semibold">Selected Package:</p>
-              <p className="text-gray-600">{selectedPackage.name}</p>
-              <p className="text-gray-600">{selectedPackage.price}</p>
-              <p className="text-gray-600">{selectedPackage.glamour_gems} Glamour Gems</p>
+              <p className="text-black">{selectedPackage.name}</p>
+              <p className="text-green-400">IDR. {selectedPackage.price}</p>
             </>
           )}
           <div className="flex flex-1 gap-2 mt-4">

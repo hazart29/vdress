@@ -129,6 +129,7 @@ const Limited_A = () => {
 
         if (userData.user_resources[0].glimmering_essence < essenceCost) {
             const gemsNeeded = essenceCost * 160;
+            console.log('gems now : ', userData.user_resources[0].glamour_gems)
             if (userData.user_resources[0].glamour_gems < gemsNeeded) {
                 setIsInsufficientModalOpen(true);
                 return;

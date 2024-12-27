@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.1.3",
+    "@neondatabase/serverless": "^0.10.4",
     "@prisma/client": "^5.21.1",
     "@serwist/next": "^9.0.2",
     "@serwist/precaching": "^9.0.2",
@@ -32,6 +33,7 @@
     "sjcl": "^1.0.8",
     "styled-components": "^6.1.13",
     "tone": "^15.0.4",
+    "uuid": "^11.0.3",
     "ws": "^8.17.1",
     "zod": "^3.23.5"
   },

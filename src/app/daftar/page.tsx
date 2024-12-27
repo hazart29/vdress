@@ -72,7 +72,7 @@ export default function Daftar() {
 
                     const data = await response.json();
                     // Decrypt data if needed (see server-side changes)
-                    const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', data.encryptedReturnData));
+                    const decryptedData = JSON.parse(sjcl.decrypt(process.env.SJCL_PASSWORD || 'virtualdressing', data.encryptedData));
 
                     console.log('User registered:', decryptedData);
                     handleOpenModal();

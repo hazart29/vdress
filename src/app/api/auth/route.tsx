@@ -1,27 +1,29 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
-import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(`${process.env.DATABASE_URL}`);
 
 export async function GET() {
   try {
-      const rows = await sql`SELECT * FROM users`;
+    const rows = await sql`SELECT * FROM users`;
 
-      if (rows.rows) {
-        return NextResponse.json({ status: "success", message: 'Successed getting api data', statusCode: 200 }, { status: 200 });
+    if (rows) {
+      return NextResponse.json({ status: "success", message: 'Successed getting api data', statusCode: 200 }, { status: 200 });
     } else {
-        return NextResponse.json({ status: "notFound", message: 'Data not found', errorCode: 404 }, { status: 404 });
+      return NextResponse.json({ status: "notFound", message: 'Data not found', errorCode: 404 }, { status: 404 });
     }
-} catch (error) {
+  } catch (error) {
     console.error(error);
     return NextResponse.json({ status: "internalError", message: 'Internal server error', errorCode: 500 }, { status: 500 });
-}
+  }
 }
 
 export async function POST(req: Request, res: NextApiResponse) {
   const { email, password } = await new Response(req.body).json();
-  const { rows } = await sql`SELECT * FROM users where email = ${email}`;
+  const rows = await sql`SELECT * FROM users where email = ${email}`;
 
   if (rows.length === 0) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });

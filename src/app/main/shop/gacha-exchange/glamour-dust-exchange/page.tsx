@@ -6,9 +6,10 @@ import { FormEvent } from 'react';
 import sjcl from 'sjcl';
 import ErrorAlert from '@/app/component/ErrorAlert';
 import React from 'react';
-import { DustItems } from '@/app/interface';
+import { DustItems, User_resources } from '@/app/interface';
 import { useRefresh } from "@/app/component/RefreshContext";
 import Loading from '@/app/component/Loading';
+import { UUID } from 'crypto';
 
 export default function GlamourDustExchange() {
   const [dustItems, setDustItems] = useState<DustItems[] | null>([]);
@@ -19,6 +20,9 @@ export default function GlamourDustExchange() {
   const [exchangeSuccess, setExchangeSuccess] = useState(false);
   const { refresh } = useRefresh();
   const [inventoryItemNames, setInventoryItemNames] = useState<string[]>([]);
+  const [userData, setUserData] = useState<User_resources | null>(null);
+
+  const uid: any = sessionStorage.getItem('uid');
 
   const handleSelectItem = (item: DustItems) => {
     setSelectedItem(item);
@@ -65,7 +69,6 @@ export default function GlamourDustExchange() {
 
   const fetchApi = async (typeFetch: string, dataFetch?: any) => {
     try {
-      const uid = sessionStorage.getItem('uid');
       if (!uid) throw new Error("User ID not found");
 
       const response = await fetch('/api/shop', {
@@ -126,7 +129,6 @@ export default function GlamourDustExchange() {
 
   const fetchInventoryItems = async () => {
     try {
-      const uid = sessionStorage.getItem('uid');
       if (!uid) {
         console.error("User ID not found in sessionStorage");
         return;
@@ -156,7 +158,27 @@ export default function GlamourDustExchange() {
     }
   };
 
+  const getData = async (uid: UUID) => {
+    try {
+      const response = await fetch('/api/user_resources', { // Your API endpoint
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid }),
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+
+      console.log(data.data)
+      setUserData(data.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setUserData(null);
+    }
+  };
+
   useEffect(() => {
+    getData(uid.toString());
     fetchDustItems();
     fetchInventoryItems();
   }, []);
@@ -196,9 +218,9 @@ export default function GlamourDustExchange() {
           return (
             <button
               key={item.id}
-              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => !isItemInInventory && item.limit !== 0 && handleSelectItem(item)} // Kondisi onClick diperbarui
-              disabled={isItemInInventory || item.limit === 0} // Atribut disabled diperbarui
+              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 || userData?.glamour_dust === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !isItemInInventory && item.limit !== 0 && userData?.glamour_dust === 0 && handleSelectItem(item)} // Kondisi onClick diperbarui
+              disabled={isItemInInventory || item.limit === 0 || userData?.glamour_dust === 0} // Atribut disabled diperbarui
             >
               <div className="flex flex-1 flex-col w-full justify-between items-center bg-white p-4">
                 <Image
@@ -229,7 +251,7 @@ export default function GlamourDustExchange() {
                           e.currentTarget.src = '/icons/placeholder.png';
                         }}
                       />
-                      <p className="text-xs text-white text-center">{item.price}</p>
+                      <p className="text-md text-white text-center">{item.price}</p>
                     </>
                   )}
 

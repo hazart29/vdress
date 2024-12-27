@@ -6,9 +6,10 @@ import { FormEvent } from 'react';
 import sjcl from 'sjcl';
 import ErrorAlert from '@/app/component/ErrorAlert';
 import React from 'react';
-import { TokenItems } from '@/app/interface';
+import { TokenItems, User_resources } from '@/app/interface';
 import { useRefresh } from "@/app/component/RefreshContext";
 import Loading from '@/app/component/Loading';
+import { UUID } from 'crypto';
 
 export default function TokenShop() {
   const [tokenItems, setTokenItems] = useState<TokenItems[] | null>([]);
@@ -19,6 +20,9 @@ export default function TokenShop() {
   const [exchangeSuccess, setExchangeSuccess] = useState(false);
   const { refresh } = useRefresh();
   const [inventoryItemNames, setInventoryItemNames] = useState<string[]>([]);
+  const [userData, setUserData] = useState<User_resources | null>(null);
+
+  const uid: any = sessionStorage.getItem('uid');
 
   const handleSelectItem = (item: TokenItems) => {
     setSelectedItem(item);
@@ -43,10 +47,10 @@ export default function TokenShop() {
     try {
       const response = await fetchApi('buyTokenItem', { itemId: selectedItem.id, quantity });
       // if (response && response.success) {
-        console.log('Purchase successful:', response);
-        setShowModal(false);
-        setExchangeSuccess(true); // Set success state to true
-        refresh();
+      console.log('Purchase successful:', response);
+      setShowModal(false);
+      setExchangeSuccess(true); // Set success state to true
+      refresh();
       // } else {
       //   setError(response?.error || "Purchase failed.");
       // }
@@ -58,7 +62,6 @@ export default function TokenShop() {
 
   const fetchApi = async (typeFetch: string, dataFetch?: any) => {
     try {
-      const uid = sessionStorage.getItem('uid');
       if (!uid) throw new Error("User ID not found");
 
       const response = await fetch('/api/shop', {
@@ -96,7 +99,6 @@ export default function TokenShop() {
 
   const fetchInventoryItems = async () => {
     try {
-      const uid = sessionStorage.getItem('uid');
       if (!uid) {
         console.error("User ID not found in sessionStorage");
         return;
@@ -126,7 +128,27 @@ export default function TokenShop() {
     }
   };
 
+  const getData = async (uid: UUID) => {
+    try {
+      const response = await fetch('/api/user_resources', { // Your API endpoint
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid }),
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+
+      console.log(data.data)
+      setUserData(data.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setUserData(null);
+    }
+  };
+
   useEffect(() => {
+    getData(uid.toString());
     fetchTokenItems();
     fetchInventoryItems();
   }, []);
@@ -158,7 +180,7 @@ export default function TokenShop() {
 
   return (
     <div className="flex flex-wrap gap-4 px-16 justify-center">
-      { tokenItems && tokenItems.length > 0 ? (
+      {tokenItems && tokenItems.length > 0 ? (
         tokenItems.map((item) => {
           // Cek apakah item dengan id 3, 4, atau 5 sudah ada di inventory
           const isItemInInventory = inventoryItemNames.includes(item.name);
@@ -166,9 +188,9 @@ export default function TokenShop() {
           return (
             <button
               key={item.id}
-              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => !isItemInInventory && item.limit !== 0 && handleSelectItem(item)} // Kondisi onClick diperbarui
-              disabled={isItemInInventory || item.limit === 0} // Atribut disabled diperbarui
+              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 || userData?.fashion_tokens === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !isItemInInventory && item.limit !== 0 && userData?.fashion_tokens !== 0 && handleSelectItem(item)} // Kondisi onClick diperbarui
+              disabled={isItemInInventory || item.limit === 0 || userData?.fashion_tokens === 0 } // Atribut disabled diperbarui
             >
               <div className="flex flex-1 flex-col w-full justify-between items-center bg-white p-4">
                 <Image
@@ -209,7 +231,7 @@ export default function TokenShop() {
           );
         })
       ) : (
-        <Loading/>
+        <Loading />
       )}
 
       <Modal isOpen={showModal} onClose={closeModal}>

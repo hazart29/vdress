@@ -9,6 +9,7 @@ import React from 'react';
 import { User_resources } from '@/app/interface';
 import { useRefresh } from "@/app/component/RefreshContext"; // Import context
 import Loading from '@/app/component/Loading';
+import { UUID } from 'crypto';
 
 
 interface FormData {
@@ -26,6 +27,8 @@ export default function GemsExchange() {
   const [userResources, setUserResources] = useState<User_resources | null>(null);
   const [exchangeSuccess, setExchangeSuccess] = useState(false);
   const { refresh } = useRefresh();
+
+  const uid: any = sessionStorage.getItem('uid');
 
   const handleExchange = (essenceType: "shimmering_essence" | "glimmering_essence") => {
     setSelectedEssence(essenceType);
@@ -102,13 +105,27 @@ export default function GemsExchange() {
     }
   };
 
-  useEffect(() => {
-    const fetchUserResources = async () => {
-      const response = await fetchApi('getUserResource');
-      setUserResources(response.userResources)
-    };
+  const getData = async (uid: UUID) => {
+    try {
+      const response = await fetch('/api/user_resources', { // Your API endpoint
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid }),
+      });
 
-    fetchUserResources();
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+
+      console.log(data.data)
+      setUserResources(data.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setUserResources(null);
+    }
+  };
+
+  useEffect(() => {
+    getData(uid.toString());
   }, []);
 
   return (
@@ -139,7 +156,7 @@ export default function GemsExchange() {
           </div>
         </button>
       ) : (
-        <Loading/>
+        <Loading />
       )}
 
       {/* Glimmering Essence */}

@@ -1,9 +1,10 @@
 // pages/api/outfit.js
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
 import sjcl from 'sjcl';
 
 const password = process.env.SJCL_PASSWORD;
+const sql = neon(`${process.env.DATABASE_URL}`);
 
 export async function POST(req: Request) {
     try {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
                     const updateResult = await sql`UPDATE suited SET a = ${top}, b = ${bottom}, c = ${feet} WHERE uid = ${uid}`;
 
-                    if (updateResult.rowCount > 0) {
+                    if (updateResult.length > 0) {
                         const encryptedResponse = sjcl.encrypt(password as string, JSON.stringify({ message: "Outfit updated successfully" }));
                         return NextResponse.json({ status: "success", encryptedData: encryptedResponse, statusCode: 200 }, { status: 200 });
                     } else {
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
                     }
                     break;
                 case "getOutfitData":
-                    const { rows } = await sql`SELECT * FROM suited WHERE uid = ${uid}`;
+                    const rows = await sql`SELECT * FROM suited WHERE uid = ${uid}`;
                     const encryptedResponseGetOutfit = sjcl.encrypt(password as string, JSON.stringify(rows));
                     return NextResponse.json({ encryptedData: encryptedResponseGetOutfit, status: 200 }, { status: 200 });
 
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
                     }
 
                     const outfitLayer = await sql`SELECT * FROM inventory WHERE layer = ${layer} AND uid = ${uid} AND rarity !='R'`;
-                    const encryptedResponseGetOutfitLayer = sjcl.encrypt(password as string, JSON.stringify(outfitLayer.rows));
+                    const encryptedResponseGetOutfitLayer = sjcl.encrypt(password as string, JSON.stringify(outfitLayer));
                     return NextResponse.json({ encryptedData: encryptedResponseGetOutfitLayer, status: 200 }, { status: 200 });
                 default:
                     return NextResponse.json({ status: "badRequest", message: "Invalid action", errorCode: 400 }, { status: 400 });
@@ -87,7 +88,7 @@ export async function GET() {
     try {
         const rows = await sql`SELECT * FROM suited`;
 
-        if (rows.rows) {
+        if (rows) {
             return NextResponse.json({ status: "success", message: 'Successed getting api data', statusCode: 200 }, { status: 200 });
         } else {
             return NextResponse.json({ status: "notFound", message: 'Data not found', errorCode: 404 }, { status: 404 });

@@ -1,9 +1,12 @@
+import { UUID } from "crypto";
+
 export interface Users {
-    uid: number;
+    uid: UUID;
     username: string;
     password: string;
     email: string;
     name: string;
+    create_at: Date;
     inventory: Inventory[];
     user_resources: User_resources[];
     suited: Suited[];
@@ -11,7 +14,7 @@ export interface Users {
 
 export interface User_resources {
     id: number;
-    uid: number;
+    uid: UUID;
     chic_coins: number;
     glamour_gems: number;
     glamour_dust: number;
@@ -20,11 +23,13 @@ export interface User_resources {
     glimmering_essence: number;
     pity: number;
     is_rate: boolean;
+    neonite: number;
+    chromite: number;
 }
 
 export interface Suited {
     id: number;
-    uid: number;
+    uid: UUID;
     a: string;
     b: string;
     c: string;
@@ -51,7 +56,7 @@ interface Stat {
 
 export interface Inventory {
     id: number;
-    uid: number;
+    uid: UUID;
     rarity: string;
     item_name: string;
     part_outfit: string;
@@ -62,7 +67,8 @@ export interface Inventory {
 }
 
 export interface HistoryGachaA {
-    uid: number;
+    id: number;
+    uid: UUID;
     rarity: string;
     item_name: string;
     part_outfit: string;
@@ -78,17 +84,33 @@ export interface Products {
 }
 
 export interface TokenItems {
+    limit: number;
     id: number;
     name: string;
     description: string;
     price: number;
-    limit: number;
 }
 
 export interface DustItems {
+    limit: number;
     id: number;
     name: string;
     description: string;
     price: number;
-    limit: number;
+}
+
+export interface UserTokenLimit {
+    id: number;
+    uid: UUID;
+    item_id: number;
+    limit: number | null;
+    initial_limit: number | null;
+}
+
+export interface UserDustLimit {
+    id: number;
+    uid: UUID;
+    item_id: number;
+    limit: number | null;
+    initial_limit: number | null;
 }

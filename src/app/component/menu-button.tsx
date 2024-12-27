@@ -69,7 +69,7 @@ export default function MenuButton() {
                             <p className="">GachaA</p>
                         </span>
                     </button>
-                    <button
+                    {/* <button
                         type="button"
                         onClick={() => handleMenu('gacha_b')}
                         className="flex flex-1 items-center justify-between gap-2 bg-white text-slate-700 font-semibold py-4 px-6 transform -skew-x-12 hover:bg-yellow-300 transition-all duration-100 hover:scale-125 hover:z-50 ease-in-out"
@@ -81,7 +81,7 @@ export default function MenuButton() {
                         <span className="flex gap-2 md:text-lg text-base">
                             <p className="p-1">GachaB</p>
                         </span>
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* Tombol Shop */}

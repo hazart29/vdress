@@ -1,12 +1,14 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 import sjcl from 'sjcl';
+
+const sql = neon(`${process.env.DATABASE_URL}`);
 
 export async function GET(req: Request) {
     try {
         const rows = await sql`SELECT * FROM gacha_item`;
 
-        if (rows.rows) {
+        if (rows) {
             return NextResponse.json({ status: "success", message: 'Successed getting api data', statusCode: 200 }, { status: 200 });
         } else {
             return NextResponse.json({ status: "notFound", message: 'Data not found', errorCode: 404 }, { status: 404 });
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
                         return NextResponse.json({ message: 'Invalid uid' }, { status: 400 });
                     }
 
-                    const { rows: primoRows } = await sql`SELECT glamour_gems FROM user_resources WHERE uid = ${uid}`;
+                    const primoRows = await sql`SELECT glamour_gems FROM user_resources WHERE uid = ${uid}`;
 
                     if (primoRows.length === 0) {
                         return NextResponse.json({ message: 'User resources not found' }, { status: 404 });
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
                 }
 
             case 'resetPity':
-                const { rows: resetRows } = await sql`SELECT * FROM user_resources WHERE uid = ${uid}`;
+                const resetRows = await sql`SELECT * FROM user_resources WHERE uid = ${uid}`;
                 if (resetRows.length > 0) {
                     await sql`UPDATE user_resources SET pity = 0 WHERE uid = ${uid}`;
                     return NextResponse.json({ message: 'pity updated to 0 successfully' }, { status: 200 });
@@ -119,10 +121,10 @@ export async function POST(req: Request) {
 
                 try {
                     const result = await updateQuery;
-                    if (result.rowCount > 0) {
+                    if (result) {
                         return NextResponse.json({ message: 'Pity updated successfully' }, { status: 200 });
                     } else {
-                        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+                        return NextResponse.json({ message: 'User not found, failed set pity' }, { status: 404 });
                     }
                 } catch (error) {
                     console.error('Error updating pity:', error);
@@ -149,7 +151,7 @@ export async function POST(req: Request) {
 
             case 'getPity':
                 try {
-                    const { rows: getPityRows } = await sql`SELECT pity FROM user_resources WHERE uid = ${uid}`;
+                    const getPityRows = await sql`SELECT pity FROM user_resources WHERE uid = ${uid}`;
                     return NextResponse.json(getPityRows, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching pity:', error);
@@ -158,7 +160,7 @@ export async function POST(req: Request) {
 
             case 'getStandardPity':
                 try {
-                    const { rows: getStandardRows } = await sql`SELECT standard_pity FROM user_resources WHERE uid = ${uid}`;
+                    const getStandardRows = await sql`SELECT standard_pity FROM user_resources WHERE uid = ${uid}`;
                     return NextResponse.json(getStandardRows, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching pity:', error);
@@ -170,7 +172,7 @@ export async function POST(req: Request) {
                 if (!getRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
-                const { rows: getLimitedRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${getRarity} AND rate_up = true`;
+                const getLimitedRows = await sql`SELECT * FROM gacha_item WHERE rarity = ${getRarity} AND rate_up = true`;
                 return NextResponse.json(getLimitedRows, { status: 200 });
 
             case 'getRateOffItem':
@@ -178,11 +180,11 @@ export async function POST(req: Request) {
                 if (!getOffRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
-                const { rows: getOffRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${getOffRarity} AND rate_up = false`;
+                const getOffRows = await sql`SELECT * FROM gacha_item WHERE rarity = ${getOffRarity} AND rate_up = false`;
                 return NextResponse.json(getOffRows, { status: 200 });
 
             case 'getRateOn':
-                const { rows: rateOnRows } = await sql`SELECT is_rate FROM user_resources WHERE uid = ${uid}`;
+                const rateOnRows = await sql`SELECT is_rate FROM user_resources WHERE uid = ${uid}`;
                 return NextResponse.json(rateOnRows[0].is_rate, { status: 200 });
 
             case 'setRateOn':
@@ -198,7 +200,7 @@ export async function POST(req: Request) {
                 if (!getGachaRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
-                const { rows: getGachaRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${getGachaRarity}`;
+                const getGachaRows = await sql`SELECT * FROM gacha_item WHERE rarity = ${getGachaRarity}`;
                 return NextResponse.json(getGachaRows, { status: 200 });
 
             case 'getStandardItem':
@@ -206,7 +208,7 @@ export async function POST(req: Request) {
                 if (!getGachaRarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
-                const { rows: standardRows } = await sql`SELECT * FROM gacha_item WHERE rarity = ${rarity} AND isLimited = 'false'`;
+                const standardRows = await sql`SELECT * FROM gacha_item WHERE rarity = ${rarity} AND isLimited = 'false'`;
                 return NextResponse.json(standardRows, { status: 200 });
 
             case 'getUserData':
@@ -216,15 +218,15 @@ export async function POST(req: Request) {
                     const userResources = await sql`SELECT * FROM user_resources WHERE uid = ${uid}`;
                     const suited = await sql`SELECT * FROM suited WHERE uid = ${uid}`;
 
-                    if (user.rows.length === 0) {
+                    if (user.length === 0) {
                         return NextResponse.json({ message: 'User not found' }, { status: 404 });
                     }
 
                     const userData = {
-                        ...user.rows[0],
-                        inventory: inventory.rows,
-                        user_resources: userResources.rows,
-                        suited: suited.rows,
+                        ...user,
+                        inventory: inventory,
+                        user_resources: userResources,
+                        suited: suited,
                     };
 
                     return NextResponse.json(userData, { status: 200 });
@@ -237,8 +239,8 @@ export async function POST(req: Request) {
                 try {
                     const gacha_type = data.gacha_type;
                     console.log('gacha type : ', gacha_type);
-                    const history = await sql`SELECT * FROM gacha_history_a WHERE uid = ${uid} AND gacha_type = ${gacha_type}`;
-                    return NextResponse.json(history.rows, { status: 200 });
+                    const history = await sql`SELECT * FROM gacha_history WHERE uid = ${uid} AND gacha_type = ${gacha_type}`;
+                    return NextResponse.json(history, { status: 200 });
                 } catch (error) {
                     console.error('Error fetching history:', error);
                     return NextResponse.json({ message: 'Error fetching history' }, { status: 500 });
@@ -255,7 +257,7 @@ export async function POST(req: Request) {
                         return NextResponse.json({ message: 'item_name, rarity, part_outfit, and gacha_type are required' }, { status: 400 });
                     }
                     await sql`
-                          INSERT INTO gacha_history_a (uid, rarity, item_name, part_outfit, gacha_type) 
+                          INSERT INTO gacha_history (uid, rarity, item_name, part_outfit, gacha_type) 
                           VALUES (${uid}, ${rarity}, ${item_name}, ${part_outfit}, ${gacha_type});
                         `;
 

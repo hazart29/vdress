@@ -1,0 +1,20 @@
+{
+  "dustItems": [
+    {
+      "id": 2,
+      "name": "glimmering_essence",
+      "description": "Essence for wishing on limited banner.",
+      "price": 75,
+      "limit": 2,
+      "initial_limit": 5
+    },
+    {
+      "id": 1,
+      "name": "shimmering_essence",
+      "description": "Essence for wishing on standard banner,",
+      "price": 75,
+      "limit": 2,
+      "initial_limit": 5
+    }
+  ]
+}

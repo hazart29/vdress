@@ -1,14 +1,15 @@
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
 import sjcl from "sjcl";
 
+const sql = neon(`${process.env.DATABASE_URL}`);
 const password = process.env.SJCL_PASSWORD; // Retrieve password from environment variables
 
 export async function GET() {
   try {
     const rows = await sql`SELECT * FROM inventory`;
 
-    if (rows.rows.length > 0) {
+    if (rows.length > 0) {
       return NextResponse.json(
         {
           status: "success",
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
         }, { status: 400 });
       }
 
-      const { rows } = await sql`SELECT * FROM inventory WHERE uid = ${uid}`;
+      const rows = await sql`SELECT * FROM inventory WHERE uid = ${uid}`;
       const encryptedResponse = sjcl.encrypt(password as string, JSON.stringify({ inventory: rows }));
 
       return NextResponse.json({
