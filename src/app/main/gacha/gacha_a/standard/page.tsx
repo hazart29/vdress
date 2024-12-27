@@ -415,7 +415,7 @@ const Standard_A = () => {
             )}
             {!isLoading && (
                 <>
-                    <div className="flex flex-1 lg:pt-10 pt-4 bg-gacha2 bg-cover lg:blur-md blur-sm animate-pulse" />
+                    <div className="flex flex-1 lg:pt-10 pt-4 bg-gacha1 bg-cover lg:blur-md blur-sm animate-pulse" />
                     <div className="absolute w-full h-full flex flex-1 pt-10 bg-gradient-to-b from-transparent via-transparent to-black to-100% z-10" />
                     <div className="absolute w-full h-full flex flex-1 z-20 lg:pt-20 pt-14">
                         <div className="flex flex-none flex-shrink w-2/5">
