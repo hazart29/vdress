@@ -21,6 +21,7 @@ export async function POST(req: Request) {
         try {
             const decryptedData = JSON.parse(sjcl.decrypt(password as string, encryptedData));
             const { action, uid, top, bottom, feet, layer } = decryptedData; // Dekripsi dan ekstrak data
+            console.log("decryptedData : ", decryptedData)
 
             if (!uid || !action) {
                 return NextResponse.json({
