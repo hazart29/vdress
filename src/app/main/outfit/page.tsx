@@ -58,8 +58,8 @@ const CanvasComponent: React.FC = () => {
 
   useEffect(() => {
     if (wardrobe) {
-      setTopImage(`/outfit/A/${wardrobe.a}.png`);
-      setBotImage(`/outfit/B/${wardrobe.b}.png`);
+      setTopImage(`/outfit/B/${wardrobe.b}.png`);
+      setBotImage(`/outfit/A/${wardrobe.a}.png`);
       setFeetImage(`/outfit/C/${wardrobe.c}.png`);
     } else {
       console.log('Wardrobe data is not available');
@@ -127,12 +127,18 @@ const CanvasComponent: React.FC = () => {
           break;
         case "getOutfitByLayer":
           if (decryptedData && decryptedData.length > 0) {
-            setOutfitData(decryptedData);
+            // Filter duplicate items based on `item_name`
+            const uniqueItems = decryptedData.filter((item: Inventory, index: number, self: Inventory[]) =>
+              index === self.findIndex((t) => t.item_name === item.item_name)
+            );
+
+            setOutfitData(uniqueItems);
           } else {
             console.log('No outfit data found for getOutfitByLayer');
             setOutfitData([]);
           }
           break;
+
         default:
           console.log('Unknown action:', action);
       }
@@ -251,7 +257,7 @@ const CanvasComponent: React.FC = () => {
           <DownloadButton onClick={handleDownload} />
         </div>
         {isLoading ? (
-          <Loading/>
+          <Loading />
         ) : (
           <div className="relative flex flex-none w-1/4 flex-shrink transition-transform duration-1000 h-full transform">
             <canvas id="avatar" ref={avatarRef} className="absolute left-0 h-full z-0" width={2000} height={4000} />
@@ -262,8 +268,8 @@ const CanvasComponent: React.FC = () => {
         )}
 
         <form className="flex flex-none flex-col justify-center items-center gap-8 max-w-fit h-full text-gray-800 transition-opacity duration-1000">
-          <OutfitComponent loc="top" src={`/icons${topImage}`} openModal={() => openModal('a')} />
-          <OutfitComponent loc="bottom" src={`/icons${botImage}`} openModal={() => openModal('b')} />
+          <OutfitComponent loc="top" src={`/icons${topImage}`} openModal={() => openModal('b')} />
+          <OutfitComponent loc="bottom" src={`/icons${botImage}`} openModal={() => openModal('a')} />
           <OutfitComponent loc="feet" src={`/icons${feetImage}`} openModal={() => openModal('c')} />
 
           <ModalWardrobe isOpen={isModalOpen} onClose={closeModal}>
@@ -274,19 +280,19 @@ const CanvasComponent: React.FC = () => {
                   outfitData?.map((item, index) => (
                     <div key={index}>
                       {/* Pass the changeOutfit function to OutfitImage */}
-                      {item.part_outfit.toLowerCase() == 'top' && (
+                      {item.part_outfit.toLowerCase() === 'top' && (
                         <OutfitImage
                           src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
                         />
                       )}
-                      {item.part_outfit.toLowerCase() == 'bottom' && (
+                      {item.part_outfit.toLowerCase() === 'bottom' && (
                         <OutfitImage
                           src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
                         />
                       )}
-                      {item.part_outfit.toLowerCase() == 'feet' && (
+                      {item.part_outfit.toLowerCase() === 'feet' && (
                         <OutfitImage
                           src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
                           onClick={() => changeOutfit({ layer: item.layer, item_name: item.item_name })}
