@@ -205,7 +205,8 @@ export async function POST(req: Request) {
 
             case 'getStandardItem':
                 const rarity = data.rarity;
-                if (!getGachaRarity) {
+                console.log
+                if (!rarity) {
                     return NextResponse.json({ message: 'rarity is required' }, { status: 400 });
                 }
                 const standardRows = await sql`SELECT * FROM gacha_item WHERE rarity = ${rarity} AND isLimited = 'false'`;

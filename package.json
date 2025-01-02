@@ -32,6 +32,7 @@
     "react-dom": "^18",
     "sjcl": "^1.0.8",
     "styled-components": "^6.1.13",
+    "tailwind-scrollbar": "^3.1.0",
     "tone": "^15.0.4",
     "uuid": "^11.0.3",
     "ws": "^8.17.1",
