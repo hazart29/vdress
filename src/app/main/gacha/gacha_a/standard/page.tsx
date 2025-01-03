@@ -291,14 +291,14 @@ const Standard_A = () => {
             try {
                 const dataFetch = { rarity };
                 let data;
-                console.log("rarity : ", rarity)
 
-                // Pull items based on rarity for standard banner
-                data = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
-                // No rate-on/rate-off for standard
+                if (rarity === "SSR") {
+                    data = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
+                } else {
+                    data = localGachaData.filter(item => item.rarity === rarity);
+                }
 
                 const randomItem = this.selectRandomItem(data);
-
                 return randomItem;
             } catch (error) {
                 console.error('Error pulling character or item:', error);
