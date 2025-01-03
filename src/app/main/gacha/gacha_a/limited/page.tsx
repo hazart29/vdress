@@ -21,13 +21,14 @@ const Limited_A = () => {
     const [gachaItem, setGachaItem] = useState<GachaItem[] | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isInsufficientModalOpen, setIsInsufficientModalOpen] = useState(false); // State for insufficient gems modal
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const [localGachaData, setLocalGachaData] = useState<GachaItem[]>([]);
     const [pulledItems, setPulledItems] = useState<GachaItem[]>([]);
     const [resourceInfo, setResourceInfo] = useState<ResourceInfo[]>([]);
     const [showExchangeModal, setShowExchangeModal] = useState(false);
     const [exchangeAmount, setExchangeAmount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const { refresh } = useRefresh();
+    let tenpull: GachaItem[] = [];
     let baseSSRProbability: number = 0.006;
     let baseSRProbability: number = 0.051;
     let ProbabilitySSRNow: number;
@@ -45,7 +46,18 @@ const Limited_A = () => {
         };
 
         fetchData();
+        fetchAllGachaItems()
     }, []); // Empty dependency array ensures this runs once on component mount
+
+    async function fetchAllGachaItems() {
+        try {
+            const data = await fetchGachaApi('getAllGachaItems');
+            // console.log('data gacha: ', data.gachaItem)
+            setLocalGachaData(data.gachaItem); // Simpan ke state lokal
+        } catch (error) {
+            console.error('Error fetching all gacha items:', error);
+        }
+    }
 
     const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
         try {
@@ -103,7 +115,7 @@ const Limited_A = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-
+        tenpull = [];
         refresh();
     };
 
@@ -202,30 +214,32 @@ const Limited_A = () => {
         static SR_NEW_ITEM_TOKENS = 2;
         static GLAMOUR_DUST_AMOUNT = 15;
         static PITY_THRESHOLD = 90;
-    
+        static isRateUp: boolean;
+
         srPity: number = 0;  // Track SR pity
-    
+
         async makeWish() {
             try {
                 const rarity = this.calculateRarity();
-                const pulledCharacterOrItem = await this.pullCharacterOrItem(rarity);
-    
+                const rateUp = GachaSystem.isRateUp;
+                const pulledCharacterOrItem = await this.pullCharacterOrItem(rarity, rateUp);
+
                 if (!pulledCharacterOrItem) return null;
-    
+
                 const isDuplicate = await this.checkDuplicateItem(pulledCharacterOrItem);
-    
+
                 if (isDuplicate) {
                     await this.handleDuplicate(pulledCharacterOrItem);
                 } else {
                     await this.addItemToInventory(pulledCharacterOrItem);
                 }
-    
+
                 if (rarity === "R") {
                     await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
                 }
-    
+
                 await this.updateHistory(pulledCharacterOrItem);
-    
+
                 // Reset and handle the gacha result
                 if (rarity === "SSR") {
                     this.resetSSR();
@@ -235,14 +249,14 @@ const Limited_A = () => {
                 } else {
                     this.incrementPity();
                 }
-    
+
                 return pulledCharacterOrItem;
             } catch (error) {
                 console.error('Error in makeWish:', error);
                 return null;
             }
         }
-    
+
         async checkDuplicateItem(item: { item_name: string; }) {
             try {
                 await fetchGachaApi("getUserData", null); // Refresh user data
@@ -253,7 +267,7 @@ const Limited_A = () => {
                 return false;
             }
         }
-    
+
         // Calculate SSR and SR probabilities based on pity
         calculatePityProbabilities() {
             // Soft Pity: Increase SSR probability after pity 74
@@ -261,15 +275,15 @@ const Limited_A = () => {
                 ProbabilitySSRNow = baseSSRProbability + (pity - 74) * 0.02; // Gradually increase
             } else if (pity >= 90) {
                 // Hard Pity: Guaranteed SSR at pity 90
-                ProbabilitySSRNow = 1; 
+                ProbabilitySSRNow = 1;
             } else {
                 ProbabilitySSRNow = baseSSRProbability;
             }
-    
+
             // SR probability (no soft or hard pity for SR)
             ProbabilitySRNow = baseSRProbability + Math.min((this.srPity % 10) * 0.0087, 1); // Cap at 1
         }
-    
+
         calculateRarity() {
             const rand = random(); // Use MCRNG generator
             if (rand < ProbabilitySSRNow || (pity + 1) >= GachaSystem.PITY_THRESHOLD) {
@@ -280,33 +294,44 @@ const Limited_A = () => {
                 return "R";
             }
         }
-    
-        async pullCharacterOrItem(rarity: string) {
+
+        async pullCharacterOrItem(rarity: string, isRateUp: boolean) {
             try {
                 const dataFetch = { rarity };
                 let data;
-    
+
                 if (rarity === "SSR" || rarity === "SR") {
-                    const isRateUp = await fetchGachaApi('getRateOn');
-                    if (isRateUp && rarity === "SSR") {
-                        data = await fetchGachaApi('getRateUpItem', dataFetch);
+                    if (isRateUp) {
+                        // Jika isRateUp true, ambil hanya item dengan rate_up = true
+                        data = localGachaData.filter(item => item.rarity === rarity && item.rate_up);
                     } else {
-                        data = Math.random() < 0.5
-                            ? await fetchGachaApi('getRateUpItem', dataFetch)
-                            : await fetchGachaApi('getRateOffItem', dataFetch);
+                        // Jika isRateUp false, pilih 50:50 antara item dengan rate_up = true dan rate_up = false
+                        const rateUpItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up);
+                        const rateOffItems = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
+
+                        // Gabungkan keduanya dengan proporsi 50:50
+                        data = Math.random() < 0.5 ? rateUpItems : rateOffItems;
                     }
-    
+
+                    // Jika tidak ada item yang memenuhi kriteria, fallback ke acak
+                    if (data.length === 0) {
+                        data = localGachaData.filter(item => item.rarity === rarity);
+                    }
+
                     const randomItem = this.selectRandomItem(data);
-    
+
                     if (rarity === "SSR" && randomItem.islimited) {
+                        // Jika item yang terpilih adalah SSR dan limited, set rate-off
                         await fetchGachaApi('setRateOff');
                     } else {
+                        // Set rate-on jika item tidak limited atau bukan SSR
                         await fetchGachaApi('setRateOn');
                     }
-    
+
                     return randomItem;
                 } else {
-                    data = await fetchGachaApi('getGachaItem', dataFetch);
+                    // Untuk rarity lainnya, langsung pilih item acak
+                    data = localGachaData.filter(item => item.rarity === rarity);
                     return this.selectRandomItem(data);
                 }
             } catch (error) {
@@ -314,13 +339,14 @@ const Limited_A = () => {
                 return null;
             }
         }
-    
+
+
         selectRandomItem(data: { [x: string]: any; }) {
             const keys = Object.keys(data);
             const randomKey = keys[Math.floor(Math.random() * keys.length)];
             return data[randomKey];
         }
-    
+
         async handleDuplicate(item: { rarity: string; }) {
             try {
                 const tokens = item.rarity === "SSR" ? GachaSystem.SSR_DUPLICATE_TOKENS : GachaSystem.SR_DUPLICATE_TOKENS;
@@ -329,7 +355,7 @@ const Limited_A = () => {
                 console.error('Error handling duplicate item:', error);
             }
         }
-    
+
         async addItemToInventory(item: { rarity: string; item_name: any; part_outfit: any; layer: any; }) {
             try {
                 const dataFetch = {
@@ -340,14 +366,14 @@ const Limited_A = () => {
                     gacha_type: 'Whisper_of_Silk'
                 };
                 await fetchGachaApi('upInven', dataFetch);
-    
+
                 const tokens = item.rarity === "SSR" ? GachaSystem.SSR_NEW_ITEM_TOKENS : GachaSystem.SR_NEW_ITEM_TOKENS;
                 await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
             } catch (error) {
                 console.error('Error adding item to inventory:', error);
             }
         }
-    
+
         async updateHistory(item: { rarity: any; item_name: any; part_outfit: any; }) {
             try {
                 const historyData = {
@@ -361,7 +387,7 @@ const Limited_A = () => {
                 console.error('Error updating history:', error);
             }
         }
-    
+
         async updateGlamourDust(amount: number) {
             try {
                 await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
@@ -369,62 +395,78 @@ const Limited_A = () => {
                 console.error('Error updating glamour dust:', error);
             }
         }
-    
+
         // Reset SSR pity after pulling an SSR
         resetSSR() {
             pity = 0; // Reset SSR pity
         }
-    
+
         // Reset SR pity to the nearest multiple of 10
         resetSR() {
             this.srPity = Math.floor(this.srPity / 10) * 10; // Reset SR pity
         }
-    
+
         // Increment pity for SSR or SR
         incrementPity() {
             pity += 1; // Increment SSR pity after a regular pull
             this.srPity += 1;  // Increment SR pity after a regular pull
         }
     }
-    
+
     async function pull(a: number): Promise<GachaItem[]> {
-        let tenpull: GachaItem[] = [];
-    
+        tenpull = [];
+
         try {
             await fetchGachaApi('getPity');
-    
+
+            GachaSystem.isRateUp = userData?.user_resources?.[0]?.is_rate ?? false;
+
             for (let i = 0; i < a; i++) {
-                // Calculate probabilities based on pity
+                // Hitung probabilitas berdasarkan pity
                 gacha.calculatePityProbabilities();
-    
-                // Simulate gacha
+
+                // Simulasi gacha
                 const result = await gacha.makeWish();
-    
-                console.log('pity in loop:', pity);
-    
-                // Save the result of the pull
                 tenpull[i] = result;
             }
-    
-            // Update pity and glamour essence on the server
+
+            // Upload semua hasil gacha sekaligus
+            await uploadInventory(tenpull);
+
+            // Update pity dan essence di server
             await fetchGachaApi('incPity', {
                 incPity: pity,
-                type: 'limited'
+                type: 'limited',
             });
-    
-            const GlimmeringEssence = (a).toString();
+
+            const GlimmeringEssence = a.toString();
             await fetchGachaApi('updateEssence', {
                 essence: GlimmeringEssence,
-                type: 'limited'
+                type: 'limited',
             });
-    
+
             return tenpull;
-    
         } catch (error) {
-            console.error('Error fetching API:', error);
+            console.error('Error pulling gacha:', error);
             return [];
         }
-    }    
+    }
+
+    // Fungsi untuk mengunggah hasil gacha ke inventory sekaligus
+    async function uploadInventory(items: GachaItem[]) {
+        try {
+            const dataFetch = items.map(item => ({
+                rarity: item.rarity,
+                item_name: item.item_name,
+                part_outfit: item.part_outfit,
+                layer: item.layer,
+                gacha_type: 'Whisper_of_Silk',
+            }));
+            await fetchGachaApi('batchUpInven', { items: dataFetch });
+        } catch (error) {
+            console.error('Error uploading inventory:', error);
+        }
+    }
 
     const sortPulledItems = (pulledItems: GachaItem[]) => {
         return pulledItems.sort((a, b) => {
@@ -531,23 +573,34 @@ const Limited_A = () => {
                             <div className="flex flex-1 flex-col w-full h-full justify-between bg-white p-8">
                                 <div className="flex flex-1 flex-col flex-wrap items-center justify-center">
 
-                                    <div id="diDapat" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse">
+                                    <div id="diDapat" className="flex flex-none flex-row w-full justify-center items-center gap-1">
                                         {pulledItems.map((item, index) => (
-                                            <img
+                                            <div
                                                 key={index}
-                                                src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
-                                                alt={item.item_name}
-                                                className={`w-24 h-24 ${item.rarity.trim() === "SSR" ? 'bg-yellow-400' : item.rarity.trim() === "SR" ? 'bg-purple-400' : 'bg-gray-500'} opacity-100 transition-opacity duration-500`}
-                                                onLoad={(e) => {
-                                                    (e.target as HTMLImageElement).classList.add('opacity-100');
+                                                className={`
+                                                    ${item.rarity.trim() === "SSR" ? 'bg-gradient-to-b from-transparent from-0% via-amber-500 via-50% to-transparent to-100%' : 
+                                                      item.rarity.trim() === "SR" ? 'bg-gradient-to-b from-transparent from-0% via-purple-800 via-50% to-transparent to-100%' : 
+                                                      'bg-gradient-to-b from-transparent from-0% via-gray-400 via-50% to-transparent to-100%'}
+                                                    h-64 flex items-center justify-center overflow-hidden opacity-100 p-1
+                                                `}
+                                                style={{ animationDelay: `${index * 0.2}s` }}
+                                                onAnimationEnd={(e) => {
+                                                    // On animation end, set opacity to 100
+                                                    (e.target as HTMLDivElement).classList.add('opacity-100', 'scale-100');
                                                 }}
-                                            />
+                                            >
+                                                <img
+                                                    src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                                                    alt={item.item_name}
+                                                    className={`w-24 h-24 object-cover `}
+                                                />
+                                            </div>
                                         ))}
                                     </div>
 
                                     <div id="addResource" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse text-[8px]">
                                         {resourceInfo.length > 0 && resourceInfo.map((resource, index) => (
-                                            <p key={index} className="flex flex-none flex-row gap-2 justify-center items-center text-black w-24 font-bold">
+                                            <p key={index} className="flex flex-none flex-row gap-2 justify-center items-center text-black w-[105px] p-1 font-bold">
                                                 {resource.dust !== '' && (
                                                     <>
                                                         <Image src={"/icons/currency/glamour_dust.png"} alt={"glamour_dust"} width={12} height={12} />

@@ -77,6 +77,14 @@ export async function POST(req: Request) {
                     return NextResponse.json({ message: 'user not found' }, { status: 404 });
                 }
 
+            case 'getAllGachaItems':
+                const gachaItem = await sql`SELECT * FROM gacha_item`;
+                if (gachaItem.length > 0) {
+                    return NextResponse.json({ gachaItem }, { status: 200 });
+                } else {
+                    return NextResponse.json({ message: 'user not found' }, { status: 404 });
+                }
+
             case 'updateEssence':
                 try {
                     const { essence, type } = data;
@@ -131,23 +139,48 @@ export async function POST(req: Request) {
                     return NextResponse.json({ message: 'Failed to update pity' }, { status: 500 });
                 }
 
-            case 'upInven':
+            case 'batchUpInven':
                 try {
-                    const { rarity, item_name, part_outfit, layer } = data;
+                    const { items } = data;
 
-                    if (!item_name || !rarity || !part_outfit || !layer) {
-                        return NextResponse.json({ message: 'item_name, rarity, part_outfit, and layer are required' }, { status: 400 });
+                    // Validasi input
+                    if (!Array.isArray(items) || items.length === 0) {
+                        return NextResponse.json({ message: 'Items array is required and cannot be empty' }, { status: 400 });
                     }
 
-                    await sql`INSERT INTO inventory (uid, rarity, item_name, part_outfit, layer) 
-                        VALUES (${uid}, ${rarity}, ${item_name}, ${part_outfit}, ${layer});`;
+                    // Validasi tiap item dalam array
+                    const invalidItems = items.filter(item =>
+                        !item.item_name || !item.rarity || !item.part_outfit || !item.layer
+                    );
 
-                    return NextResponse.json({ message: `${item_name}, push successfully` }, { status: 200 });
+                    if (invalidItems.length > 0) {
+                        return NextResponse.json({
+                            message: 'Each item must have item_name, rarity, part_outfit, and layer'
+                        }, { status: 400 });
+                    }
+
+                    // Lakukan batch insert ke database
+                    const values = items.map(item => ({
+                        uid,
+                        rarity: item.rarity,
+                        item_name: item.item_name,
+                        part_outfit: item.part_outfit,
+                        layer: item.layer,
+                    }));
+
+                    await sql`
+                            INSERT INTO inventory (uid, rarity, item_name, part_outfit, layer)
+                            SELECT * FROM json_to_recordset(${JSON.stringify(values)})
+                            AS x(uid UUID, rarity TEXT, item_name TEXT, part_outfit TEXT, layer TEXT);
+                        `;
+
+                    return NextResponse.json({ message: 'Items pushed successfully' }, { status: 200 });
 
                 } catch (error) {
                     console.error('Error updating inventory:', error);
                     return NextResponse.json({ message: 'Error updating inventory' }, { status: 500 });
                 }
+
 
             case 'getPity':
                 try {

@@ -24,13 +24,12 @@ const Standard_A = () => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [pulledItems, setPulledItems] = useState<GachaItem[]>([]);
     const [resourceInfo, setResourceInfo] = useState<ResourceInfo[]>([]);
-
+    const [localGachaData, setLocalGachaData] = useState<GachaItem[]>([]);
     const [showExchangeModal, setShowExchangeModal] = useState(false);
     const [exchangeAmount, setExchangeAmount] = useState(0);
-
     const { refresh } = useRefresh();
     const [isLoading, setIsLoading] = useState(false);
-
+    let tenpull: GachaItem[] = [];
     let baseSSRProbability: number = 0.006;
     let baseSRProbability: number = 0.051;
     let ProbabilitySSRNow: number;
@@ -40,7 +39,18 @@ const Standard_A = () => {
 
     useEffect(() => {
         fetchGachaApi("getUserData", null);
+        fetchAllGachaItems()
     }, []); // Empty dependency array ensures this runs once on component mount
+
+    async function fetchAllGachaItems() {
+        try {
+            const data = await fetchGachaApi('getAllGachaItems');
+            // console.log('data gacha: ', data.gachaItem)
+            setLocalGachaData(data.gachaItem); // Simpan ke state lokal
+        } catch (error) {
+            console.error('Error fetching all gacha items:', error);
+        }
+    }
 
     const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
         try {
@@ -98,7 +108,7 @@ const Standard_A = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-
+        tenpull = [];
         refresh()
     };
 
@@ -281,10 +291,10 @@ const Standard_A = () => {
             try {
                 const dataFetch = { rarity };
                 let data;
-                console.log("rarity : ",rarity)
+                console.log("rarity : ", rarity)
 
                 // Pull items based on rarity for standard banner
-                data = await fetchGachaApi('getStandardItem', dataFetch);  // No rate-on/rate-off for standard
+                data = localGachaData.filter(item => item.rarity === rarity);  // No rate-on/rate-off for standard
 
                 const randomItem = this.selectRandomItem(data);
 
@@ -334,7 +344,7 @@ const Standard_A = () => {
                     rarity: item.rarity,
                     item_name: item.item_name,
                     part_outfit: item.part_outfit,
-                    gacha_type: 'Whispers_of_Silk'
+                    gacha_type: 'Symphony_of_Silk'
                 };
                 await fetchGachaApi('upHistoryA', historyData);
             } catch (error) {
@@ -368,7 +378,7 @@ const Standard_A = () => {
     }
 
     async function pull(a: number): Promise<GachaItem[]> {
-        let tenpull: GachaItem[] = [];
+        tenpull = [];
 
         try {
             await fetchGachaApi('getStandardPity');
@@ -510,23 +520,33 @@ const Standard_A = () => {
                         <div className="relative w-full h-full flex flex-1 flex-col items-center justify-center">
                             <div className="flex flex-1 flex-col w-full h-full justify-between bg-white p-8">
                                 <div className="flex flex-1 flex-col items-center justify-center">
-                                    <div id="diDapat" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse">
+                                    <div id="diDapat" className="flex flex-none flex-row w-full justify-center items-center gap-1">
                                         {pulledItems.map((item, index) => (
-                                            <img
+                                            <div
                                                 key={index}
-                                                src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
-                                                alt={item.item_name}
-                                                className={`w-24 h-24 ${item.rarity.trim() === "SSR" ? 'bg-yellow-400' : item.rarity.trim() === "SR" ? 'bg-purple-400' : 'bg-gray-500'} opacity-100 transition-opacity duration-500`}
-                                                onLoad={(e) => {
-                                                    (e.target as HTMLImageElement).classList.add('opacity-100');
+                                                className={`${item.rarity.trim() === "SSR" ? 'bg-gradient-to-b from-transparent from-0% via-amber-500 via-50% to-transparent to-100%' :
+                                                    item.rarity.trim() === "SR" ? 'bg-gradient-to-b from-transparent from-0% via-purple-800 via-50% to-transparent to-100%' :
+                                                        'bg-gradient-to-b from-transparent from-0% via-gray-400 via-50% to-transparent to-100%'}
+                                                    h-64 flex items-center justify-center overflow-hidden opacity-100 p-1
+                                                `}
+                                                style={{ animationDelay: `${index * 0.2}s` }}
+                                                onAnimationEnd={(e) => {
+                                                    // On animation end, set opacity to 100
+                                                    (e.target as HTMLDivElement).classList.add('opacity-100', 'scale-100');
                                                 }}
-                                            />
+                                            >
+                                                <img
+                                                    src={`/icons/outfit/${item.layer.toLocaleUpperCase()}/${item.item_name}.png`}
+                                                    alt={item.item_name}
+                                                    className={`w-24 h-24 object-cover `}
+                                                />
+                                            </div>
                                         ))}
                                     </div>
 
                                     <div id="addResource" className="flex flex-none flex-row w-full justify-center items-center gap-1 animate-pulse text-[8px]">
                                         {resourceInfo.length > 0 && resourceInfo.map((resource, index) => (
-                                            <p key={index} className="flex flex-none flex-row gap-2 justify-center items-center text-black w-24 font-bold">
+                                            <p key={index} className="flex flex-none flex-row gap-2 justify-center items-center text-black w-[105px] p-1 font-bold">
                                                 {resource.dust !== '' && (
                                                     <>
                                                         <Image src={"/icons/currency/glamour_dust.png"} alt={"glamour_dust"} width={12} height={12} />

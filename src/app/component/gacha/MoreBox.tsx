@@ -51,7 +51,7 @@ const MoreBox: React.FC<{ activeTab: string }> = ({ activeTab }) => {
             </ModalBox>
 
             <ModalBox isOpen={showModal === 3} onClose={handleModalClose} title="History Gacha">
-                <HistoryGacha gachaType={activeTab === "standar" ? "Symphony_of_Silk" : "Whispers_of_Silk"} />
+                <HistoryGacha gachaType={activeTab === "standard" ? "Symphony_of_Silk" : "Whispers_of_Silk"} />
             </ModalBox>
         </div>
     );
