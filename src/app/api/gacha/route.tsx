@@ -166,12 +166,14 @@ export async function POST(req: Request) {
                         item_name: item.item_name,
                         part_outfit: item.part_outfit,
                         layer: item.layer,
+                        stat: item.stat,
+                        power: item.power,
                     }));
 
                     await sql`
-                            INSERT INTO inventory (uid, rarity, item_name, part_outfit, layer)
+                            INSERT INTO inventory (uid, rarity, item_name, part_outfit, layer, stat, power)
                             SELECT * FROM json_to_recordset(${JSON.stringify(values)})
-                            AS x(uid UUID, rarity TEXT, item_name TEXT, part_outfit TEXT, layer TEXT);
+                            AS x(uid UUID, rarity TEXT, item_name TEXT, part_outfit TEXT, layer TEXT, stat JSONB, power NUMERIC);
                         `;
 
                     return NextResponse.json({ message: 'Items pushed successfully' }, { status: 200 });
@@ -179,6 +181,48 @@ export async function POST(req: Request) {
                 } catch (error) {
                     console.error('Error updating inventory:', error);
                     return NextResponse.json({ message: 'Error updating inventory' }, { status: 500 });
+                }
+
+            case 'batchUpHistory':
+                try {
+                    const { items } = data;
+
+                    // Validasi input
+                    if (!Array.isArray(items) || items.length === 0) {
+                        return NextResponse.json({ message: 'Items array is required and cannot be empty' }, { status: 400 });
+                    }
+
+                    // Validasi tiap item dalam array
+                    const invalidItems = items.filter(item =>
+                        !item.item_name || !item.rarity || !item.part_outfit || !item.gacha_type
+                    );
+
+                    if (invalidItems.length > 0) {
+                        return NextResponse.json({
+                            message: 'Each item must have item_name, rarity, part_outfit, and gacha_type'
+                        }, { status: 400 });
+                    }
+
+                    // Lakukan batch insert ke database
+                    const values = items.map(item => ({
+                        uid,
+                        rarity: item.rarity,
+                        item_name: item.item_name,
+                        part_outfit: item.part_outfit,
+                        gacha_type: item.gacha_type,
+                    }));
+
+                    await sql`
+                            INSERT INTO gacha_history (uid, rarity, item_name, part_outfit, gacha_type)
+                            SELECT * FROM json_to_recordset(${JSON.stringify(values)})
+                            AS x(uid UUID, rarity TEXT, item_name TEXT, part_outfit TEXT, gacha_type TEXT);
+                        `;
+
+                    return NextResponse.json({ message: 'Items pushed successfully' }, { status: 200 });
+
+                } catch (error) {
+                    console.error('Error updating history:', error);
+                    return NextResponse.json({ message: 'Error updating history' }, { status: 500 });
                 }
 
 

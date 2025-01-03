@@ -208,8 +208,11 @@ const Standard_A = () => {
         static SR_NEW_ITEM_TOKENS = 2;
         static GLAMOUR_DUST_AMOUNT = 15;
         static PITY_THRESHOLD = 90;
-
-        srPity: number = 0;  // Track SR pity
+        static isRateUp: boolean;
+        static itemsToUpload: GachaItem[] = [];
+        static fashionToken: number = 0;
+        static glamourDust: number = 0;
+        srPity: number = 0;  // Track SR standard_pity
 
         async makeWish() {
             try {
@@ -220,17 +223,30 @@ const Standard_A = () => {
 
                 const isDuplicate = await this.checkDuplicateItem(pulledCharacterOrItem);
 
+                // Always add to tenpull for display, regardless of duplicate status
+                tenpull.push(pulledCharacterOrItem);
+
                 if (isDuplicate) {
+                    // Skip adding to inventory if it's a duplicate, but still add to tenpull
                     await this.handleDuplicate(pulledCharacterOrItem);
                 } else {
-                    await this.addItemToInventory(pulledCharacterOrItem);
+                    // If it's not a duplicate, add to itemsToUpload array for batch upload
+                    GachaSystem.itemsToUpload.push(pulledCharacterOrItem);
+                    const tokens = rarity === "SSR"
+                        ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                        : rarity === "SR"
+                            ? GachaSystem.SR_NEW_ITEM_TOKENS
+                            : 0;
+                    GachaSystem.fashionToken += tokens;
+                    // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
                 }
 
                 if (rarity === "R") {
-                    await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
+                    GachaSystem.glamourDust += GachaSystem.GLAMOUR_DUST_AMOUNT;
+                    // await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
                 }
 
-                await this.updateHistory(pulledCharacterOrItem);
+                // await this.updateHistory(pulledCharacterOrItem);
 
                 // Reset and handle the gacha result
                 if (rarity === "SSR") {
@@ -260,19 +276,19 @@ const Standard_A = () => {
             }
         }
 
-        // Calculate SSR and SR probabilities based on pity
+        // Calculate SSR and SR probabilities based on standard_pity
         calculatePityProbabilities() {
-            // Soft Pity: Increase SSR probability after pity 74
+            // Soft standard_pity: Increase SSR probability after standard_pity 74
             if (standard_pity >= 74 && standard_pity < 90) {
                 ProbabilitySSRNow = baseSSRProbability + (standard_pity - 74) * 0.02; // Gradually increase
             } else if (standard_pity >= 90) {
-                // Hard Pity: Guaranteed SSR at pity 90
+                // Hard standard_pity: Guaranteed SSR at standard_pity 90
                 ProbabilitySSRNow = 1;
             } else {
                 ProbabilitySSRNow = baseSSRProbability;
             }
 
-            // SR probability (no soft or hard pity for SR)
+            // SR probability (no soft or hard standard_pity for SR)
             ProbabilitySRNow = baseSRProbability + Math.min((this.srPity % 10) * 0.0087, 1); // Cap at 1
         }
 
@@ -289,7 +305,6 @@ const Standard_A = () => {
 
         async pullCharacterOrItem(rarity: string) {
             try {
-                const dataFetch = { rarity };
                 let data;
 
                 if (rarity === "SSR") {
@@ -314,67 +329,32 @@ const Standard_A = () => {
 
         async handleDuplicate(item: { rarity: string; }) {
             try {
-                const tokens = item.rarity === "SSR" ? GachaSystem.SSR_DUPLICATE_TOKENS : GachaSystem.SR_DUPLICATE_TOKENS;
-                await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
+                const tokens = item.rarity === "SSR"
+                    ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                    : item.rarity === "SR"
+                        ? GachaSystem.SR_NEW_ITEM_TOKENS
+                        : 0;
+                GachaSystem.fashionToken += tokens;
+                // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
             } catch (error) {
                 console.error('Error handling duplicate item:', error);
             }
         }
 
-        async addItemToInventory(item: { rarity: string; item_name: any; part_outfit: any; layer: any; }) {
-            try {
-                const dataFetch = {
-                    rarity: item.rarity,
-                    item_name: item.item_name,
-                    part_outfit: item.part_outfit,
-                    layer: item.layer,
-                    gacha_type: 'Symphony_of_Silk'
-                };
-                await fetchGachaApi('upInven', dataFetch);
-
-                const tokens = item.rarity === "SSR" ? GachaSystem.SSR_NEW_ITEM_TOKENS : GachaSystem.SR_NEW_ITEM_TOKENS;
-                await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
-            } catch (error) {
-                console.error('Error adding item to inventory:', error);
-            }
-        }
-
-        async updateHistory(item: { rarity: any; item_name: any; part_outfit: any; }) {
-            try {
-                const historyData = {
-                    rarity: item.rarity,
-                    item_name: item.item_name,
-                    part_outfit: item.part_outfit,
-                    gacha_type: 'Symphony_of_Silk'
-                };
-                await fetchGachaApi('upHistoryA', historyData);
-            } catch (error) {
-                console.error('Error updating history:', error);
-            }
-        }
-
-        async updateGlamourDust(amount: number) {
-            try {
-                await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
-            } catch (error) {
-                console.error('Error updating glamour dust:', error);
-            }
-        }
-
-        // Reset SSR pity after pulling an SSR
+        // Reset SSR standard_pity after pulling an SSR
         resetSSR() {
-            standard_pity = 0; // Reset SSR pity
+            standard_pity = 0; // Reset SSR standard_pity
         }
 
-        // Reset SR pity to the nearest multiple of 10
+        // Reset SR standard_pity to the nearest multiple of 10
         resetSR() {
-            this.srPity = Math.floor(this.srPity / 10) * 10; // Reset SR pity
+            this.srPity = Math.floor(this.srPity / 10) * 10; // Reset SR standard_pity
         }
 
-        // Increment pity for SSR or SR
+        // Increment standard_pity for SSR or SR
         incrementPity() {
-            standard_pity += 1; // Increment SSR pity after a regular pull
-            this.srPity += 1;  // Increment SR pity after a regular pull
+            standard_pity += 1; // Increment SSR standard_pity after a regular pull
+            this.srPity += 1;  // Increment SR standard_pity after a regular pull
         }
     }
 
@@ -382,38 +362,92 @@ const Standard_A = () => {
         tenpull = [];
 
         try {
-            await fetchGachaApi('getStandardPity');
+            await fetchGachaApi('getPity');
+
+            GachaSystem.isRateUp = userData?.user_resources?.[0]?.is_rate ?? false;
 
             for (let i = 0; i < a; i++) {
-                // Calculate probabilities based on pity
+                // Hitung probabilitas berdasarkan standard_pity
                 gacha.calculatePityProbabilities();
 
-                // Simulate gacha
+                // Simulasi gacha
                 const result = await gacha.makeWish();
-
-                console.log('pity in loop:', standard_pity);
-
-                // Save the result of the pull
                 tenpull[i] = result;
             }
 
-            // Update pity and glamour essence on the server
+            if (GachaSystem.itemsToUpload.length > 0) await uploadInventory(GachaSystem.itemsToUpload);
+            if (GachaSystem.glamourDust !== 0) await updateGlamourDust(GachaSystem.glamourDust);
+            if (GachaSystem.fashionToken !== 0) await updateFashionToken(GachaSystem.fashionToken);
+
+            // Reset after the upload
+            GachaSystem.itemsToUpload = [];
+            GachaSystem.glamourDust = 0;
+            GachaSystem.fashionToken = 0;
+
+            // Update standard_pity dan essence di server
             await fetchGachaApi('incPity', {
                 incPity: standard_pity,
-                type: 'standard'
+                type: 'standard',
             });
 
-            const GlimmeringEssence = (a).toString();
+            const ShimmeringEssence = a.toString();
             await fetchGachaApi('updateEssence', {
-                essence: GlimmeringEssence,
-                type: 'standard'
+                essence: ShimmeringEssence,
+                type: 'standard',
             });
+
+            await updateHistory(tenpull);
 
             return tenpull;
-
         } catch (error) {
-            console.error('Error fetching API:', error);
+            console.error('Error pulling gacha:', error);
             return [];
+        }
+    }
+
+    async function updateHistory(items: GachaItem[]) {
+        try {
+            const dataFetch = items.map(item => ({
+                rarity: item.rarity,
+                item_name: item.item_name,
+                part_outfit: item.part_outfit,
+                gacha_type: 'Symphony_of_Silk'
+            }));
+            await fetchGachaApi('batchUpHistory', { items: dataFetch });
+        } catch (error) {
+            console.error('Error updating history:', error);
+        }
+    }
+
+    async function updateGlamourDust(amount: number) {
+        try {
+            await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
+        }
+    }
+
+    async function updateFashionToken(amount: number) {
+        try {
+            await fetchGachaApi('updateFashionTokens', { fashion_tokens: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
+        }
+    }
+
+    // Fungsi untuk mengunggah hasil gacha ke inventory sekaligus
+    async function uploadInventory(items: GachaItem[]) {
+        try {
+            const dataFetch = items.map(item => ({
+                rarity: item.rarity,
+                item_name: item.item_name,
+                part_outfit: item.part_outfit,
+                layer: item.layer,
+                gacha_type: 'Symphony_of_Silk',
+            }));
+            await fetchGachaApi('batchUpInven', { items: dataFetch });
+        } catch (error) {
+            console.error('Error uploading inventory:', error);
         }
     }
 
@@ -471,17 +505,6 @@ const Standard_A = () => {
                                         objectFit="contain"
                                         objectPosition="bottom"
                                         className="scale-150"
-                                    />
-                                </div>
-                                <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
-                                    <Image
-                                        id="MikoImg"
-                                        src={"/banner/avatar/standardB.png"}
-                                        alt={"Miko"}
-                                        layout="fill"
-                                        objectFit="contain"
-                                        objectPosition="bottom"
-                                        className="scale-95"
                                     />
                                 </div>
                             </div>

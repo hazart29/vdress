@@ -215,7 +215,9 @@ const Limited_A = () => {
         static GLAMOUR_DUST_AMOUNT = 15;
         static PITY_THRESHOLD = 90;
         static isRateUp: boolean;
-
+        static itemsToUpload: GachaItem[] = [];
+        static fashionToken: number = 0;
+        static glamourDust: number = 0;
         srPity: number = 0;  // Track SR pity
 
         async makeWish() {
@@ -228,17 +230,30 @@ const Limited_A = () => {
 
                 const isDuplicate = await this.checkDuplicateItem(pulledCharacterOrItem);
 
+                // Always add to tenpull for display, regardless of duplicate status
+                tenpull.push(pulledCharacterOrItem);
+
                 if (isDuplicate) {
+                    // Skip adding to inventory if it's a duplicate, but still add to tenpull
                     await this.handleDuplicate(pulledCharacterOrItem);
                 } else {
-                    await this.addItemToInventory(pulledCharacterOrItem);
+                    // If it's not a duplicate, add to itemsToUpload array for batch upload
+                    GachaSystem.itemsToUpload.push(pulledCharacterOrItem);
+                    const tokens = rarity === "SSR"
+                        ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                        : rarity === "SR"
+                            ? GachaSystem.SR_NEW_ITEM_TOKENS
+                            : 0;
+                    GachaSystem.fashionToken += tokens;
+                    // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
                 }
 
                 if (rarity === "R") {
-                    await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
+                    GachaSystem.glamourDust += GachaSystem.GLAMOUR_DUST_AMOUNT;
+                    // await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
                 }
 
-                await this.updateHistory(pulledCharacterOrItem);
+                // await this.updateHistory(pulledCharacterOrItem);
 
                 // Reset and handle the gacha result
                 if (rarity === "SSR") {
@@ -319,7 +334,9 @@ const Limited_A = () => {
 
                     const randomItem = this.selectRandomItem(data);
 
-                    if (rarity === "SSR" && randomItem.islimited) {
+                    console.log('random item : ',randomItem)
+
+                    if (rarity === "SSR" && randomItem.islimited === true) {
                         // Jika item yang terpilih adalah SSR dan limited, set rate-off
                         await fetchGachaApi('setRateOff');
                     } else {
@@ -339,7 +356,6 @@ const Limited_A = () => {
             }
         }
 
-
         selectRandomItem(data: { [x: string]: any; }) {
             const keys = Object.keys(data);
             const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -348,50 +364,15 @@ const Limited_A = () => {
 
         async handleDuplicate(item: { rarity: string; }) {
             try {
-                const tokens = item.rarity === "SSR" ? GachaSystem.SSR_DUPLICATE_TOKENS : GachaSystem.SR_DUPLICATE_TOKENS;
-                await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
+                const tokens = item.rarity === "SSR"
+                    ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                    : item.rarity === "SR"
+                        ? GachaSystem.SR_NEW_ITEM_TOKENS
+                        : 0;
+                GachaSystem.fashionToken += tokens;
+                // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
             } catch (error) {
                 console.error('Error handling duplicate item:', error);
-            }
-        }
-
-        async addItemToInventory(item: { rarity: string; item_name: any; part_outfit: any; layer: any; }) {
-            try {
-                const dataFetch = {
-                    rarity: item.rarity,
-                    item_name: item.item_name,
-                    part_outfit: item.part_outfit,
-                    layer: item.layer,
-                    gacha_type: 'Whisper_of_Silk'
-                };
-                await fetchGachaApi('upInven', dataFetch);
-
-                const tokens = item.rarity === "SSR" ? GachaSystem.SSR_NEW_ITEM_TOKENS : GachaSystem.SR_NEW_ITEM_TOKENS;
-                await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
-            } catch (error) {
-                console.error('Error adding item to inventory:', error);
-            }
-        }
-
-        async updateHistory(item: { rarity: any; item_name: any; part_outfit: any; }) {
-            try {
-                const historyData = {
-                    rarity: item.rarity,
-                    item_name: item.item_name,
-                    part_outfit: item.part_outfit,
-                    gacha_type: 'Whispers_of_Silk'
-                };
-                await fetchGachaApi('upHistoryA', historyData);
-            } catch (error) {
-                console.error('Error updating history:', error);
-            }
-        }
-
-        async updateGlamourDust(amount: number) {
-            try {
-                await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
-            } catch (error) {
-                console.error('Error updating glamour dust:', error);
             }
         }
 
@@ -429,8 +410,14 @@ const Limited_A = () => {
                 tenpull[i] = result;
             }
 
-            // Upload semua hasil gacha sekaligus
-            await uploadInventory(tenpull);
+            if (GachaSystem.itemsToUpload.length > 0) await uploadInventory(GachaSystem.itemsToUpload);
+            if (GachaSystem.glamourDust !== 0) await updateGlamourDust(GachaSystem.glamourDust);
+            if (GachaSystem.fashionToken !== 0) await updateFashionToken(GachaSystem.fashionToken);
+
+            // Reset after the upload
+            GachaSystem.itemsToUpload = [];
+            GachaSystem.glamourDust = 0;
+            GachaSystem.fashionToken = 0;
 
             // Update pity dan essence di server
             await fetchGachaApi('incPity', {
@@ -444,10 +431,42 @@ const Limited_A = () => {
                 type: 'limited',
             });
 
+            await updateHistory(tenpull);
+
             return tenpull;
         } catch (error) {
             console.error('Error pulling gacha:', error);
             return [];
+        }
+    }
+
+    async function updateHistory(items: GachaItem[]) {
+        try {
+            const dataFetch = items.map(item => ({
+                rarity: item.rarity,
+                item_name: item.item_name,
+                part_outfit: item.part_outfit,
+                gacha_type: 'Whispers_of_Silk'
+            }));
+            await fetchGachaApi('batchUpHistory', { items: dataFetch });
+        } catch (error) {
+            console.error('Error updating history:', error);
+        }
+    }
+
+    async function updateGlamourDust(amount: number) {
+        try {
+            await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
+        }
+    }
+
+    async function updateFashionToken(amount: number) {
+        try {
+            await fetchGachaApi('updateFashionTokens', { fashion_tokens: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
         }
     }
 
@@ -459,6 +478,8 @@ const Limited_A = () => {
                 item_name: item.item_name,
                 part_outfit: item.part_outfit,
                 layer: item.layer,
+                stat: item.stat,
+                power: item.power,
                 gacha_type: 'Whisper_of_Silk',
             }));
             await fetchGachaApi('batchUpInven', { items: dataFetch });
@@ -577,9 +598,9 @@ const Limited_A = () => {
                                             <div
                                                 key={index}
                                                 className={`
-                                                    ${item.rarity.trim() === "SSR" ? 'bg-gradient-to-b from-transparent from-0% via-amber-500 via-50% to-transparent to-100%' : 
-                                                      item.rarity.trim() === "SR" ? 'bg-gradient-to-b from-transparent from-0% via-purple-800 via-50% to-transparent to-100%' : 
-                                                      'bg-gradient-to-b from-transparent from-0% via-gray-400 via-50% to-transparent to-100%'}
+                                                    ${item.rarity.trim() === "SSR" ? 'bg-gradient-to-b from-transparent from-0% via-amber-500 via-50% to-transparent to-100%' :
+                                                        item.rarity.trim() === "SR" ? 'bg-gradient-to-b from-transparent from-0% via-purple-800 via-50% to-transparent to-100%' :
+                                                            'bg-gradient-to-b from-transparent from-0% via-gray-400 via-50% to-transparent to-100%'}
                                                     h-64 flex items-center justify-center overflow-hidden opacity-100 p-1
                                                 `}
                                                 style={{ animationDelay: `${index * 0.2}s` }}

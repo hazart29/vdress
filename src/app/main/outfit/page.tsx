@@ -262,8 +262,8 @@ const CanvasComponent: React.FC = () => {
           <div className="relative flex flex-none w-1/4 flex-shrink transition-transform duration-1000 h-full transform">
             <canvas id="avatar" ref={avatarRef} className="absolute left-0 h-full z-0" width={2000} height={4000} />
             <canvas id="oFeet" ref={feetRef} className="absolute inset-0 h-full z-10" width={2000} height={4000} />
-            <canvas id="oBottom" ref={bottomRef} className="absolute inset-0 h-full z-20" width={2000} height={4000} />
-            <canvas id="oTop" ref={topRef} className="absolute inset-0 h-full z-30" width={2000} height={4000} />
+            <canvas id="oBottom" ref={bottomRef} className="absolute inset-0 h-full z-30" width={2000} height={4000} />
+            <canvas id="oTop" ref={topRef} className="absolute inset-0 h-full z-20" width={2000} height={4000} />
           </div>
         )}
 
