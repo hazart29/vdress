@@ -297,7 +297,6 @@ const Limited_A = () => {
 
         async pullCharacterOrItem(rarity: string, isRateUp: boolean) {
             try {
-                const dataFetch = { rarity };
                 let data;
 
                 if (rarity === "SSR" || rarity === "SR") {

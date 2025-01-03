@@ -294,7 +294,8 @@ const Standard_A = () => {
                 console.log("rarity : ", rarity)
 
                 // Pull items based on rarity for standard banner
-                data = localGachaData.filter(item => item.rarity === rarity);  // No rate-on/rate-off for standard
+                data = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
+                // No rate-on/rate-off for standard
 
                 const randomItem = this.selectRandomItem(data);
 
