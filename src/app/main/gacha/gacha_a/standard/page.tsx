@@ -30,8 +30,12 @@ const Standard_A = () => {
     const { refresh } = useRefresh();
     const [isLoading, setIsLoading] = useState(false);
     let tenpull: GachaItem[] = [];
-    let baseSSRProbability: number = 0.006;
-    let baseSRProbability: number = 0.051;
+
+    // Base probabilities
+    const baseSSRProbability = 0.006; // 0.600%
+    const consolidatedSSRProbability = 1; // 100%
+    const baseSRProbability = 0.051; // 5.100%
+    const consolidatedSRProbability = 1// 100%
     let ProbabilitySSRNow: number;
     let ProbabilitySRNow: number;
     let standard_pity: number;
@@ -208,7 +212,6 @@ const Standard_A = () => {
         static SR_NEW_ITEM_TOKENS = 2;
         static GLAMOUR_DUST_AMOUNT = 15;
         static PITY_THRESHOLD = 90;
-        static isRateUp: boolean;
         static itemsToUpload: GachaItem[] = [];
         static fashionToken: number = 0;
         static glamourDust: number = 0;
@@ -278,18 +281,29 @@ const Standard_A = () => {
 
         // Calculate SSR and SR probabilities based on standard_pity
         calculatePityProbabilities() {
-            // Soft standard_pity: Increase SSR probability after standard_pity 74
+            // SSR probability (Soft and Hard standard_pity)
+            console.log('standard_pity now : ', standard_pity + 1)
             if (standard_pity >= 74 && standard_pity < 90) {
-                ProbabilitySSRNow = baseSSRProbability + (standard_pity - 74) * 0.02; // Gradually increase
+                // Soft standard_pity: Exponentially increase SSR probability
+                const progress = (standard_pity - 74) / (90 - 74); // Progression between 0 and 1
+                ProbabilitySSRNow = baseSSRProbability +
+                    (consolidatedSSRProbability - baseSSRProbability) * (1 - Math.exp(-5 * progress));
             } else if (standard_pity >= 90) {
-                // Hard standard_pity: Guaranteed SSR at standard_pity 90
+                // Hard standard_pity: Guaranteed SSR
                 ProbabilitySSRNow = 1;
             } else {
+                // Base probability
                 ProbabilitySSRNow = baseSSRProbability;
             }
 
-            // SR probability (no soft or hard standard_pity for SR)
-            ProbabilitySRNow = baseSRProbability + Math.min((this.srPity % 10) * 0.0087, 1); // Cap at 1
+            // SR probability (Soft standard_pity only)
+            if (this.srPity >= 9) {
+                // Guarantee SR at 10th pull
+                ProbabilitySRNow = 1;
+            } else {
+                // Soft standard_pity increases SR probability incrementally
+                ProbabilitySRNow = baseSRProbability + (this.srPity / 9) * (consolidatedSRProbability - baseSRProbability);
+            }
         }
 
         calculateRarity() {
@@ -308,7 +322,7 @@ const Standard_A = () => {
                 let data;
 
                 if (rarity === "SSR") {
-                    data = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
+                    data = localGachaData.filter(item => item.rarity === rarity && item.rate_up === false);
                 } else {
                     data = localGachaData.filter(item => item.rarity === rarity);
                 }
@@ -363,8 +377,6 @@ const Standard_A = () => {
 
         try {
             await fetchGachaApi('getPity');
-
-            GachaSystem.isRateUp = userData?.user_resources?.[0]?.is_rate ?? false;
 
             for (let i = 0; i < a; i++) {
                 // Hitung probabilitas berdasarkan standard_pity

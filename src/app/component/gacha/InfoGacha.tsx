@@ -19,9 +19,9 @@ const InfoGacha: React.FC<InfoGachaProps> = ({ activeTab }) => {
                         </span>
                         <span>
                             <h2 className="text-lg font-bold">Peluang Drop:</h2>
-                            SSR (Super Super Rare): 1.8% (dengan peluang rate on sebesar 50% untuk item unggulan).
-                            SR (Super Rare): 10% (dengan peluang rate on sebesar 25% untuk item unggulan).
-                            R (Rare): 88.5%.
+                            SSR (Super Super Rare): 0.6% (dengan peluang rate on sebesar 50% untuk item unggulan).
+                            SR (Super Rare): 5.1% (dengan peluang rate on sebesar 50% untuk item unggulan).
+                            R (Rare): 94.3%.
                         </span>
                         <span>
                             <h2 className="text-lg font-bold">Item Drop:</h2>
@@ -37,19 +37,19 @@ const InfoGacha: React.FC<InfoGachaProps> = ({ activeTab }) => {
                                         <td className="px-4 py-2">
                                             <Image src={"/icons/outfit/B/MikoB.png"} alt={"Outfit Top"} width={64} height={64}/>
                                         </td>
-                                        <td>0.6%</td>
+                                        <td>0.2%</td>
                                     </tr>
                                     <tr>
                                         <td className="px-4 py-2">
                                             <Image src={"/icons/outfit/A/MikoA.png"} alt={"Outfit Bottom"} width={64} height={64}/>
                                         </td>
-                                        <td>0.6%</td>
+                                        <td>0.2%</td>
                                     </tr>
                                     <tr>
                                         <td className="px-4 py-2">
                                             <Image src={"/icons/outfit/C/MikoC.png"} alt={"Outfit Feet"} width={64} height={64}/>
                                         </td>
-                                        <td>0.6%</td>
+                                        <td>0.2%</td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -9,6 +9,7 @@ import ErrorAlert from "@/app/component/ErrorAlert";
 import sjcl from 'sjcl';
 import { useRefresh } from "@/app/component/RefreshContext"; // Import context
 import Loading from "@/app/component/Loading";
+import { error } from "console";
 
 // Define the ResourceInfo type (important!)
 interface ResourceInfo {
@@ -29,8 +30,11 @@ const Limited_A = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { refresh } = useRefresh();
     let tenpull: GachaItem[] = [];
-    let baseSSRProbability: number = 0.006;
-    let baseSRProbability: number = 0.051;
+    // Base probabilities
+    const baseSSRProbability = 0.006; // 0.600%
+    const consolidatedSSRProbability = 1; // 100%
+    const baseSRProbability = 0.051; // 5.100%
+    const consolidatedSRProbability = 1// 100%
     let ProbabilitySSRNow: number;
     let ProbabilitySRNow: number;
     let pity: number;
@@ -129,7 +133,6 @@ const Limited_A = () => {
             return;
         }
 
-        await fetchGachaApi("getUserData", null);
         const essenceCost = a === 1 ? 1 : 10;
 
         if (userData.user_resources[0].glimmering_essence < essenceCost) {
@@ -166,7 +169,6 @@ const Limited_A = () => {
                 glamour_gems: (exchangeAmount * 160).toString(),
                 glimmering_essence: exchangeAmount.toString()
             });
-            await fetchGachaApi("getUserData", null);
 
             setShowExchangeModal(false); // Tutup modal konfirmasi 
 
@@ -285,22 +287,34 @@ const Limited_A = () => {
 
         // Calculate SSR and SR probabilities based on pity
         calculatePityProbabilities() {
-            // Soft Pity: Increase SSR probability after pity 74
+            // SSR probability (Soft and Hard Pity)
+            console.log('pity now : ', pity+1)
             if (pity >= 74 && pity < 90) {
-                ProbabilitySSRNow = baseSSRProbability + (pity - 74) * 0.02; // Gradually increase
+                // Soft pity: Exponentially increase SSR probability
+                const progress = (pity - 74) / (90 - 74); // Progression between 0 and 1
+                ProbabilitySSRNow = baseSSRProbability + 
+                (consolidatedSSRProbability - baseSSRProbability) * (1 - Math.exp(-5 * progress));
             } else if (pity >= 90) {
-                // Hard Pity: Guaranteed SSR at pity 90
+                // Hard pity: Guaranteed SSR
                 ProbabilitySSRNow = 1;
             } else {
+                // Base probability
                 ProbabilitySSRNow = baseSSRProbability;
             }
 
-            // SR probability (no soft or hard pity for SR)
-            ProbabilitySRNow = baseSRProbability + Math.min((this.srPity % 10) * 0.0087, 1); // Cap at 1
+            // SR probability (Soft Pity only)
+            if (this.srPity >= 9) {
+                // Guarantee SR at 10th pull
+                ProbabilitySRNow = 1;
+            } else {
+                // Soft pity increases SR probability incrementally
+                ProbabilitySRNow = baseSRProbability + (this.srPity / 9) * (consolidatedSRProbability - baseSRProbability);
+            }
         }
 
         calculateRarity() {
             const rand = random(); // Use MCRNG generator
+            console.log('random numb : ', rand)
             if (rand < ProbabilitySSRNow || (pity + 1) >= GachaSystem.PITY_THRESHOLD) {
                 return "SSR";
             } else if (rand < ProbabilitySRNow || (this.srPity + 1) % 10 === 0) {
@@ -315,16 +329,21 @@ const Limited_A = () => {
                 let data;
 
                 if (rarity === "SSR" || rarity === "SR") {
-                    if (isRateUp) {
+                    if (rarity === "SSR" && isRateUp === true) {
+                        console.log('dapat rateup');
                         // Jika isRateUp true, ambil hanya item dengan rate_up = true
-                        data = localGachaData.filter(item => item.rarity === rarity && item.rate_up);
+                        data = localGachaData.filter(item => item.rarity === rarity && item.rate_up === true);
                     } else {
+                        console.log('dapat 50:50');
                         // Jika isRateUp false, pilih 50:50 antara item dengan rate_up = true dan rate_up = false
-                        const rateUpItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up);
-                        const rateOffItems = localGachaData.filter(item => item.rarity === rarity && !item.rate_up);
+                        const rateUpItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up === true);
+                        const rateOffItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up === false);
 
                         // Gabungkan keduanya dengan proporsi 50:50
-                        data = Math.random() < 0.5 ? rateUpItems : rateOffItems;
+                        data = Math.random() < 0.5 ? rateOffItems : rateUpItems;
+
+                        // Cek hasil data
+                        // console.log('Hasil data:', data);
                     }
 
                     // Jika tidak ada item yang memenuhi kriteria, fallback ke acak
@@ -334,14 +353,22 @@ const Limited_A = () => {
 
                     const randomItem = this.selectRandomItem(data);
 
-                    console.log('random item : ',randomItem)
+                    // console.log('random item : ', randomItem)
 
                     if (rarity === "SSR" && randomItem.islimited === true) {
                         // Jika item yang terpilih adalah SSR dan limited, set rate-off
                         await fetchGachaApi('setRateOff');
-                    } else {
+                        if (userData && userData.user_resources?.[0]) {
+                            userData.user_resources[0].is_rate = false; // Set is_rate to false
+                            GachaSystem.isRateUp = false;
+                        }
+                    } else if (rarity === "SSR" && randomItem.islimited === false) {
                         // Set rate-on jika item tidak limited atau bukan SSR
                         await fetchGachaApi('setRateOn');
+                        if (userData && userData.user_resources?.[0]) {
+                            userData.user_resources[0].is_rate = true; // Set is_rate to true
+                            GachaSystem.isRateUp = true;
+                        }
                     }
 
                     return randomItem;
@@ -396,14 +423,22 @@ const Limited_A = () => {
     async function pull(a: number): Promise<GachaItem[]> {
         tenpull = [];
 
+        await fetchGachaApi("getUserData", null);
+
         try {
             await fetchGachaApi('getPity');
 
-            GachaSystem.isRateUp = userData?.user_resources?.[0]?.is_rate ?? false;
+            if (userData?.user_resources[0]) {
+                GachaSystem.isRateUp = userData.user_resources[0].is_rate;
+                console.log('rate up : ', GachaSystem.isRateUp)
+            } else {
+                throw new Error("user_resources[0].is_rate is undefined or not available.");
+            }
 
             for (let i = 0; i < a; i++) {
                 // Hitung probabilitas berdasarkan pity
                 gacha.calculatePityProbabilities();
+                console.log('probability SSR : ', ProbabilitySSRNow)
 
                 // Simulasi gacha
                 const result = await gacha.makeWish();
