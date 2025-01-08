@@ -206,8 +206,26 @@ const Limited_A = () => {
         }
     }
 
-    // Inisialisasi generator MCRNG dengan seed
-    let random = multiplicativeCRNG(Date.now());
+    function xorshift32(state: number) {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        return state;
+    }
+
+    function combinedRandom(seed: number) {
+        const mcrng = multiplicativeCRNG(seed);
+        let xorshiftState = seed; // Use seed as initial state for Xorshift
+
+        return function () {
+            const mcrngOutput = mcrng();
+            xorshiftState = xorshift32(xorshiftState ^ mcrngOutput); // XOR MCRNG output with Xorshift state
+            return (xorshiftState >>> 0) / Math.pow(2, 32); // Return unsigned Xorshift state normalized to 0-1
+        };
+    }
+
+    // Usage
+    let random = combinedRandom(Date.now());
 
     class GachaSystem {
         static SSR_DUPLICATE_TOKENS = 25;
@@ -288,12 +306,12 @@ const Limited_A = () => {
         // Calculate SSR and SR probabilities based on pity
         calculatePityProbabilities() {
             // SSR probability (Soft and Hard Pity)
-            console.log('pity now : ', pity+1)
+            console.log('pity now : ', pity + 1)
             if (pity >= 74 && pity < 90) {
                 // Soft pity: Exponentially increase SSR probability
                 const progress = (pity - 74) / (90 - 74); // Progression between 0 and 1
-                ProbabilitySSRNow = baseSSRProbability + 
-                (consolidatedSSRProbability - baseSSRProbability) * (1 - Math.exp(-5 * progress));
+                ProbabilitySSRNow = baseSSRProbability +
+                    (consolidatedSSRProbability - baseSSRProbability) * (1 - Math.exp(-5 * progress));
             } else if (pity >= 90) {
                 // Hard pity: Guaranteed SSR
                 ProbabilitySSRNow = 1;
