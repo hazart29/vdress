@@ -58,7 +58,7 @@ const Standard_A = () => {
 
     const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
         try {
-            const uid = sessionStorage.getItem('uid'); // Pastikan uid tersedia
+            const uid = localStorage.getItem('uid'); // Pastikan uid tersedia
 
             // Gabungkan data yang akan dikirimkan dalam body
             const requestBody = {

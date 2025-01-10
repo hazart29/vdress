@@ -22,7 +22,7 @@ export default function GlamourDustExchange() {
   const [inventoryItemNames, setInventoryItemNames] = useState<string[]>([]);
   const [userData, setUserData] = useState<User_resources | null>(null);
 
-  const uid: any = sessionStorage.getItem('uid');
+  const uid: any = localStorage.getItem('uid');
 
   const handleSelectItem = (item: DustItems) => {
     setSelectedItem(item);
@@ -157,7 +157,7 @@ export default function GlamourDustExchange() {
   const fetchInventoryItems = async () => {
     try {
       if (!uid) {
-        console.error("User ID not found in sessionStorage");
+        console.error("User ID not found in storage");
         return;
       }
 
