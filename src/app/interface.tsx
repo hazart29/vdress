@@ -10,6 +10,8 @@ export interface Users {
     inventory: Inventory[];
     user_resources: User_resources[];
     suited: Suited[];
+    user_token_limit: UserTokenLimit[];
+    user_dust_limit: UserDustLimit[];
 }
 
 export interface User_resources {

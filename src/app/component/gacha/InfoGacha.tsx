@@ -19,8 +19,8 @@ const InfoGacha: React.FC<InfoGachaProps> = ({ activeTab }) => {
                         </span>
                         <span>
                             <h2 className="text-lg font-bold">Peluang Drop:</h2>
-                            SSR (Super Super Rare): 0.6% (dengan peluang rate on sebesar 50% untuk item unggulan).
-                            SR (Super Rare): 5.1% (dengan peluang rate on sebesar 50% untuk item unggulan).
+                            SSR (Super Super Rare): 0.6% meningkat hingga 1.600% (dengan peluang rate on sebesar 50% untuk item unggulan).
+                            SR (Super Rare): 5.1% meningkat hingga 13.000% (dengan peluang rate on sebesar 50% untuk item unggulan).
                             R (Rare): 94.3%.
                         </span>
                         <span>
@@ -51,6 +51,24 @@ const InfoGacha: React.FC<InfoGachaProps> = ({ activeTab }) => {
                                         </td>
                                         <td>0.2%</td>
                                     </tr>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/B/SeifukuB.png"} alt={"Outfit Top"} width={64} height={64}/>
+                                        </td>
+                                        <td>1.7%</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/A/SeifukuA.png"} alt={"Outfit Bottom"} width={64} height={64}/>
+                                        </td>
+                                        <td>1.7%</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/C/SeifukuC.png"} alt={"Outfit Feet"} width={64} height={64}/>
+                                        </td>
+                                        <td>1.7%</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </span>
@@ -73,7 +91,71 @@ const InfoGacha: React.FC<InfoGachaProps> = ({ activeTab }) => {
                     </div>
                 </>
                 :
-                <></>
+                <>
+                    <div className="flex flex-1 flex-col gap-2">
+                        <span>
+                            <h2 className="text-lg font-bold">Banner: <span className="text-violet-600">Celestial Maidens</span></h2>
+                            <p>Dalam sebuah kerajaan yang jauh, para Maid adalah sosok yang sangat dihormati. Mereka dikenal karena kecantikan, keanggunan, dan dedikasi mereka yang tinggi. Dengan kostum yang mencerminkan status sosial mereka, para Maid ini adalah simbol keindahan dan kemewahan. Dapatkan kostum Maid ekslusif dan jadilah bagian dari kisah mereka.</p>
+                        </span>
+                        <span>
+                            <h2 className="text-lg font-bold">Sistem Pity:</h2>
+                            Banner ini menggunakan sistem pity untuk menjamin pengalaman yang adil bagi semua pemain. Jika Anda belum mendapatkan item SSR (Super Super Rare) setelah 89 tarikan, maka tarikan ke-90 dijamin akan menghasilkan SSR. Dan dipastikan mendapatkan salah satu dari ketiga outfit <span className="text-violet-600 font-bold">Celestial Maidens</span>.
+                        </span>
+                        <span>
+                            <h2 className="text-lg font-bold">Peluang Drop:</h2>
+                            SSR (Super Super Rare): 0.600% meningkat hingga 1.600%.
+                            SR (Super Rare): 5.1% meningkat hingga 13.000%.
+                            R (Rare): 94.3%.
+                        </span>
+                        <span>
+                            <h2 className="text-lg font-bold">Item Drop:</h2>
+                            <table className="table-auto w-full bg-gray-200 border-collapse border border-slate-400">
+                                <thead className="bg-gray-400">
+                                    <tr>
+                                        <th className="px-4 py-2">Item</th>
+                                        <th>Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/B/MaidB.png"} alt={"Outfit Top"} width={64} height={64}/>
+                                        </td>
+                                        <td>0.2%</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/A/MaidA.png"} alt={"Outfit Bottom"} width={64} height={64}/>
+                                        </td>
+                                        <td>0.2%</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2">
+                                            <Image src={"/icons/outfit/C/MaidC.png"} alt={"Outfit Feet"} width={64} height={64}/>
+                                        </td>
+                                        <td>0.2%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </span>
+                        {/* <span>
+                            <h2 className="text-lg font-bold">Rate On dan Rate Off:</h2>
+                            *Peluang drop SSR dan SR dalam banner ini dibagi menjadi dua kategori:
+                            <ul>
+                                <li>Rate On: Item unggulan dengan peluang lebih besar untuk didapatkan. Untuk banner "Japanese Miko", item SSR unggulan adalah Japanese Miko Costume dan item SR unggulan adalah Seifuku.</li>
+                                <li>Rate Off: Item SSR dan SR lainnya yang bukan bagian dari unggulan tetapi tetap tersedia dengan peluang lebih kecil.*</li>
+                            </ul>
+                        </span> */}
+                        <span>
+                            <h2 className="text-lg font-bold">Periode Banner:</h2>
+                            <p>Banner ini tersedia selamanya tanpa batasan waktu.</p>
+                        </span>
+                        <span>
+                            <h2 className="text-lg font-bold">Akses Gacha:</h2>
+                            <p>Anda dapat melakukan satu kali draw menggunakan 1 mata uang khusus atau memilih 10 kali draw sekaligus untuk meningkatkan efisiensi dan peluang mendapatkan item unggulan. Jangan lewatkan kesempatan langka ini untuk melengkapi koleksi Anda dengan kostum dan aksesori eksklusif yang penuh keindahan dan keberuntungan!</p>
+                        </span>
+                    </div>
+                </>
             }
         </div>
     );
