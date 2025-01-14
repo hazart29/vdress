@@ -159,7 +159,7 @@ const Limited_A = () => {
                 setIsLoading(false); // Nonaktifkan loading indicator setelah selesai
             }
         }
-        await fetchGachaApi("getUserData", null);
+        // await fetchGachaApi("getUserData", null);
     };
 
     const handleExchange = async () => {
@@ -294,7 +294,7 @@ const Limited_A = () => {
 
         async checkDuplicateItem(item: { item_name: string; }) {
             try {
-                await fetchGachaApi("getUserData", null); // Refresh user data
+                // await fetchGachaApi("getUserData", null); // Refresh user data
                 const currentInventory = userData?.inventory || [];
                 return currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
             } catch (error) {
