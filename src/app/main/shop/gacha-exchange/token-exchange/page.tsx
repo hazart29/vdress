@@ -72,11 +72,14 @@ export default function TokenShop() {
 
       // Add the purchased item to inventoryItemNames
       setInventoryItemNames((prevNames) => {
+        if ([1, 2].includes(selectedItem.id)) {
+            return prevNames; // Skip items with id 1 and 2
+        }
         if (prevNames.includes(selectedItem.name)) {
-          return prevNames; // Avoid duplicates
+            return prevNames; // Avoid duplicates
         }
         return [...prevNames, selectedItem.name];
-      });
+    });
 
     } catch (error: any) {
       console.error('Error during purchase:', error);
@@ -235,9 +238,9 @@ export default function TokenShop() {
           return (
             <button
               key={item.id}
-              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${item.limit === 0 || (userData?.fashion_tokens ?? 0) < item.price ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || (userData?.fashion_tokens ?? 0) < item.price ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={() => (userData?.fashion_tokens ?? 0) >= item.price && handleSelectItem(item)} // Kondisi onClick diperbarui
-              disabled={isItemInInventory || item.limit === 0 || (userData?.fashion_tokens ?? 0) < item.price} // Atribut disabled diperbarui
+              disabled={(userData?.fashion_tokens ?? 0) < item.price} // Atribut disabled diperbarui
             >
               <div className="flex flex-1 flex-col w-full justify-between items-center bg-white p-4">
                 <Image
