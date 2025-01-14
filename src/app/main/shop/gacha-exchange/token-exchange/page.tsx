@@ -235,8 +235,8 @@ export default function TokenShop() {
           return (
             <button
               key={item.id}
-              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${isItemInInventory || item.limit === 0 || (userData?.fashion_tokens ?? 0) < item.price ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => !isItemInInventory && item.limit !== 0 && (userData?.fashion_tokens ?? 0) >= item.price && handleSelectItem(item)} // Kondisi onClick diperbarui
+              className={`flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden bg-gray-100 shadow-md ${item.limit === 0 || (userData?.fashion_tokens ?? 0) < item.price ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => (userData?.fashion_tokens ?? 0) >= item.price && handleSelectItem(item)} // Kondisi onClick diperbarui
               disabled={isItemInInventory || item.limit === 0 || (userData?.fashion_tokens ?? 0) < item.price} // Atribut disabled diperbarui
             >
               <div className="flex flex-1 flex-col w-full justify-between items-center bg-white p-4">
@@ -253,8 +253,8 @@ export default function TokenShop() {
               </div>
               {/* Menampilkan status limit dan status sudah dimiliki */}
               <div className="flex flex-col flex-none w-full p-2 bg-amber-500 text-white">
-                <p className="text-xs flex gap-1 items-center justify-center">
-                  {isItemInInventory ? (
+                <span className="text-xs flex gap-1 items-center justify-center">
+                  {(isItemInInventory && item.id !==1 && item.id !== 2) ? (
                     <p className="text-xs text-gray-300 text-center">Sudah dimiliki</p>
                   ) : (
                     <>
@@ -270,7 +270,7 @@ export default function TokenShop() {
                       <p className="text-xs text-white text-center">{item.price}</p>
                     </>
                   )}
-                </p>
+                </span>
               </div>
             </button>
           );
