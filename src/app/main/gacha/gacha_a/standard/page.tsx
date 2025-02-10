@@ -621,6 +621,7 @@ const Standard_A = () => {
                                 </div>
                                 <div className="flex justify-end mt-4">
                                     <button
+                                        aria-label="button"
                                         type="button"
                                         onClick={closeModal}
                                         className="px-4 py-2 focus:outline-none font-bold text-2xl text-gray-400 animate-pulse"
@@ -639,6 +640,7 @@ const Standard_A = () => {
                             <p className="text-black">Glamour Gems tidak cukup!</p>
                             <div className="flex justify-end mt-4">
                                 <button
+                                    aria-label="button"
                                     type="button"
                                     onClick={closeInsufficientModal}
                                     className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:outline-none"
@@ -658,6 +660,7 @@ const Standard_A = () => {
                             </p>
                             <div className="flex gap-4">
                                 <button
+                                    aria-label="button"
                                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                     onClick={handleExchange}
 
@@ -665,6 +668,7 @@ const Standard_A = () => {
                                     Ya, Tukar
                                 </button>
                                 <button
+                                    aria-label="button"
                                     className="bg-gray-400 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
                                     onClick={() => setShowExchangeModal(false)}
                                 >

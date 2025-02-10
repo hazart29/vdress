@@ -20,6 +20,7 @@ const MoreBox: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     return (
         <div className="flex gap-4">
             <button
+                aria-label="button"
                 id='shop-button'
                 onClick={() => goToShop()}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold lg:px-6 px-4 lg:py-2 py-1 rounded-full">
@@ -29,6 +30,7 @@ const MoreBox: React.FC<{ activeTab: string }> = ({ activeTab }) => {
             </button>
 
             <button
+                aria-label="button"
                 id='descrip-button'
                 onClick={() => setShowModal(2)}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold lg:px-6 px-4 lg:py-2 py-1 rounded-full">
@@ -39,6 +41,7 @@ const MoreBox: React.FC<{ activeTab: string }> = ({ activeTab }) => {
             </button>
 
             <button
+                aria-label="button"
                 id='history-button'
                 onClick={() => setShowModal(3)}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold lg:px-6 px-4 lg:py-2 py-1 rounded-full">

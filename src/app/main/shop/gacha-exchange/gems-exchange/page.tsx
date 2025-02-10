@@ -129,10 +129,11 @@ export default function GemsExchange() {
   }, []);
 
   return (
-    <div className="flex flex-1 gap-4 px-16">
+    <div className="flex flex-1 gap-4 px-16 justify-center">
       {/* Shimmering Essence */}
       {userResources ? (
         <button
+          aria-label="button"
           className="flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden"
           onClick={() => handleExchange("shimmering_essence")}
         >
@@ -162,6 +163,7 @@ export default function GemsExchange() {
       {/* Glimmering Essence */}
       {userResources && (
         <button
+          aria-label="button"
           className="flex flex-col flex-none h-40 w-36 rounded-lg overflow-hidden"
           onClick={() => handleExchange("glimmering_essence")}
         >
@@ -192,6 +194,7 @@ export default function GemsExchange() {
           <form onSubmit={handleSubmit} className="relative overflow-hidden flex flex-col flex-none w-1/2 text-black bg-white rounded-md p-6 items-center justify-end gap-4">
             <div className="flex flex-none flex-col w-2/3 rounded-md bg-white overflow-hidden items-center gap-2">
               <button
+                aria-label="button"
                 type="button"
                 onClick={closeModal}
                 className="absolute -top-4 -right-4 font-bold py-5 px-6 rounded-full transition-all duration-300"
@@ -231,6 +234,7 @@ export default function GemsExchange() {
               {error && <ErrorAlert message={error} />}
 
               <button
+                aria-label="button"
                 type="submit"
                 className="flex-1 w-full bg-transparent border-2 border-blue-600 text-black text-md font-bold mt-4 py-2 px-1 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-300"
                 disabled={(!essence || essence === 0 || error) ? true : undefined}
@@ -248,7 +252,7 @@ export default function GemsExchange() {
           <div className="flex flex-col justify-center items-center p-6 bg-white rounded-md">
             <h2 className="text-lg font-bold text-red-500 mb-4">Gagal!</h2>
             <p className="text-center">{error}</p>
-            <button onClick={() => setError(null)} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md">Tutup</button>
+            <button aria-label="button" onClick={() => setError(null)} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md">Tutup</button>
           </div>
         </Modal>
       )}
@@ -258,7 +262,7 @@ export default function GemsExchange() {
           <div className="flex flex-col justify-center items-center p-6 bg-white rounded-md">
             <h2 className="text-lg font-bold text-green-500 mb-4">Berhasil!</h2>
             <p className="text-center">Pertukaran Essence Berhasil.</p>
-            <button onClick={() => setExchangeSuccess(false)} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">Tutup</button>
+            <button aria-label="button" onClick={() => setExchangeSuccess(false)} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">Tutup</button>
           </div>
         </Modal>
       )}

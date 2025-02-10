@@ -148,6 +148,7 @@ const HistoryGacha = ({ gachaType }: { gachaType: string }) => {
         <div className="flex justify-center mt-4">
           {paginationRange()?.map((pageNumber, index) => (
             <button
+              aria-label="button"
               key={index}
               onClick={() => paginate(pageNumber)}
               className={`px-3 py-1 rounded-md mx-1 ${currentPage === pageNumber

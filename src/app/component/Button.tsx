@@ -10,6 +10,7 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({ text, onClick, className }) => {
   return (
     <button
+      aria-label="button"
       onClick={onClick}
       className={`${className}`}
     >

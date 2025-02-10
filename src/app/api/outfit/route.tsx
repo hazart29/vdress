@@ -64,7 +64,7 @@ export async function POST(req: Request) {
                         }, { status: 400 });
                     }
 
-                    const outfitLayer = await sql`SELECT * FROM inventory WHERE layer = ${layer} AND uid = ${uid} AND rarity !='R'`;
+                    const outfitLayer = await sql`SELECT * FROM inventory WHERE layer = ${layer} AND uid = ${uid}`;
                     const encryptedResponseGetOutfitLayer = sjcl.encrypt(password as string, JSON.stringify(outfitLayer));
                     return NextResponse.json({ encryptedData: encryptedResponseGetOutfitLayer, status: 200 }, { status: 200 });
                 default:

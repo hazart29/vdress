@@ -22,6 +22,7 @@ const ModalAlert: React.FC<ModalProps> = ({ isOpen, onConfirm, title, imageSrc, 
         </div>
         <div className="flex justify-center">
           <button
+            aria-label="button"
             onClick={onConfirm}
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-all duration-300"
           >

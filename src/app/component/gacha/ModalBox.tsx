@@ -15,6 +15,7 @@ const ModalBox: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) =>
             <div className="bg-white p-4 rounded-lg flex flex-1 flex-col h-full relative">
                 <div className='flex flex-none flex-row'>
                     <button
+                        aria-label="button"
                         className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
                         onClick={onClose}
                     >

@@ -46,6 +46,7 @@ const ShopLayout = ({ children }: { children: React.ReactNode }) => {
                             <li>
                                 <Link href="/main/shop/gacha-exchange">
                                     <button
+                                        aria-label="button"
                                         onClick={() => setActiveTab(1)}
                                         className={tabClasses + (activeTab === 1 ? ` ${activeTabClasses}` : ` ${nonActiveTabClasses}`)}
                                     >
@@ -56,6 +57,7 @@ const ShopLayout = ({ children }: { children: React.ReactNode }) => {
                             <li>
                                 <Link href="/main/shop/top-up">
                                     <button
+                                        aria-label="button"
                                         onClick={() => setActiveTab(2)}
                                         className={tabClasses + (activeTab === 2 ? ` ${activeTabClasses}` : ` ${nonActiveTabClasses}`)}
                                     >
