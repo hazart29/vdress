@@ -22,15 +22,15 @@ function Home() {
       });
     }
 
-    if ((window.matchMedia('(display-mode: fullscreen)').matches) || (window.matchMedia('(display-mode: standalone)').matches)) {
-      setIsInstalled(true);
-    } else {
-      setIsInstalled(false);
-    }
+    // if ((window.matchMedia('(display-mode: fullscreen)').matches) || (window.matchMedia('(display-mode: standalone)').matches)) {
+    //   setIsInstalled(true);
+    // } else {
+    //   setIsInstalled(false);
+    // }
 
     // Redirect to /login after loading and checking installation
     const redirectToLogin = () => {
-      if (!isLoading && isInstalled === true) {
+      if (!isLoading === true) {
         router.push('/login');
       }
     };
