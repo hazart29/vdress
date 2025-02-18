@@ -47,11 +47,11 @@ function Home() {
     );
   }
 
-  // The PWAInstallPrompt component will not be rendered since the user is 
-  // immediately redirected to /login
-  if (!isInstalled) { 
-    return <PWAInstallPrompt />; 
-  }
+  // // The PWAInstallPrompt component will not be rendered since the user is 
+  // // immediately redirected to /login
+  // if (!isInstalled) { 
+  //   return <PWAInstallPrompt />; 
+  // }
 
 }
 
