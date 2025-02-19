@@ -1,7 +1,6 @@
 // middleware.ts (di dalam folder pages/api)
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY!; 
 const ALLOWED_ORIGIN = 'http://localhost:3000'; 
@@ -28,23 +27,6 @@ export async function middleware(req: NextRequest) {
     return new NextResponse(
       JSON.stringify({ message: 'Forbidden' }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  // 3. Rate Limiting
-  const ip = req.ip ?? 'unknown';
-  const rateLimiter = new RateLimiterMemory({
-    points: 10, 
-    duration: 60, 
-  });
-
-  const rateLimiterKey = `api_rate_limit_${ip}`;
-  try {
-    await rateLimiter.consume(rateLimiterKey);
-  } catch (error) {
-    return new NextResponse(
-      JSON.stringify({ message: 'Too many requests' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
