@@ -438,6 +438,7 @@ const Limited_A = () => {
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
+                                        className="scale-150"
                                         priority
                                     />
                                 </div>
@@ -449,6 +450,7 @@ const Limited_A = () => {
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
+                                        className="scale-95"
                                         priority
                                     />
                                 </div>
