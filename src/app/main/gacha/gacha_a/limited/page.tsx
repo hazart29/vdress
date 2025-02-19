@@ -438,7 +438,6 @@ const Limited_A = () => {
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
-                                        className="scale-150"
                                         priority
                                     />
                                 </div>
@@ -450,7 +449,6 @@ const Limited_A = () => {
                                         layout="fill"
                                         objectFit="contain"
                                         objectPosition="bottom"
-                                        className="scale-95"
                                         priority
                                     />
                                 </div>
@@ -554,7 +552,7 @@ const Limited_A = () => {
                     {/* Insufficient Gems Modal */}
                     <DynamicModal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal}>
                         <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
-                            <p className="text-black">Glamour Gems tidak cukup!</p>
+                            <p className="text-black">Glimmering Essence tidak cukup!</p>
                             <div className="flex justify-end mt-4">
                                 <button
                                     aria-label="button"
