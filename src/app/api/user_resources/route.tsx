@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
+import { Params } from 'next/dist/server/request/params';
 import { NextRequest, NextResponse } from 'next/server';
 
 const sql = neon(`${process.env.DATABASE_URL}`);
