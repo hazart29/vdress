@@ -21,21 +21,28 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request, res: NextApiResponse) {
-  const { email, password } = await new Response(req.body).json();
-  const rows = await sql`SELECT * FROM users where email = ${email}`;
-  console.log(rows)
+export async function POST(req: Request) {
+  try {
+    const { email, password } = await req.json(); // Use req.json() directly
 
-  if (!rows) {
-    return NextResponse.json({ message: 'User not found' }, { status: 404 });
-  } else {
-    const user = rows;
-    const isMatch = await bcrypt.compare(password, user[0].password);
+    const [user] = await sql`SELECT * FROM users WHERE email = ${email} LIMIT 1`; // Use LIMIT 1 for efficiency and destructuring
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return NextResponse.json({ message: 'Password not match' }, { status: 401 });
-    } else {
-      const token = jwt.sign({ id: user[0].uid }, process.env.JWT_SECRET, { expiresIn: '1d' });
-      return NextResponse.json({ token, user: user[0] }, { status: 200 });
     }
+
+    const token = jwt.sign({ id: user.uid }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    return NextResponse.json({ token, user }, { status: 200 });
+
+  } catch (error) {
+    console.error("Authentication error:", error); // Log the error for debugging
+    return NextResponse.json({ message: 'An error occurred during authentication' }, { status: 500 }); // Generic error message for security
   }
 }
