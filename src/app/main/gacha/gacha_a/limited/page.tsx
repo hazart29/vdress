@@ -6,7 +6,6 @@ import BoxItem from "@/app/component/gacha/BoxItem";
 import GachaButton from "@/app/component/gacha/GachaButton";
 import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
-import ErrorAlert from "@/app/component/ErrorAlert";
 import sjcl from 'sjcl';
 import { useRefresh } from "@/app/component/RefreshContext";
 import Loading from "@/app/component/Loading";
@@ -321,8 +320,6 @@ const Limited_A = () => {
         }
     };
 
-
-
     const handleExchange = async () => {
         setIsLoading(true);
         try {
@@ -344,7 +341,6 @@ const Limited_A = () => {
             setIsLoading(false);
         }
     };
-
 
     // --- Helper Functions for Updates (No Changes Needed) ---
     async function updateHistory(items: GachaItem[]) {

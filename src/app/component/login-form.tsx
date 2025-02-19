@@ -103,6 +103,7 @@ const Login: React.FC = () => {
             </p>
           </Link>
           <button
+            aria-label="button"
             type="submit"
             className="flex-1 bg-transparent border-2 border-white text-white font-bold p-2 rounded-lg hover:bg-white hover:text-blue-500 transition-all duration-300">
             MASUK
