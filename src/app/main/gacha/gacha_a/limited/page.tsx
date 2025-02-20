@@ -1,350 +1,503 @@
 'use client'
-import React, { useEffect, useState, useMemo, useCallback } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import dynamic from 'next/dynamic'; // Import next/dynamic
 import BoxItem from "@/app/component/gacha/BoxItem";
 import GachaButton from "@/app/component/gacha/GachaButton";
 import { Users, GachaItem } from "@/app/interface";
 import Modal from '@/app/component/modal';
+import ErrorAlert from "@/app/component/ErrorAlert";
 import sjcl from 'sjcl';
-import { useRefresh } from "@/app/component/RefreshContext";
+import { useRefresh } from "@/app/component/RefreshContext"; // Import context
 import Loading from "@/app/component/Loading";
+import { error } from "console";
 
-// --- Constants (Move to top for clarity) ---
-const PASSWORD = 'virtualdressing';  // Replace with a strong password!
-const BASE_SSR_PROBABILITY = 0.006;
-const BASE_SR_PROBABILITY = 0.051;
-const CONSOLIDATED_SSR_PROBABILITY = 0.016;
-const CONSOLIDATED_SR_PROBABILITY = 0.13;
-const SOFT_PITY = 74;
-const HARD_PITY = 90;
-const SSR_DUPLICATE_TOKENS = 25;
-const SR_DUPLICATE_TOKENS = 5;
-const SSR_NEW_ITEM_TOKENS = 10;
-const SR_NEW_ITEM_TOKENS = 2;
-const GLAMOUR_DUST_AMOUNT = 15;
-const ESSENCE_TO_GEMS_RATIO = 160;
-const ACTIVE_TAB = 'limited';
-
+// Define the ResourceInfo type (important!)
 interface ResourceInfo {
     dust: string;
     tokens: string;
 }
 
-// --- Helper Function: Combined Random Number Generator (Concise Version)---
-function createCombinedRNG(seed: number) {
-    let state = seed;
-
-    const mcrng = () => {
-        const a = 1664525;
-        const c = 1013904223;
-        const m = 2 ** 32;
-        state = (a * state + c) % m;
-        return state / m;
-    };
-
-    const xorshift32 = () => {
-        state ^= state << 13;
-        state ^= state >> 17;
-        state ^= state << 5;
-        return state;
-    };
-
-    return () => {
-        const mcrngOutput = mcrng();
-        return ((xorshift32() ^ mcrngOutput) >>> 0) / 2 ** 32;
-    };
-}
-
-// --- API Function (Centralized and Improved) ---
-async function fetchGachaApi<T>(typeFetch: string, dataFetch?: any, retries = 3): Promise<T> {
-    const uid = localStorage.getItem('uid');
-    if (!uid) {
-        throw new Error('UID not found in localStorage');
-    }
-
-    const requestBody = {
-        uid,
-        typeFetch,
-        ...(dataFetch || {})
-    };
-
-    const encryptedData = sjcl.encrypt(PASSWORD, JSON.stringify(requestBody));
-
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch('/api/gacha', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ encryptedData }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Network response not ok (status ${response.status}): ${errorText}`);
-            }
-
-            const responseData = await response.json();
-            return responseData as T;
-        } catch (error: any) {
-            console.error(`Error fetching (attempt ${i + 1}):`, error);
-            if (i === retries - 1) {
-                throw error; // Re-throw after last retry
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000 * (2 ** i))); // Exponential backoff
-        }
-    }
-    throw new Error('Fetch retries exceeded'); // Should never get here, but good for completeness
-}
-
-// --- Gacha System Class (Optimized) ---
-class GachaSystem {
-    private random: () => number;
-    private srPity: number = 0;
-    public itemsToUpload: GachaItem[] = [];
-    public fashionToken: number = 0;
-    public glamourDust: number = 0;
-
-    constructor(seed: number, private isRateUp: boolean, private pity: number, private localGachaData: GachaItem[]) {
-        this.random = createCombinedRNG(seed);
-    }
-
-    private calculateProbabilities() {
-        const pityProgress = this.pity / SOFT_PITY;
-        const probabilitySSRNow = this.pity >= HARD_PITY ? 1 :
-            this.pity >= SOFT_PITY ? CONSOLIDATED_SSR_PROBABILITY + (1 - CONSOLIDATED_SSR_PROBABILITY) * (1 - Math.exp(-5 * (this.pity - SOFT_PITY) / (HARD_PITY - SOFT_PITY))) :
-                BASE_SSR_PROBABILITY + (CONSOLIDATED_SSR_PROBABILITY - BASE_SSR_PROBABILITY) * pityProgress;
-
-        const probabilitySRNow = this.srPity >= 9 ? 1 : BASE_SR_PROBABILITY + (CONSOLIDATED_SR_PROBABILITY - BASE_SR_PROBABILITY) * (this.srPity / 9);
-        return { probabilitySSRNow, probabilitySRNow };
-    }
-
-    private calculateRarity() {
-        const { probabilitySSRNow, probabilitySRNow } = this.calculateProbabilities();
-        const rand = this.random();
-        if (rand < probabilitySSRNow || this.pity + 1 >= HARD_PITY) return "SSR";
-        if (rand < probabilitySRNow || (this.srPity + 1) % 10 === 0) return "SR";
-        return "R";
-    }
-
-    private async pullItem(rarity: string): Promise<GachaItem | null> {
-        let availableItems = this.localGachaData.filter(item => item.rarity === rarity);
-
-        if ((rarity === "SSR" || rarity === "SR")) {
-            const rateUpItems = availableItems.filter(item => item.rate_up);
-            const rateOffItems = availableItems.filter(item => !item.rate_up);
-            availableItems = this.isRateUp ? rateUpItems : (this.random() < 0.5 ? rateOffItems : rateUpItems);
-            if (!availableItems.length) availableItems = this.localGachaData.filter(item => item.rarity === rarity);
-        }
-
-        const randomItem = availableItems[Math.floor(this.random() * availableItems.length)];
-        return randomItem; // No need to check for null, handle it in makeWish
-    }
-
-    private isDuplicateItem(item: GachaItem, inventory: GachaItem[]): boolean {
-        return inventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
-    }
-
-    private handleDuplicate(item: GachaItem) {
-        const tokens = item.rarity === "SSR" ? SSR_DUPLICATE_TOKENS : (item.rarity === "SR" ? SR_DUPLICATE_TOKENS : 0);
-        this.fashionToken += tokens;
-    }
-
-    private resetSSR() { this.pity = 0; }
-    private resetSR() { this.srPity = this.srPity % 10; }
-    private incrementPity() { this.pity += 1; this.srPity += 1; }
-
-    // Public method to perform a single wish
-    public async makeWish(inventory: GachaItem[]): Promise<GachaItem | null> {
-        const rarity = this.calculateRarity();
-        const pulledItem = await this.pullItem(rarity);
-
-        if (!pulledItem) return null; // Handle the case where no item is pulled
-
-        const isDuplicate = this.isDuplicateItem(pulledItem, inventory);
-
-        if (!isDuplicate) {
-            this.itemsToUpload.push(pulledItem);
-            this.fashionToken += rarity === "SSR" ? SSR_NEW_ITEM_TOKENS : (rarity === "SR" ? SR_NEW_ITEM_TOKENS : 0);
-        } else {
-            this.handleDuplicate(pulledItem);
-        }
-
-        if (rarity === "R") this.glamourDust += GLAMOUR_DUST_AMOUNT;
-
-        if (rarity === "SSR") {
-            this.isRateUp = !pulledItem.islimited;
-            this.resetSSR();
-        } else if (rarity === "SR") {
-            this.incrementPity();
-            this.resetSR();
-        } else {
-            this.incrementPity();
-        }
-        return pulledItem;
-    }
-    public getPity(): number {
-        return this.pity;
-    }
-    public getIsRateUp(): boolean {
-        return this.isRateUp;
-    }
-}
-
-// --- Dynamically Imported Components (for Code Splitting) ---
-// Wrap heavy components with next/dynamic
-const DynamicBoxItem = dynamic(() => Promise.resolve(BoxItem), { ssr: false });
-const DynamicGachaButton = dynamic(() => Promise.resolve(GachaButton), { ssr: false });
-const DynamicModal = dynamic(() => Promise.resolve(Modal), { ssr: false });
-
-// --- Main Component ---
 const Limited_A = () => {
     const [userData, setUserData] = useState<Users | null>(null);
+    const [gachaItem, setGachaItem] = useState<GachaItem[] | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isInsufficientModalOpen, setIsInsufficientModalOpen] = useState(false); // State for insufficient gems modal
     const [localGachaData, setLocalGachaData] = useState<GachaItem[]>([]);
     const [pulledItems, setPulledItems] = useState<GachaItem[]>([]);
     const [resourceInfo, setResourceInfo] = useState<ResourceInfo[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isInsufficientModalOpen, setIsInsufficientModalOpen] = useState(false);
     const [showExchangeModal, setShowExchangeModal] = useState(false);
     const [exchangeAmount, setExchangeAmount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const { refresh } = useRefresh();
+    let tenpull: GachaItem[] = [];
+    // Base probabilities
+    const baseSSRProbability = 0.006; // 0.600%
+    const consolidatedSSRProbability = 1; // 100%
+    const baseSRProbability = 0.051; // 5.100%
+    const consolidatedSRProbability = 1// 100%
+    let ProbabilitySSRNow: number;
+    let ProbabilitySRNow: number;
+    let pity: number;
+    const activeTab = 'limited';
 
-    // --- Memoized values and callbacks ---
-
-    // Use useMemo to create the gacha system *only* when necessary
-    const gachaSystem = useMemo(() => {
-        if (userData && localGachaData.length > 0) {
-            return new GachaSystem(Date.now(), !!userData.user_resources[0]?.is_rate, userData.user_resources[0].pity, localGachaData);
-        }
-        return null; // Return null if data isn't ready
-    }, [userData, localGachaData]);
-
-
-    const closeModal = useCallback(() => {
-        setIsModalOpen(false);
-        setPulledItems([]);
-        setResourceInfo([]);
-        refresh();
-    }, [refresh]);
-
-    const closeInsufficientModal = useCallback(() => {
-        setIsInsufficientModalOpen(false);
-    }, []);
-
-    // --- Data Fetching (Optimized with Promise.all) ---
     useEffect(() => {
         const fetchData = async () => {
-            setIsLoading(true);
             try {
-                const [userDataResult, gachaItemsResult]: any = await Promise.all([
-                    fetchGachaApi<Users>("getUserData"),
-                    fetchGachaApi("getAllGachaItems"),
-                ]);
-                console.log("gacha item: ", gachaItemsResult)
-                setUserData(userDataResult);
-                setLocalGachaData(gachaItemsResult.gachaItem);
-            } catch (error) {
-                console.error('Error fetching initial data:', error);
+                await fetchGachaApi("getUserData", null);
             } finally {
-                setIsLoading(false);
+                setIsLoading(false); // Set loading ke false setelah data diterima (atau error)
             }
         };
+
         fetchData();
-    }, [refresh]); // Depend on refresh to re-fetch when needed
+        fetchAllGachaItems()
+    }, []); // Empty dependency array ensures this runs once on component mount
 
-    // --- Gacha Pull Logic (using helper function) ---
-
-    const performPull = async (pullCount: number): Promise<GachaItem[]> => {
-        if (!gachaSystem) return []; // Don't attempt to pull if gachaSystem isn't ready
-        let newPulledItems: GachaItem[] = [];
-
-        const inventory: any = userData?.inventory || []; // Get inventory *once*
-
-        for (let i = 0; i < pullCount; i++) {
-            const item = await gachaSystem.makeWish(inventory);
-            if (item) {
-                newPulledItems.push(item);
-            }
+    async function fetchAllGachaItems() {
+        try {
+            const data = await fetchGachaApi('getAllGachaItems');
+            // console.log('data gacha: ', data.gachaItem)
+            setLocalGachaData(data.gachaItem); // Simpan ke state lokal
+        } catch (error) {
+            console.error('Error fetching all gacha items:', error);
         }
+    }
 
-        // Batch updates (all at once)
-        if (gachaSystem.itemsToUpload.length > 0) await uploadInventory(gachaSystem.itemsToUpload);
-        if (gachaSystem.glamourDust !== 0) await updateGlamourDust(gachaSystem.glamourDust);
-        if (gachaSystem.fashionToken !== 0) await updateFashionToken(gachaSystem.fashionToken);
+    const fetchGachaApi = async (typeFetch: string, dataFetch?: any) => {
+        try {
+            const uid = localStorage.getItem('uid'); // Pastikan uid tersedia
 
-        await fetchGachaApi('incPity', { incPity: gachaSystem.getPity(), type: 'limited' });
-        await fetchGachaApi('updateEssence', { essence: pullCount.toString(), type: 'limited' });
-        await updateHistory(newPulledItems);
+            // Gabungkan data yang akan dikirimkan dalam body
+            const requestBody = {
+                uid: uid!,
+                typeFetch: typeFetch,
+                ...(dataFetch || {}) // Gabungkan dataFetch jika ada
+            };
 
-        // Reset gacha system variables *after* API calls
-        gachaSystem.itemsToUpload = [];
-        gachaSystem.glamourDust = 0;
-        gachaSystem.fashionToken = 0;
+            // Enkripsi data dengan SJCL
+            const password = 'virtualdressing'; // Ganti dengan password yang lebih kuat dan aman
+            const encryptedData = sjcl.encrypt(password, JSON.stringify(requestBody));
 
-        return newPulledItems;
+            const response = await fetch('/api/gacha', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ encryptedData }), // Kirim data sebagai JSON
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // Tangani response berdasarkan typeFetch
+            switch (typeFetch) {
+                case "getUserData":
+                    const reqData: Users = await response.json();
+                    setUserData(reqData);
+                    break;
+                case "getPity":
+                    const pityData = await response.json();
+                    pity = Number(pityData[0].pity);
+                    break;
+                case "getRateUpItem":
+                    const RateUpItems = await response.json();
+                    return RateUpItems;
+                case "getRateOn":
+                    const isRateOn = await response.json();
+                    return isRateOn;
+                default:
+                    const responseData = await response.json();
+                    return responseData;
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return <ErrorAlert message='Terjadi kesalahan. Muat ulang kembali.' />;
+        }
+    }
+
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        tenpull = [];
+        refresh();
     };
 
+    const closeInsufficientModal = () => {
+        setIsInsufficientModalOpen(false);
+    };
 
-    const openModal = async (pullCount: number) => {
-        if (!userData?.user_resources?.length) {
+    const openModal = async (a: number) => {
+        if (!userData || !userData.user_resources || userData.user_resources.length === 0) {
             console.error('User data or user resources not available');
             return;
         }
 
-        const essenceCost = pullCount;
-        const gemsNeeded = essenceCost * ESSENCE_TO_GEMS_RATIO;
+        const essenceCost = a === 1 ? 1 : 10;
+        await fetchGachaApi("getUserData", null);
 
         if (userData.user_resources[0].glimmering_essence < essenceCost) {
+            const gemsNeeded = essenceCost * 160;
+            console.log('gems now : ', userData.user_resources[0].glamour_gems)
             if (userData.user_resources[0].glamour_gems < gemsNeeded) {
                 setIsInsufficientModalOpen(true);
                 return;
+            } else {
+                // Tampilkan modal konfirmasi penukaran
+                setShowExchangeModal(true);
+                setExchangeAmount(essenceCost);
             }
-            setShowExchangeModal(true);
-            setExchangeAmount(essenceCost);
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const newPulledItems = await performPull(pullCount);
-            setPulledItems(newPulledItems); // Update pulled items
-            if (userData && localGachaData.length > 0) {
-                listGacha(newPulledItems)
-            }
+        } else {
+            // Jika essence cukup, langsung jalankan gacha
             setIsModalOpen(true);
-        } catch (error) {
-            console.error("Error during gacha pull:", error);
-        } finally {
-            setIsLoading(false);
+            setIsLoading(true);
+            try {
+                const pulledItems = await pull(a);
+                setGachaItem(pulledItems);
+            } catch (error) {
+                console.error('Error during gacha pull:', error);
+            } finally {
+                setIsLoading(false); // Nonaktifkan loading indicator setelah selesai
+            }
         }
+        await fetchGachaApi("getUserData", null);
     };
 
     const handleExchange = async () => {
-        setIsLoading(true);
         try {
             await fetchGachaApi('exchangeGemsForEssence', {
                 type: 'glimmering_essence',
-                glamour_gems: (exchangeAmount * ESSENCE_TO_GEMS_RATIO).toString(),
+                glamour_gems: (exchangeAmount * 160).toString(),
                 glimmering_essence: exchangeAmount.toString()
             });
 
-            setShowExchangeModal(false);
-            //refresh user data
-            const userDataResult = await fetchGachaApi<Users>("getUserData");
-            setUserData(userDataResult);
-            //after refresh, do a pull
-            openModal(exchangeAmount)
+            setShowExchangeModal(false); // Tutup modal konfirmasi 
+
+            // Jalankan gacha setelah penukaran berhasil
+            setIsModalOpen(true);
+            setIsLoading(true);
+            try {
+                const pulledItems = await pull(exchangeAmount === 1 ? 1 : 10);
+                setGachaItem(pulledItems);
+            } catch (error) {
+                console.error('Error during gacha pull:', error);
+            } finally {
+                setIsLoading(false); // Nonaktifkan loading indicator setelah selesai
+            }
+
+            await fetchGachaApi("getUserData", null);
+
         } catch (error) {
             console.error('Error exchanging gems:', error);
-        } finally {
-            setIsLoading(false);
         }
-    };
+    }
 
-    // --- Helper Functions for Updates (No Changes Needed) ---
+    useEffect(() => {
+        if (gachaItem) {
+            listGacha(gachaItem);
+        }
+    }, [gachaItem]);
+
+    function multiplicativeCRNG(seed: number) {
+        const a = 1664525; // Multiplier
+        const c = 1013904223; // Increment (can be 0 for multiplicative)
+        const m = Math.pow(2, 32); // Modulus
+        let xn = seed;
+
+        return function () {
+            xn = (a * xn + c) % m;
+            return xn / m; // Normalize to 0 - 1 range
+        }
+    }
+
+    function xorshift32(state: number) {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        return state;
+    }
+
+    function combinedRandom(seed: number) {
+        const mcrng = multiplicativeCRNG(seed);
+        let xorshiftState = seed; // Use seed as initial state for Xorshift
+
+        return function () {
+            const mcrngOutput = mcrng();
+            xorshiftState = xorshift32(xorshiftState ^ mcrngOutput); // XOR MCRNG output with Xorshift state
+            return (xorshiftState >>> 0) / Math.pow(2, 32); // Return unsigned Xorshift state normalized to 0-1
+        };
+    }
+
+    // Usage
+    let random = combinedRandom(Date.now());
+
+    class GachaSystem {
+        static SSR_DUPLICATE_TOKENS = 25;
+        static SR_DUPLICATE_TOKENS = 5;
+        static SSR_NEW_ITEM_TOKENS = 10;
+        static SR_NEW_ITEM_TOKENS = 2;
+        static GLAMOUR_DUST_AMOUNT = 15;
+        static PITY_THRESHOLD = 90;
+        static isRateUp: boolean;
+        static itemsToUpload: GachaItem[] = [];
+        static fashionToken: number = 0;
+        static glamourDust: number = 0;
+        srPity: number = 0;  // Track SR pity
+
+        async makeWish() {
+            try {
+                const rarity = this.calculateRarity();
+                const rateUp = GachaSystem.isRateUp;
+                const pulledCharacterOrItem = await this.pullCharacterOrItem(rarity, rateUp);
+
+                if (!pulledCharacterOrItem) return null;
+
+                const isDuplicate = await this.checkDuplicateItem(pulledCharacterOrItem);
+
+                // Always add to tenpull for display, regardless of duplicate status
+                tenpull.push(pulledCharacterOrItem);
+
+                if (isDuplicate) {
+                    // Skip adding to inventory if it's a duplicate, but still add to tenpull
+                    await this.handleDuplicate(pulledCharacterOrItem);
+                } else {
+                    // If it's not a duplicate, add to itemsToUpload array for batch upload
+                    GachaSystem.itemsToUpload.push(pulledCharacterOrItem);
+                    const tokens = rarity === "SSR"
+                        ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                        : rarity === "SR"
+                            ? GachaSystem.SR_NEW_ITEM_TOKENS
+                            : 0;
+                    GachaSystem.fashionToken += tokens;
+                    // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
+                }
+
+                if (rarity === "R") {
+                    GachaSystem.glamourDust += GachaSystem.GLAMOUR_DUST_AMOUNT;
+                    // await this.updateGlamourDust(GachaSystem.GLAMOUR_DUST_AMOUNT);
+                }
+
+                // await this.updateHistory(pulledCharacterOrItem);
+
+                // Reset and handle the gacha result
+                if (rarity === "SSR") {
+                    this.resetSSR();
+                } else if (rarity === "SR") {
+                    this.incrementPity();
+                    this.resetSR();
+                } else {
+                    this.incrementPity();
+                }
+
+                return pulledCharacterOrItem;
+            } catch (error) {
+                console.error('Error in makeWish:', error);
+                return null;
+            }
+        }
+
+        async checkDuplicateItem(item: { item_name: string; }) {
+            try {
+                await fetchGachaApi("getUserData", null); // Refresh user data
+                const currentInventory = userData?.inventory || [];
+                return currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
+            } catch (error) {
+                console.error('Error checking duplicate item:', error);
+                return false;
+            }
+        }
+
+        // Calculate SSR and SR probabilities based on pity
+        calculatePityProbabilities() {
+            // SSR probability (Soft and Hard Pity)
+            console.log('pity now : ', pity + 1)
+            if (pity >= 74 && pity < 90) {
+                // Soft pity: Exponentially increase SSR probability
+                const progress = (pity - 74) / (90 - 74); // Progression between 0 and 1
+                ProbabilitySSRNow = baseSSRProbability +
+                    (consolidatedSSRProbability - baseSSRProbability) * (1 - Math.exp(-5 * progress));
+            } else if (pity >= 90) {
+                // Hard pity: Guaranteed SSR
+                ProbabilitySSRNow = 1;
+            } else {
+                // Base probability
+                ProbabilitySSRNow = baseSSRProbability;
+            }
+
+            // SR probability (Soft Pity only)
+            if (this.srPity >= 9) {
+                // Guarantee SR at 10th pull
+                ProbabilitySRNow = 1;
+            } else {
+                // Soft pity increases SR probability incrementally
+                ProbabilitySRNow = baseSRProbability + (this.srPity / 9) * (consolidatedSRProbability - baseSRProbability);
+            }
+        }
+
+        calculateRarity() {
+            const rand = random(); // Use MCRNG generator
+            console.log('random numb : ', rand)
+            if (rand < ProbabilitySSRNow || (pity + 1) >= GachaSystem.PITY_THRESHOLD) {
+                return "SSR";
+            } else if (rand < ProbabilitySRNow || (this.srPity + 1) % 10 === 0) {
+                return "SR";
+            } else {
+                return "R";
+            }
+        }
+
+        async pullCharacterOrItem(rarity: string, isRateUp: boolean) {
+            try {
+                let data;
+
+                if (rarity === "SSR" || rarity === "SR") {
+                    if (rarity === "SSR" && isRateUp === true) {
+                        console.log('dapat rateup');
+                        // Jika isRateUp true, ambil hanya item dengan rate_up = true
+                        data = localGachaData.filter(item => item.rarity === rarity && item.rate_up === true);
+                    } else {
+                        console.log('dapat 50:50');
+                        // Jika isRateUp false, pilih 50:50 antara item dengan rate_up = true dan rate_up = false
+                        const rateUpItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up === true);
+                        const rateOffItems = localGachaData.filter(item => item.rarity === rarity && item.rate_up === false);
+
+                        // Gabungkan keduanya dengan proporsi 50:50
+                        data = Math.random() < 0.5 ? rateOffItems : rateUpItems;
+
+                        // Cek hasil data
+                        // console.log('Hasil data:', data);
+                    }
+
+                    // Jika tidak ada item yang memenuhi kriteria, fallback ke acak
+                    if (data.length === 0) {
+                        data = localGachaData.filter(item => item.rarity === rarity);
+                    }
+
+                    const randomItem = this.selectRandomItem(data);
+
+                    // console.log('random item : ', randomItem)
+
+                    if (rarity === "SSR" && randomItem.islimited === true) {
+                        // Jika item yang terpilih adalah SSR dan limited, set rate-off
+                        await fetchGachaApi('setRateOff');
+                        if (userData && userData.user_resources?.[0]) {
+                            userData.user_resources[0].is_rate = false; // Set is_rate to false
+                            GachaSystem.isRateUp = false;
+                        }
+                    } else if (rarity === "SSR" && randomItem.islimited === false) {
+                        // Set rate-on jika item tidak limited atau bukan SSR
+                        await fetchGachaApi('setRateOn');
+                        if (userData && userData.user_resources?.[0]) {
+                            userData.user_resources[0].is_rate = true; // Set is_rate to true
+                            GachaSystem.isRateUp = true;
+                        }
+                    }
+
+                    return randomItem;
+                } else {
+                    // Untuk rarity lainnya, langsung pilih item acak
+                    data = localGachaData.filter(item => item.rarity === rarity);
+                    return this.selectRandomItem(data);
+                }
+            } catch (error) {
+                console.error('Error pulling character or item:', error);
+                return null;
+            }
+        }
+
+        selectRandomItem(data: { [x: string]: any; }) {
+            const keys = Object.keys(data);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            return data[randomKey];
+        }
+
+        async handleDuplicate(item: { rarity: string; }) {
+            try {
+                const tokens = item.rarity === "SSR"
+                    ? GachaSystem.SSR_NEW_ITEM_TOKENS
+                    : item.rarity === "SR"
+                        ? GachaSystem.SR_NEW_ITEM_TOKENS
+                        : 0;
+                GachaSystem.fashionToken += tokens;
+                // await fetchGachaApi('updateFashionTokens', { fashion_tokens: tokens });
+            } catch (error) {
+                console.error('Error handling duplicate item:', error);
+            }
+        }
+
+        // Reset SSR pity after pulling an SSR
+        resetSSR() {
+            pity = 0; // Reset SSR pity
+        }
+
+        // Reset SR pity to the nearest multiple of 10
+        resetSR() {
+            this.srPity = Math.floor(this.srPity / 10) * 10; // Reset SR pity
+        }
+
+        // Increment pity for SSR or SR
+        incrementPity() {
+            pity += 1; // Increment SSR pity after a regular pull
+            this.srPity += 1;  // Increment SR pity after a regular pull
+        }
+    }
+
+    async function pull(a: number): Promise<GachaItem[]> {
+        tenpull = [];
+
+        await fetchGachaApi("getUserData", null);
+
+        try {
+            await fetchGachaApi('getPity');
+
+            if (userData?.user_resources[0]) {
+                GachaSystem.isRateUp = userData.user_resources[0].is_rate;
+                console.log('rate up : ', GachaSystem.isRateUp)
+            } else {
+                throw new Error("user_resources[0].is_rate is undefined or not available.");
+            }
+
+            for (let i = 0; i < a; i++) {
+                // Hitung probabilitas berdasarkan pity
+                gacha.calculatePityProbabilities();
+                console.log('probability SSR : ', ProbabilitySSRNow)
+
+                // Simulasi gacha
+                const result = await gacha.makeWish();
+                tenpull[i] = result;
+            }
+
+            if (GachaSystem.itemsToUpload.length > 0) await uploadInventory(GachaSystem.itemsToUpload);
+            if (GachaSystem.glamourDust !== 0) await updateGlamourDust(GachaSystem.glamourDust);
+            if (GachaSystem.fashionToken !== 0) await updateFashionToken(GachaSystem.fashionToken);
+
+            // Reset after the upload
+            GachaSystem.itemsToUpload = [];
+            GachaSystem.glamourDust = 0;
+            GachaSystem.fashionToken = 0;
+
+            // Update pity dan essence di server
+            await fetchGachaApi('incPity', {
+                incPity: pity,
+                type: 'limited',
+            });
+
+            const GlimmeringEssence = a.toString();
+            await fetchGachaApi('updateEssence', {
+                essence: GlimmeringEssence,
+                type: 'limited',
+            });
+
+            await updateHistory(tenpull);
+
+            return tenpull;
+        } catch (error) {
+            console.error('Error pulling gacha:', error);
+            return [];
+        }
+    }
+
     async function updateHistory(items: GachaItem[]) {
-        if (items.length === 0) return; // Don't update if no items
         try {
             const dataFetch = items.map(item => ({
                 rarity: item.rarity,
@@ -359,19 +512,23 @@ const Limited_A = () => {
     }
 
     async function updateGlamourDust(amount: number) {
-        if (amount === 0) return;
-        try { await fetchGachaApi('updateGlamourDust', { glamour_dust: amount }); }
-        catch (error) { console.error('Error updating glamour dust:', error); }
+        try {
+            await fetchGachaApi('updateGlamourDust', { glamour_dust: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
+        }
     }
 
     async function updateFashionToken(amount: number) {
-        if (amount === 0) return;
-        try { await fetchGachaApi('updateFashionTokens', { fashion_tokens: amount }); }
-        catch (error) { console.error('Error updating fashion tokens:', error); }
+        try {
+            await fetchGachaApi('updateFashionTokens', { fashion_tokens: amount });
+        } catch (error) {
+            console.error('Error updating glamour dust:', error);
+        }
     }
 
+    // Fungsi untuk mengunggah hasil gacha ke inventory sekaligus
     async function uploadInventory(items: GachaItem[]) {
-        if (items.length === 0) return; // Don't upload if no items
         try {
             const dataFetch = items.map(item => ({
                 rarity: item.rarity,
@@ -388,20 +545,22 @@ const Limited_A = () => {
         }
     }
 
-    const sortPulledItems = useCallback((pulledItems: GachaItem[]) => {
-        return [...pulledItems].sort((a, b) => { // Create a copy before sorting
+    const sortPulledItems = (pulledItems: GachaItem[]) => {
+        return pulledItems.sort((a, b) => {
             const rarityOrder = { R: 0, SR: 1, SSR: 2 };
             return rarityOrder[b.rarity as keyof typeof rarityOrder] - rarityOrder[a.rarity as keyof typeof rarityOrder];
         });
-    }, []);
+    };
 
-    const listGacha = useCallback(async (tenpull: GachaItem[]) => {
-
+    const listGacha = async (tenpull: any[]) => {
         const sortedTenpull = sortPulledItems(tenpull);
-        setPulledItems(sortedTenpull); // Use functional update
+        setPulledItems(sortedTenpull);
 
+        // Assuming fetchGachaApi("getUserData", null) has been called before listGacha
         const currentInventory = userData?.inventory || [];
-        const newResourceInfo = tenpull.map((item) => {
+
+        // Create ResourceInfo objects with filtered values
+        const resourceInfo = tenpull.map((item) => {
             const rarity = item.rarity.trim();
             const isDuplicate = currentInventory.some(inventoryItem => inventoryItem.item_name === item.item_name);
 
@@ -413,17 +572,18 @@ const Limited_A = () => {
             };
         }).filter(resource => resource.dust !== '' || resource.tokens !== '');
 
-        setResourceInfo(newResourceInfo); // Use functional update
-    }, [userData?.inventory, sortPulledItems]); // Add dependencies
+        // Update state with the resourceInfo array
+        setResourceInfo(resourceInfo);
+    };
 
-    // Removed:  gacha is now created in useMemo.  No need for it here.
+    const gacha = new GachaSystem();
 
     return (
         <>
             {isLoading && (
                 <Loading />
             )}
-            {!isLoading && ( // Render only when not loading
+            {!isLoading && ( // Render konten hanya jika isLoading false
                 <>
                     <div className="flex flex-1 lg:pt-10 pt-4 bg-gacha1 bg-cover lg:blur-md blur-sm animate-pulse" />
                     <div className="absolute w-full h-full flex flex-1 pt-10 bg-gradient-to-b from-transparent via-transparent to-black to-100% z-10" />
@@ -439,7 +599,6 @@ const Limited_A = () => {
                                         objectFit="contain"
                                         objectPosition="bottom"
                                         className="scale-150"
-                                        priority
                                     />
                                 </div>
                                 <div className="absolute flex justify-end w-full h-full -bottom-32 -right-52">
@@ -451,7 +610,6 @@ const Limited_A = () => {
                                         objectFit="contain"
                                         objectPosition="bottom"
                                         className="scale-95"
-                                        priority
                                     />
                                 </div>
                             </div>
@@ -473,13 +631,13 @@ const Limited_A = () => {
                                 </div>
                                 <div className="flex flex-1 flex-col gap-12">
                                     <div className="flex flex-1 items-end justify-end gap-8 pr-16">
-                                        <DynamicBoxItem imageUrl={"/icons/outfit/A/MikoA.png"} altText={"Miko a"} />
-                                        <DynamicBoxItem imageUrl={"/icons/outfit/B/MikoB.png"} altText={"Miko b"} />
-                                        <DynamicBoxItem imageUrl={"/icons/outfit/C/MikoC.png"} altText={"Miko c"} />
+                                        <BoxItem imageUrl={"/icons/outfit/A/MikoA.png"} altText={"Miko a"} />
+                                        <BoxItem imageUrl={"/icons/outfit/B/MikoB.png"} altText={"Miko b"} />
+                                        <BoxItem imageUrl={"/icons/outfit/C/MikoC.png"} altText={"Miko c"} />
                                         <p className=" flex flex-none h-20 justify-center items-center animate-pulse text-yellow-400">Rate Up!</p>
                                     </div>
                                     <div className="flex flex-none flex-col gap-4 pr-16 pb-10 justify-center">
-                                        <DynamicGachaButton onClick={openModal} activeTab={ACTIVE_TAB} />
+                                        <GachaButton onClick={openModal} activeTab={activeTab} />
                                     </div>
                                 </div>
                             </div>
@@ -487,7 +645,7 @@ const Limited_A = () => {
                     </div>
 
                     {/* Gacha Modal */}
-                    <DynamicModal isOpen={isModalOpen} onClose={closeModal}>
+                    <Modal isOpen={isModalOpen} onClose={closeModal}>
                         <div className="relative w-full h-full flex flex-1 flex-col items-center justify-center">
                             <div className="flex flex-1 flex-col w-full h-full justify-between bg-white p-8">
                                 <div className="flex flex-1 flex-col flex-wrap items-center justify-center">
@@ -538,7 +696,6 @@ const Limited_A = () => {
                                 </div>
                                 <div className="flex justify-end mt-4">
                                     <button
-                                        aria-label="button"
                                         type="button"
                                         onClick={closeModal}
                                         className="px-4 py-2 focus:outline-none font-bold text-2xl text-gray-400 animate-pulse"
@@ -549,15 +706,14 @@ const Limited_A = () => {
                             </div>
 
                         </div>
-                    </DynamicModal>
+                    </Modal>
 
                     {/* Insufficient Gems Modal */}
-                    <DynamicModal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal}>
+                    <Modal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal}>
                         <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
-                            <p className="text-black">Glimmering Essence tidak cukup!</p>
+                            <p className="text-black">Glamour Gems tidak cukup!</p>
                             <div className="flex justify-end mt-4">
                                 <button
-                                    aria-label="button"
                                     type="button"
                                     onClick={closeInsufficientModal}
                                     className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:outline-none"
@@ -566,10 +722,10 @@ const Limited_A = () => {
                                 </button>
                             </div>
                         </div>
-                    </DynamicModal>
+                    </Modal>
 
                     {/* Modal Konfirmasi Penukaran */}
-                    <DynamicModal isOpen={showExchangeModal} onClose={() => setShowExchangeModal(false)}>
+                    <Modal isOpen={showExchangeModal} onClose={() => setShowExchangeModal(false)}>
                         <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
                             <p className="text-black mb-4 text-center">
                                 Glimmering Essence tidak cukup! <br />
@@ -577,7 +733,6 @@ const Limited_A = () => {
                             </p>
                             <div className="flex gap-4">
                                 <button
-                                    aria-label="button"
                                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                     onClick={handleExchange}
 
@@ -585,7 +740,6 @@ const Limited_A = () => {
                                     Ya, Tukar
                                 </button>
                                 <button
-                                    aria-label="button"
                                     className="bg-gray-400 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
                                     onClick={() => setShowExchangeModal(false)}
                                 >
@@ -593,10 +747,11 @@ const Limited_A = () => {
                                 </button>
                             </div>
                         </div>
-                    </DynamicModal>
+                    </Modal>
 
                 </>
             )}
+
         </>
     )
 }
