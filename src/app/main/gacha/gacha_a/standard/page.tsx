@@ -170,14 +170,17 @@ const Standard_A = () => {
 
             // Jalankan gacha setelah penukaran berhasil
             setIsModalOpen(true);
+            setIsLoading(true);
             try {
                 const pulledItems = await pull(exchangeAmount === 1 ? 1 : 10);
                 setGachaItem(pulledItems);
             } catch (error) {
                 console.error('Error during gacha pull:', error);
+            } finally {
+                setIsLoading(false); // Nonaktifkan loading indicator setelah selesai
             }
 
-            // await fetchGachaApi("getUserData", null);
+            await fetchGachaApi("getUserData", null);
 
         } catch (error) {
             console.error('Error exchanging gems:', error);
@@ -637,7 +640,7 @@ const Standard_A = () => {
                     {/* Insufficient Gems Modal */}
                     <Modal isOpen={isInsufficientModalOpen} onClose={closeInsufficientModal} >
                         <div className="p-4 flex flex-col flex-none w-2/5 justify-center items-center bg-white rounded-lg py-8">
-                            <p className="text-black">Glamour Gems tidak cukup!</p>
+                            <p className="text-black">Shimmering Essence tidak cukup!</p>
                             <div className="flex justify-end mt-4">
                                 <button
                                     aria-label="button"

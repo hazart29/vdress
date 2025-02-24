@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ModalAlert from '@/app/component/ModalAlert';
 import Image from 'next/image';
+import PWAInstallPrompt from '../component/PWAInstallPompt';
 
 interface FormData {
   email: string;
@@ -16,16 +17,24 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       //  Ambil token JWT dari atau cookie
-      const token = localStorage.getItem('token'); 
+      const token = localStorage.getItem('token');
       if (token) {
         // Jika ada token, redirect ke halaman /main
-        router.push('/main'); 
+        router.push('/main');
       }
     };
+
+    if ((window.matchMedia('(display-mode: fullscreen)').matches) || (window.matchMedia('(display-mode: standalone)').matches)) {
+      setIsInstalled(true);
+    } else {
+      setIsInstalled(false);
+    }
+
     checkAuth();
   }, [router]);
 
@@ -59,7 +68,7 @@ const Login: React.FC = () => {
         router.push('/main');
       } else {
         // Tangani error dari API
-        setError(data.message || 'Login failed'); 
+        setError(data.message || 'Login failed');
       }
     } catch (error) {
       console.error("Error during sign-in:", error);
@@ -67,15 +76,19 @@ const Login: React.FC = () => {
     }
   };
 
+  if (!isInstalled) {
+    return <PWAInstallPrompt />;
+  }
+
   return (
     <div className='relative flex flex-none w-1/3 flex-col items-center justify-center gap-2'>
       <Image src="/ui/logo2.svg" alt="logo" className='pointer-events-none select-none' width={200} height={70} priority />
 
       {/* Modal Alert */}
-      {error && ( 
+      {error && (
         <ModalAlert
-          isOpen={!!error} 
-          onConfirm={() => setError(null)} 
+          isOpen={!!error}
+          onConfirm={() => setError(null)}
           title="Error"
           imageSrc="/ui/galat_img.svg"
         >
